@@ -1,0 +1,14 @@
+{
+  "pokemon": [
+    {
+      "question": "What is the starter Pokemon from Pokemon Yellow version?",
+      "answer": "Pikachu",
+      "useHints": true
+    },
+    {
+     	"question": "Who is the gym leader from Pewter City?",
+      "answer": "Brock",
+      "useHints": true
+    }
+  ]
+}
