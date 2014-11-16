@@ -35,3 +35,37 @@
 [Regis Philbot v1.0] 03:03:22 Loading questions from: "pokemon.json"
 [Regis Philbot v1.0] 03:03:35 Asking question: [0mWhat are Relicanth's type(s)?[Water and Rock]
 [Regis Philbot v1.0] 03:03:54 Shutting down
+[Regis Philbot v1.0] 03:42:00 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 03:42:00 Loading config...
+[Regis Philbot v1.0] 03:42:00 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 03:42:11 Asking question: [0mWho is the Gym Leader of Azalea Town?[Bugsy]
+[Regis Philbot v1.0] 03:42:31 	Giving hint: _ug__
+[Regis Philbot v1.0] 03:42:51 	Answer was: Bugsy
+[Regis Philbot v1.0] 03:43:17 Asking question: [0mWhat Pokemon does Drifblim evolve from?[Drifloon]
+[Regis Philbot v1.0] 03:43:18 Shutting down
+[Regis Philbot v1.0] 03:46:27 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 03:46:27 Loading config...
+[Regis Philbot v1.0] 03:46:27 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 03:46:38 Asking question: [0mWhat are Politoed's type(s)?[Water]
+[Regis Philbot v1.0] 03:46:58 	Giving hint: __t__
+[Regis Philbot v1.0] 03:47:18 	Answer was: Water
+[Regis Philbot v1.0] 03:47:45 Asking question: [0mWhat are Snorlax's type(s)?[Normal]
+[Regis Philbot v1.0] 03:48:06 	Giving hint: No____
+[Regis Philbot v1.0] 03:48:26 	Answer was: Normal
+[Regis Philbot v1.0] 03:48:31 Shutting down
+[Regis Philbot v1.0] 03:55:34 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 03:55:34 Loading config...
+[Regis Philbot v1.0] 03:55:34 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 03:55:48 Asking question: [0mHow many years had the Maiden of Maiden's Peak waited for her true love to return to her?[2,000 years]
+[Regis Philbot v1.0] 03:56:08 	Giving hint: __00_______
+[Regis Philbot v1.0] 03:56:10 Shutting down
+[Regis Philbot v1.0] 03:56:13 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 03:56:13 Loading config...
+[Regis Philbot v1.0] 03:56:13 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 03:56:22 Asking question: [0mWhat Pokemon does Ralts evolve into?[Kirlia]
+[Regis Philbot v1.0] 03:56:32 Shutting down
+[Regis Philbot v1.0] 03:56:33 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 03:56:33 Loading config...
+[Regis Philbot v1.0] 03:56:33 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 03:56:52 Asking question: [0mWhat Pokemon does Porygon-Z evolve from?[Porygon2]
+[Regis Philbot v1.0] 03:56:54 Shutting down

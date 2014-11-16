@@ -11,13 +11,13 @@
 # ************************** #
 
 import sys
-import BaseHTTPServer
-import requests
-import urlparse
-import simplejson as json
 import time
 import math
 import random
+import urlparse
+import requests
+import BaseHTTPServer
+import simplejson as json
 
 expectedRequestKeys = ['user_id','channel_name','timestamp','team_id','channel_id','token','text','service_id','team_domain','user_name']
 
@@ -77,7 +77,8 @@ class Trivia():
 			return time.time() - self.timer	
 
 	def delay(self, seconds):
-		time.sleep(seconds)	
+		while self.getElapsedTime() < seconds:
+			httpd.handle_request()
 	
 	def askQuestion(self):
 		global answerFound
@@ -91,7 +92,7 @@ class Trivia():
 			sendMessage(question)
 		
 	def listenForAnswers(self):
-		return httpd.handle_request()
+		httpd.handle_request()
 		
 	def checkAnswer(self, msg):
 		answer = questions[self.questionSet][self.currentQuestion]["answer"]
@@ -135,8 +136,8 @@ class Trivia():
 		finalHint = str("".join(hint))
 		
 		prettyPrint("Giving hint: " + finalHint,1)
-		sendMessage("Heres a hint: " + finalHint)				
-	
+		sendMessage("Heres a hint: " + finalHint)	
+			
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 	def log_message(self, format, *args):
 		return
@@ -146,27 +147,21 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		self.end_headers()
 	  
 	def do_POST( self ):
+		self.send_response(200)
+		self.end_headers()
+		
 		request_len = int(self.headers['Content-Length'])
 		request = self.rfile.read(request_len)
 
 		post = urlparse.parse_qs(request)
 		
-		# Check key params
-		if set(expectedRequestKeys).issubset(post.keys()):
-			self.send_response(200)
-		else:
-			self.send_response(200)
+		if not(set(expectedRequestKeys).issubset(post.keys())):
 			return
 		
-		# Check security token
 		if not( post["token"][0] == config['outgoingToken'] ):
-			self.send_response(200)
 			return
 		elif ( post["user_name"][0] == 'slackbot' ):
-			self.send_response(200)
 			return
-
-		self.end_headers()
 
 		if( float(post["timestamp"][0]) < float(bot.timer) ):
 			return		
