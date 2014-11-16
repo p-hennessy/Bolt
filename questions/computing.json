@@ -1,0 +1,6 @@
+{"computing": [
+	{"question": "What is the design pattern that focus's on single instance?","answer": "Singleton"},
+	{"question": "What year was the Unix operating system created?","answer": "1973"},
+	{"question": "What is the HTTP response code for 'I am a teapot'?","answer": "418"},
+	{"question": "What is the BigO notation of merge sort?","answer": "N Log(n)"}
+]}

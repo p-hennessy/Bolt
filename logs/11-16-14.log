@@ -1,0 +1,37 @@
+[Regis Philbot v1.0] 02:55:27 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 02:55:27 Loading config...
+[Regis Philbot v1.0] 02:55:27 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 02:55:33 Asking question: [0mWhat are Shedinja's type(s)?[Bug and Ghost]
+[Regis Philbot v1.0] 02:55:48 	Giving hint: Bug__________
+[Regis Philbot v1.0] 02:56:03 	Answer was: Bug and Ghost
+[Regis Philbot v1.0] 02:56:20 Asking question: [0mWhat was the first Pokemon Ash tried to capture?[Pidgey]
+[Regis Philbot v1.0] 02:56:29 Shutting down
+[Regis Philbot v1.0] 02:56:30 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 02:56:30 Loading config...
+[Regis Philbot v1.0] 02:56:30 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 02:56:40 Asking question: [0mWhat are Burmy's type(s)?[Bug]
+[Regis Philbot v1.0] 02:56:45 	Correct answer given by: pat
+[Regis Philbot v1.0] 02:56:58 Asking question: [0mWhat Pokemon does Anorith evolve into?[Armaldo]
+[Regis Philbot v1.0] 02:57:09 	Correct answer given by: pat
+[Regis Philbot v1.0] 02:57:31 Asking question: [0mWhat are Drifloon's type(s)?[Ghost and Flying]
+[Regis Philbot v1.0] 02:57:46 	Giving hint: _host___________
+[Regis Philbot v1.0] 02:58:02 	Answer was: Ghost and Flying
+[Regis Philbot v1.0] 02:58:17 Asking question: [0mWhat are Nidoqueen's type(s)?[Poison and Ground]
+[Regis Philbot v1.0] 02:58:22 Shutting down
+[Regis Philbot v1.0] 02:58:23 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 02:58:23 Loading config...
+[Regis Philbot v1.0] 02:58:23 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 02:58:29 Asking question: [0mWhat Pokemon does Torterra evolve from?[Grotle]
+[Regis Philbot v1.0] 02:58:49 	Giving hint: Gr____
+[Regis Philbot v1.0] 02:59:09 	Answer was: Grotle
+[Regis Philbot v1.0] 02:59:23 Asking question: [0mWhat are Regice's type(s)?[Ice]
+[Regis Philbot v1.0] 02:59:44 	Giving hint: I__
+[Regis Philbot v1.0] 03:00:04 	Answer was: Ice
+[Regis Philbot v1.0] 03:00:15 Asking question: [0mWhat Pokemon does Ariados evolve from?[Spinarak]
+[Regis Philbot v1.0] 03:00:34 	Correct answer given by: pat
+[Regis Philbot v1.0] 03:00:39 Shutting down
+[Regis Philbot v1.0] 03:03:22 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 03:03:22 Loading config...
+[Regis Philbot v1.0] 03:03:22 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 03:03:35 Asking question: [0mWhat are Relicanth's type(s)?[Water and Rock]
+[Regis Philbot v1.0] 03:03:54 Shutting down

@@ -30,33 +30,33 @@ running = True
 def main():
 	global bot 
 	bot = Trivia()
+	random.seed()
 
 	sendMessage(config["botname"] + " initalizing...")
-	bot.delay(5)
-	sendMessage("There will be cake at the end of this session.")
-
+	bot.delay(random.randint(5,20))
+	
 	while running:
 		bot.startTimer()		
 		bot.askQuestion()
 		
-		while bot.getElapsedTime() < 20:
+		while bot.getElapsedTime() < 40:
 			bot.listenForAnswers()
 			
 			if (answerFound):
 				break
 
- 			if(int(bot.getElapsedTime()) == 10):
+ 			if(int(bot.getElapsedTime()) == 20):
  				bot.giveHint()
  				bot.delay(1)
  				
 		if not(answerFound):
 			bot.giveAnswer()
 
-		bot.delay(5)		
+		bot.delay(random.randint(15,30))	
 		
 class Trivia():
 	currentQuestion = 0
-	questionSet = "computing"
+	questionSet = "pokemon"
 	timer = time.time()	
 	
 	def __init__(self):
@@ -68,6 +68,7 @@ class Trivia():
 	
 		loadConfig()
 		loadQuestions()
+		self.getNextQuestion()
 	
 	def startTimer(self):
 			self.timer = time.time()
@@ -83,9 +84,10 @@ class Trivia():
 		answerFound = False
 		
 		question = questions[self.questionSet][self.currentQuestion]["question"]
+		answer = questions[self.questionSet][self.currentQuestion]["answer"]
 
 		if not(question == None):
-			prettyPrint("Asking question: " + color.reset + question)
+			prettyPrint("Asking question: " + color.reset + question + "[" + answer + "]")
 			sendMessage(question)
 		
 	def listenForAnswers(self):
@@ -94,17 +96,15 @@ class Trivia():
 	def checkAnswer(self, msg):
 		answer = questions[self.questionSet][self.currentQuestion]["answer"]
 		
-		if	( msg == answer ):
+		if	( msg.lower() == answer.lower() ):
 			return True
 		else:
 			return False
 
 	def getNextQuestion(self):
-		if(len(questions[self.questionSet]) - 1 == self.currentQuestion):
-			self.currentQuestion = 0
-	
-		else:
-			self.currentQuestion += 1
+		random.seed()		
+		
+		self.currentQuestion = random.randint(0, len(questions[self.questionSet]) - 1) 		
 
 	def givePoints(self, userid, username):
 		self.getNextQuestion()
@@ -117,7 +117,7 @@ class Trivia():
 
 		if not(answer == None):		
 			prettyPrint("Answer was: " + answer, 1)
-			sendMessage("The answer was: " + answer)
+			sendMessage("Times up! The answer was: " + answer)
 	
 		self.getNextQuestion()		
 	
@@ -155,12 +155,13 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		if set(expectedRequestKeys).issubset(post.keys()):
 			self.send_response(200)
 		else:
-			self.send_response(418)
+			self.send_response(200)
 			return
 		
 		# Check security token
 		if not( post["token"][0] == config['outgoingToken'] ):
-			self.send_response(418)
+			self.send_response(200)
+			return
 		elif ( post["user_name"][0] == 'slackbot' ):
 			self.send_response(200)
 			return
@@ -185,7 +186,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 def loadConfig():
 	prettyPrint("Loading config...")
 	
-	file = open("trebek.config", "r+")
+	file = open("conf/" + "bot.conf", "r+")
 	lines = file.read()
 	file.close()
 		
@@ -199,7 +200,7 @@ def loadConfig():
 def loadQuestions():
 	prettyPrint("Loading questions from: \"" + config["questions"] + "\"")
 	
-	file = open(config["questions"], "r")
+	file = open("questions/" + config["questions"], "r")
 	
 	global questions
 	questions = json.load(file)
@@ -217,10 +218,11 @@ class color():
 		
 def prettyPrint(msg, tabLevel=0):
 	timestamp = time.strftime("%H:%M:%S")
+	date = str(time.strftime("%x")).replace("/", "-")
 
 	print "\t" + color.white + "[" + color.yellow + "Regis Philbot v1.0" + color.white + "] " + color.gray + timestamp + " " + color.reset + ("\t" * tabLevel) + msg
 
-	file = open("regisphilbot.log", "a+")
+	file = open("logs/" + date + ".log", "a+")
 	file.write( "[Regis Philbot v1.0] " + timestamp + " " + ("\t" * tabLevel) + msg + "\n")	
 	file.close()
 
@@ -232,7 +234,7 @@ def sendMessage(msg):
 		
 		global running
 		running = False	
-		
+			
 # Startup function	
 if __name__ == '__main__':
 	try:
