@@ -18,6 +18,11 @@
     ],
     
 	"computing": [
+	 	{
+	      "question": "What is the design pattern that focus's on single instance?",
+	      "answer": "Singleton",
+	      "useHints": true
+	    },
 	    {
 	      "question": "What year was the Unix operating system created?",
 	      "answer": "1973",

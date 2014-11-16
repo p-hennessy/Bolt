@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # ************************** #
-#        Trebek v 1.0        #
+#     Regis Philbot v1.0     #
 #      Slack Trivia Bot	     #
 #  		                    #
 #             by             #
@@ -16,43 +16,43 @@ import requests
 import urlparse
 import simplejson as json
 import time
+import math
+import random
 
 expectedRequestKeys = ['user_id','channel_name','timestamp','team_id','channel_id','token','text','service_id','team_domain','user_name']
 
 config = {}
 questions = {}
 answerFound = False
-trebek = None
+bot = None
 running = True
 
 def main():
-	global trebek 
-	trebek = Trivia()
+	global bot 
+	bot = Trivia()
 
-	sendMessage("Test")
+	sendMessage(config["botname"] + " initalizing...")
+	bot.delay(5)
+	sendMessage("There will be cake at the end of this session.")
 
 	while running:
-		trebek.startTimer()		
-		trebek.askQuestion()
+		bot.startTimer()		
+		bot.askQuestion()
 		
-		while trebek.getElapsedTime() < 20:
-			trebek.listenForAnswers()
+		while bot.getElapsedTime() < 20:
+			bot.listenForAnswers()
 			
 			if (answerFound):
-				print "Answer Found!"
 				break
 
- 			if(int(trebek.getElapsedTime()) == 15):
- 				trebek.giveHint()
- 			elif(int(trebek.getElapsedTime()) == 45):
- 				trebek.giveHint()
+ 			if(int(bot.getElapsedTime()) == 10):
+ 				bot.giveHint()
+ 				bot.delay(1)
  				
-		if(answerFound):
-			trebek.givePoints()
-		else:
-			trebek.giveAnswer()
+		if not(answerFound):
+			bot.giveAnswer()
 
-		trebek.delay(5)		
+		bot.delay(5)		
 		
 class Trivia():
 	currentQuestion = 0
@@ -64,7 +64,7 @@ class Trivia():
 		httpd = BaseHTTPServer.HTTPServer(('', 69), RequestHandler)
 		httpd.socket.settimeout(1)
 
-		prettyPrint("Starting Trebek 1.0")	
+		prettyPrint("Starting Regis Philbot v1.0")	
 	
 		loadConfig()
 		loadQuestions()
@@ -81,19 +81,23 @@ class Trivia():
 	def askQuestion(self):
 		global answerFound
 		answerFound = False
-
+		
 		question = questions[self.questionSet][self.currentQuestion]["question"]
 
 		if not(question == None):
-			prettyPrint(color.white + "> Asking question: " + color.reset + question)
+			prettyPrint("Asking question: " + color.reset + question)
 			sendMessage(question)
 		
 	def listenForAnswers(self):
 		return httpd.handle_request()
 		
-	def checkAnswer(self, answer):
-		print "checking for answer:" + answer
-		return False
+	def checkAnswer(self, msg):
+		answer = questions[self.questionSet][self.currentQuestion]["answer"]
+		
+		if	( msg == answer ):
+			return True
+		else:
+			return False
 
 	def getNextQuestion(self):
 		if(len(questions[self.questionSet]) - 1 == self.currentQuestion):
@@ -102,22 +106,36 @@ class Trivia():
 		else:
 			self.currentQuestion += 1
 
-	def givePoints(self):
+	def givePoints(self, userid, username):
 		self.getNextQuestion()
-		prettyPrint("10 points awarded to someone...")	
+		prettyPrint("Correct answer given by: " + username, 1)	
+		sendMessage("Correct! " + username + ", you earned $10!")
+		sendMessage("Your riches have amassed to a staggering $30!")
 	
 	def giveAnswer(self):
 		answer = questions[self.questionSet][self.currentQuestion]["answer"]
 
 		if not(answer == None):		
-			prettyPrint(color.white + "> Answer was: " + answer)
+			prettyPrint("Answer was: " + answer, 1)
 			sendMessage("The answer was: " + answer)
 	
 		self.getNextQuestion()		
 	
 	def giveHint(self):
-		print "giving hint"
-	
+		random.seed()
+		answer = questions[self.questionSet][self.currentQuestion]["answer"]
+		hint = list("_" * len(answer))
+		
+		nReveal = int(math.ceil(float(len(answer)) * 0.25))
+
+		for i in range(0, nReveal):
+			rand = random.randint(0, nReveal)			
+			hint[rand] = answer[rand] 
+
+		finalHint = str("".join(hint))
+		
+		prettyPrint("Giving hint: " + finalHint,1)
+		sendMessage("Heres a hint: " + finalHint)				
 	
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 	def log_message(self, format, *args):
@@ -141,17 +159,26 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			return
 		
 		# Check security token
-		if not(post["token"][0] == config['outgoingToken']):
+		if not( post["token"][0] == config['outgoingToken'] ):
 			self.send_response(418)
-
-		if (post["user_name"][0] == 'slackbot'):
+		elif ( post["user_name"][0] == 'slackbot' ):
 			self.send_response(200)
 			return
 
 		self.end_headers()
+
+		if( float(post["timestamp"][0]) < float(bot.timer) ):
+			return		
 		
 		global answerFound
-		answerFound = trebek.checkAnswer(post["text"][0])		
+
+		if(answerFound):
+			return
+		else:
+			answerFound = bot.checkAnswer(post["text"][0])	
+		
+		if(answerFound):
+			bot.givePoints(post["user_id"][0], post["user_name"][0])	
 		
 
 # Load config from a file storing into global dict
@@ -186,13 +213,16 @@ class color():
 	red  = '\033[1;31m'  	
 	green  = '\033[1;32m'  	
 	yellow  = '\033[1;33m' 	
-	blue  = '\033[1;34m'  	
-	purple  = '\033[1;35m'  	
-	cyan  = '\033[1;36m'  	
 	white = '\033[1;37m'  
 		
 def prettyPrint(msg, tabLevel=0):
-	print "\t" + color.white + "[" + color.yellow + "Trebek v1.0" + color.white + "] " + color.reset + ("\t" * tabLevel) + msg
+	timestamp = time.strftime("%H:%M:%S")
+
+	print "\t" + color.white + "[" + color.yellow + "Regis Philbot v1.0" + color.white + "] " + color.gray + timestamp + " " + color.reset + ("\t" * tabLevel) + msg
+
+	file = open("regisphilbot.log", "a+")
+	file.write( "[Regis Philbot v1.0] " + timestamp + " " + ("\t" * tabLevel) + msg + "\n")	
+	file.close()
 
 def sendMessage(msg):
 	response = requests.post(config["incomingHookURL"], data='{"channel": "#general", "username": "' + config["botname"] + '", "text":"' + msg + '"}')
@@ -208,6 +238,8 @@ if __name__ == '__main__':
 	try:
 		main()
 	except KeyboardInterrupt:
+		sendMessage(config["botname"] + " shutting down...")
+		prettyPrint("Shutting down")
 		sys.exit(1)
 
 
