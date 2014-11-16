@@ -23,20 +23,19 @@ config = {}
 questions = {}
 answerFound = False
 trebek = None
+running = True
 
 def main():
 	global trebek 
 	trebek = Trivia()
 
 	sendMessage("Test")
-	
-	print config.keys()
 
-	while True:
+	while running:
 		trebek.startTimer()		
 		trebek.askQuestion()
 		
-		while trebek.getElapsedTime() < 5:
+		while trebek.getElapsedTime() < 20:
 			trebek.listenForAnswers()
 			
 			if (answerFound):
@@ -57,7 +56,7 @@ def main():
 		
 class Trivia():
 	currentQuestion = 0
-	questionSet = "pokemon"
+	questionSet = "computing"
 	timer = time.time()	
 	
 	def __init__(self):
@@ -83,7 +82,11 @@ class Trivia():
 		global answerFound
 		answerFound = False
 
-		prettyPrint(color.white + "> Asking question: " + color.reset + questions[self.questionSet][self.currentQuestion]["question"])
+		question = questions[self.questionSet][self.currentQuestion]["question"]
+
+		if not(question == None):
+			prettyPrint(color.white + "> Asking question: " + color.reset + question)
+			sendMessage(question)
 		
 	def listenForAnswers(self):
 		return httpd.handle_request()
@@ -93,7 +96,7 @@ class Trivia():
 		return False
 
 	def getNextQuestion(self):
-		if(len(questions["pokemon"]) - 1 == self.currentQuestion):
+		if(len(questions[self.questionSet]) - 1 == self.currentQuestion):
 			self.currentQuestion = 0
 	
 		else:
@@ -101,17 +104,25 @@ class Trivia():
 
 	def givePoints(self):
 		self.getNextQuestion()
-		print "10 pints!"	
+		prettyPrint("10 points awarded to someone...")	
 	
 	def giveAnswer(self):
-		self.getNextQuestion()	
-		print "Answer was xxx..."
+		answer = questions[self.questionSet][self.currentQuestion]["answer"]
+
+		if not(answer == None):		
+			prettyPrint(color.white + "> Answer was: " + answer)
+			sendMessage("The answer was: " + answer)
+	
+		self.getNextQuestion()		
 	
 	def giveHint(self):
 		print "giving hint"
 	
 	
 class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+	def log_message(self, format, *args):
+		return
+
 	def do_GET( self ):
 		self.send_response(418)
 		self.end_headers()
@@ -135,8 +146,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 		if (post["user_name"][0] == 'slackbot'):
 			self.send_response(200)
-
-		print post["user_name"][0]
+			return
 
 		self.end_headers()
 		
@@ -185,12 +195,13 @@ def prettyPrint(msg, tabLevel=0):
 	print "\t" + color.white + "[" + color.yellow + "Trebek v1.0" + color.white + "] " + color.reset + ("\t" * tabLevel) + msg
 
 def sendMessage(msg):
-	
-	url = "https://patacave.slack.com/services/hooks/incoming-webhook?token=PiGeLJIXj00PbaUdSVbVfgDy"
+	response = requests.post(config["incomingHookURL"], data='{"channel": "#general", "username": "' + config["botname"] + '", "text":"' + msg + '"}')
 
-	payload = '{"channel": "#general", "username": "' + config["botname"] + '", "text":"' + msg + '"}'
-	
-	print requests.post(url, data=payload)
+	if not(str(response) == "<Response [200]>"):
+		prettyPrint(color.red + "ERROR: " + color.reset + "Send message failed.")
+		
+		global running
+		running = False	
 		
 # Startup function	
 if __name__ == '__main__':
