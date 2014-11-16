@@ -12,6 +12,7 @@
 
 import sys
 import BaseHTTPServer
+import requests
 import urlparse
 import simplejson as json
 import time
@@ -26,6 +27,10 @@ trebek = None
 def main():
 	global trebek 
 	trebek = Trivia()
+
+	sendMessage("Test")
+	
+	print config.keys()
 
 	while True:
 		trebek.startTimer()		
@@ -84,7 +89,7 @@ class Trivia():
 		return httpd.handle_request()
 		
 	def checkAnswer(self, answer):
-		print "checking for answer"
+		print "checking for answer:" + answer
 		return False
 
 	def getNextQuestion(self):
@@ -125,13 +130,18 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			return
 		
 		# Check security token
-		if not(post["token"][0] == config['token']):
+		if not(post["token"][0] == config['outgoingToken']):
 			self.send_response(418)
+
+		if (post["user_name"][0] == 'slackbot'):
+			self.send_response(200)
+
+		print post["user_name"][0]
 
 		self.end_headers()
 		
 		global answerFound
-		answerFound = trebek.checkAnswer(post["text"])		
+		answerFound = trebek.checkAnswer(post["text"][0])		
 		
 
 # Load config from a file storing into global dict
@@ -143,10 +153,10 @@ def loadConfig():
 	file.close()
 		
 	for index in lines.split("\n"):
-		split = index.split("=")
+		split = index.partition("=")
 		
-		if len(split) == 2:		
-			config[split[0]] = split[1]
+		if len(split) == 3:		
+			config[split[0]] = split[2]
 
 # Load the questions from a file storing into global dict
 def loadQuestions():
@@ -173,7 +183,15 @@ class color():
 		
 def prettyPrint(msg, tabLevel=0):
 	print "\t" + color.white + "[" + color.yellow + "Trebek v1.0" + color.white + "] " + color.reset + ("\t" * tabLevel) + msg
+
+def sendMessage(msg):
 	
+	url = "https://patacave.slack.com/services/hooks/incoming-webhook?token=PiGeLJIXj00PbaUdSVbVfgDy"
+
+	payload = '{"channel": "#general", "username": "' + config["botname"] + '", "text":"' + msg + '"}'
+	
+	print requests.post(url, data=payload)
+		
 # Startup function	
 if __name__ == '__main__':
 	try:
@@ -194,5 +212,3 @@ if __name__ == '__main__':
 
 
 
-
-# ************************** #
