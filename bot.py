@@ -35,7 +35,19 @@ def main():
 	sendMessage(config["botname"] + " initalizing...")
 	bot.delay(random.randint(5,20))
 	
-	while running:
+	while True:
+		global running		
+		
+		if not(running):
+			bot.listenForAnswers()
+			continue	
+		
+		if bot.quietCount >= 25:
+			running = False
+			prettyPrint("Stopping due to inactivity. Will resume on request")
+			sendMessage("Stopping trivia due to inactivity. Will resume on request")	
+			continue	
+		
 		bot.startTimer()		
 		bot.askQuestion()
 		
@@ -47,7 +59,6 @@ def main():
 
  			if(int(bot.getElapsedTime()) == 20):
  				bot.giveHint()
- 				bot.delay(1)
  				
 		if not(answerFound):
 			bot.giveAnswer()
@@ -56,8 +67,10 @@ def main():
 		
 class Trivia():
 	currentQuestion = 0
-	questionSet = "pokemon"
-	timer = time.time()	
+	questionSet = "security"
+	timer = time.time()
+	hintGiven = False
+	quietCount = 0
 	
 	def __init__(self):
 		global httpd
@@ -77,19 +90,21 @@ class Trivia():
 			return time.time() - self.timer	
 
 	def delay(self, seconds):
+		self.startTimer()
 		while self.getElapsedTime() < seconds:
 			httpd.handle_request()
 	
 	def askQuestion(self):
 		global answerFound
 		answerFound = False
+		self.hintGiven = False
 		
 		question = questions[self.questionSet][self.currentQuestion]["question"]
 		answer = questions[self.questionSet][self.currentQuestion]["answer"]
 
 		if not(question == None):
-			prettyPrint("Asking question: " + color.reset + question + "[" + answer + "]")
-			sendMessage(question)
+			prettyPrint("[" + config["questions"][:-5].capitalize() + "." + self.questionSet.capitalize() + " " + hex(self.currentQuestion) + "] " + color.reset + question + " [" + answer + "]")
+			sendMessage("[" + config["questions"][:-5].capitalize() + "." + self.questionSet.capitalize() + " " + hex(self.currentQuestion) + "] " + question)
 		
 	def listenForAnswers(self):
 		httpd.handle_request()
@@ -105,7 +120,7 @@ class Trivia():
 	def getNextQuestion(self):
 		random.seed()		
 		
-		self.currentQuestion = random.randint(0, len(questions[self.questionSet]) - 1) 		
+		self.currentQuestion = random.randint(0, len(questions[self.questionSet])) 		
 
 	def givePoints(self, userid, username):
 		self.getNextQuestion()
@@ -115,7 +130,9 @@ class Trivia():
 	
 	def giveAnswer(self):
 		answer = questions[self.questionSet][self.currentQuestion]["answer"]
-
+			
+		self.quietCount += 1		
+			
 		if not(answer == None):		
 			prettyPrint("Answer was: " + answer, 1)
 			sendMessage("Times up! The answer was: " + answer)
@@ -123,6 +140,11 @@ class Trivia():
 		self.getNextQuestion()		
 	
 	def giveHint(self):
+		if(self.hintGiven):
+			return
+		else:
+			self.hintGiven = True		
+		
 		random.seed()
 		answer = questions[self.questionSet][self.currentQuestion]["answer"]
 		hint = list("_" * len(answer))
@@ -238,17 +260,3 @@ if __name__ == '__main__':
 		sendMessage(config["botname"] + " shutting down...")
 		prettyPrint("Shutting down")
 		sys.exit(1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-

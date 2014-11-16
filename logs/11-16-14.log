@@ -69,3 +69,310 @@
 [Regis Philbot v1.0] 03:56:33 Loading questions from: "pokemon.json"
 [Regis Philbot v1.0] 03:56:52 Asking question: [0mWhat Pokemon does Porygon-Z evolve from?[Porygon2]
 [Regis Philbot v1.0] 03:56:54 Shutting down
+[Regis Philbot v1.0] 04:17:04 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 04:17:04 Loading config...
+[Regis Philbot v1.0] 04:17:04 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 04:17:24 Asking question: [0mWhat badge do you receive from Celadon City?[Rainbow Badge]
+[Regis Philbot v1.0] 04:17:40 	Correct answer given by: pat
+[Regis Philbot v1.0] 04:17:52 Asking question: [0mWhat are Persian's type(s)?[Normal]
+[Regis Philbot v1.0] 04:17:59 	Correct answer given by: pat
+[Regis Philbot v1.0] 04:18:22 Asking question: [0mWhat Pokemon does Teddiursa evolve into?[Ursaring]
+[Regis Philbot v1.0] 04:18:32 	Correct answer given by: pat
+[Regis Philbot v1.0] 04:18:44 Asking question: [0mWhat are Rapidash's type(s)?[Fire]
+[Regis Philbot v1.0] 04:18:47 	Correct answer given by: pat
+[Regis Philbot v1.0] 04:19:06 Asking question: [0mI am a fire type Pokemon that resembles a monkey. I was released by Paul because he thought I was weak. After this event, Ash offered for me to join his team. Who am I?[Chimchar]
+[Regis Philbot v1.0] 04:19:26 	Giving hint: C_______
+[Regis Philbot v1.0] 04:19:26 	Giving hint: _hi_____
+[Regis Philbot v1.0] 04:19:27 	Giving hint: C_i_____
+[Regis Philbot v1.0] 04:19:27 	Giving hint: Ch______
+[Regis Philbot v1.0] 04:19:46 	Answer was: Chimchar
+[Regis Philbot v1.0] 04:19:46 Asking question: [0mWhat Pokemon does Togepi evolve into?[Togetic]
+[Regis Philbot v1.0] 04:19:54 	Correct answer given by: pat
+[Regis Philbot v1.0] 04:20:09 Asking question: [0mI was Ash's very first Pokemon. Who am I?[Pikachu]
+[Regis Philbot v1.0] 04:20:30 	Correct answer given by: pat
+[Regis Philbot v1.0] 04:20:31 Asking question: [0mWhat are Piplup's type(s)?[Water]
+[Regis Philbot v1.0] 04:20:51 	Giving hint: __t__
+[Regis Philbot v1.0] 04:20:51 	Giving hint: W_t__
+[Regis Philbot v1.0] 04:20:52 	Giving hint: _at__
+[Regis Philbot v1.0] 04:20:52 	Giving hint: __t__
+[Regis Philbot v1.0] 04:21:11 	Answer was: Water
+[Regis Philbot v1.0] 04:21:12 Asking question: [0mWhat are Yanma's type(s)?[Bug and Flying]
+[Regis Philbot v1.0] 04:21:32 	Giving hint: _u_ a_________
+[Regis Philbot v1.0] 04:21:32 	Giving hint: B__ a_________
+[Regis Philbot v1.0] 04:21:32 	Giving hint: Bu__a_________
+[Regis Philbot v1.0] 04:21:35 Shutting down
+[Regis Philbot v1.0] 04:22:57 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 04:22:57 Loading config...
+[Regis Philbot v1.0] 04:22:57 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 04:23:07 Asking question: [0mWhat Pokemon does Gastly evolve into?[Haunter]
+[Regis Philbot v1.0] 04:24:02 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 04:24:02 Loading config...
+[Regis Philbot v1.0] 04:24:02 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 04:24:22 Asking question: [0mWho is the Gym Leader of Cinnabar Island?[Blaine]
+[Regis Philbot v1.0] 04:24:43 	Giving hint: __a___
+[Regis Philbot v1.0] 04:25:03 	Answer was: Blaine
+[Regis Philbot v1.0] 04:25:03 Asking question: [0mWhat Pokemon does Piloswine evolve into?[Mamoswine]
+[Regis Philbot v1.0] 04:25:24 	Giving hint: M_mo_____
+[Regis Philbot v1.0] 04:25:44 	Answer was: Mamoswine
+[Regis Philbot v1.0] 04:25:44 Asking question: [0mWhat are Weedle's type(s)?[Bug and Poison]
+[Regis Philbot v1.0] 04:26:04 	Giving hint: _ug __________
+[Regis Philbot v1.0] 04:26:24 	Answer was: Bug and Poison
+[Regis Philbot v1.0] 04:26:25 Asking question: [0mWhat Pokemon does Makuhita evolve into?[Hariyama]
+[Regis Philbot v1.0] 04:26:34 Shutting down
+[Regis Philbot v1.0] 04:26:35 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 04:26:35 Loading config...
+[Regis Philbot v1.0] 04:26:35 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 04:26:42 Asking question: [0mWhat are Teddiursa's type(s)?[Normal]
+[Regis Philbot v1.0] 04:27:02 	Giving hint: _or___
+[Regis Philbot v1.0] 04:27:22 	Answer was: Normal
+[Regis Philbot v1.0] 04:27:39 Asking question: [0mWhat Pokemon does Slowpoke evolve into when traded holding a King's Rock?[Slowking]
+[Regis Philbot v1.0] 04:27:59 	Giving hint: _lo_____
+[Regis Philbot v1.0] 04:28:15 	Correct answer given by: pat
+[Regis Philbot v1.0] 04:28:37 Asking question: [0mWho is the grass starter in Pokemon Red/Blue?[Bulbasaur]
+[Regis Philbot v1.0] 04:28:58 	Giving hint: Bu_b_____
+[Regis Philbot v1.0] 04:29:18 	Answer was: Bulbasaur
+[Regis Philbot v1.0] 04:29:40 Asking question: [0mWhat Pokemon does Hitmontop evolve from?[Tyrogue]
+[Regis Philbot v1.0] 04:30:00 	Giving hint: T_r____
+[Regis Philbot v1.0] 04:30:07 	Correct answer given by: pat
+[Regis Philbot v1.0] 04:30:33 Asking question: [0mWhat Pokemon does Electrike evolve into?[Manectric]
+[Regis Philbot v1.0] 04:30:43 	Correct answer given by: pat
+[Regis Philbot v1.0] 04:31:01 Asking question: [0mWhat are Tangela's type(s)?[Grass]
+[Regis Philbot v1.0] 04:31:05 	Correct answer given by: pat
+[Regis Philbot v1.0] 04:31:21 Asking question: [0mWhat are Togetic's type(s)?[Normal and Flying]
+[Regis Philbot v1.0] 04:31:40 	Correct answer given by: pat
+[Regis Philbot v1.0] 04:32:11 Asking question: [0mWhat are Nidoqueen's type(s)?[Poison and Ground]
+[Regis Philbot v1.0] 04:32:31 	Giving hint: Poi_on___________
+[Regis Philbot v1.0] 04:32:51 	Answer was: Poison and Ground
+[Regis Philbot v1.0] 04:33:11 Asking question: [0mWhat Pokemon does Shellder evolve into?[Cloyster]
+[Regis Philbot v1.0] 04:33:31 	Giving hint: C_______
+[Regis Philbot v1.0] 04:33:51 	Answer was: Cloyster
+[Regis Philbot v1.0] 04:34:07 Asking question: [0mWhat are Goldeen's type(s)?[Water]
+[Regis Philbot v1.0] 04:34:28 	Giving hint: W_t__
+[Regis Philbot v1.0] 04:34:48 	Answer was: Water
+[Regis Philbot v1.0] 04:35:06 Asking question: [0mWhat Pokemon does Roserade evolve from?[Roselia]
+[Regis Philbot v1.0] 04:35:27 	Giving hint: R______
+[Regis Philbot v1.0] 04:35:47 	Answer was: Roselia
+[Regis Philbot v1.0] 04:36:11 Asking question: [0mWhat Pokemon does Slowking evolve from?[Slowpoke]
+[Regis Philbot v1.0] 04:36:31 	Giving hint: __o_____
+[Regis Philbot v1.0] 04:36:52 	Answer was: Slowpoke
+[Regis Philbot v1.0] 04:37:01 Shutting down
+[Regis Philbot v1.0] 04:37:03 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 04:37:03 Loading config...
+[Regis Philbot v1.0] 04:37:03 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 04:38:32 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 04:38:32 Loading config...
+[Regis Philbot v1.0] 04:38:32 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 04:38:41 Asking question: [0mWhat are Clamperl's type(s)?[Water]
+[Regis Philbot v1.0] 04:39:01 	Giving hint: _at__
+[Regis Philbot v1.0] 04:39:15 Shutting down
+[Regis Philbot v1.0] 04:39:16 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 04:39:16 Loading config...
+[Regis Philbot v1.0] 04:39:16 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 04:39:30 Asking question: [0mWhat are Houndoom's type(s)?[Dark and Fire]
+[Regis Philbot v1.0] 04:39:51 	Giving hint: _a_k ________
+[Regis Philbot v1.0] 04:40:11 	Answer was: Dark and Fire
+[Regis Philbot v1.0] 04:40:31 Asking question: [0mWhat Pokemon does Marowak evolve from?[Cubone]
+[Regis Philbot v1.0] 04:40:51 	Giving hint: C_b___
+[Regis Philbot v1.0] 04:41:12 	Answer was: Cubone
+[Regis Philbot v1.0] 04:41:31 Stopping due to inactivity. Will resume on request
+[Regis Philbot v1.0] 04:41:31 Asking question: [0mWhat number is Jigglypuff?[39]
+[Regis Philbot v1.0] 04:41:37 Shutting down
+[Regis Philbot v1.0] 04:41:51 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 04:41:51 Loading config...
+[Regis Philbot v1.0] 04:41:51 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 04:41:57 Stopping due to inactivity. Will resume on request
+[Regis Philbot v1.0] 04:43:36 Shutting down
+[Regis Philbot v1.0] 04:43:43 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 04:43:43 Loading config...
+[Regis Philbot v1.0] 04:43:43 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 04:43:45 Shutting down
+[Regis Philbot v1.0] 04:43:47 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 04:43:47 Loading config...
+[Regis Philbot v1.0] 04:43:47 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 04:44:00 Asking question: [0mWhat Pokemon does Seedot evolve into?[Nuzleaf]
+[Regis Philbot v1.0] 04:44:20 	Giving hint: _uz____
+[Regis Philbot v1.0] 04:44:41 	Answer was: Nuzleaf
+[Regis Philbot v1.0] 04:44:56 Asking question: [0mWhat are Carvanha's type(s)?[Water and Dark]
+[Regis Philbot v1.0] 04:45:16 	Giving hint: _ate__________
+[Regis Philbot v1.0] 04:45:36 	Answer was: Water and Dark
+[Regis Philbot v1.0] 04:45:58 Asking question: [0mWhat are Elekid's type(s)?[Electric]
+[Regis Philbot v1.0] 04:46:18 	Giving hint: _le_____
+[Regis Philbot v1.0] 04:46:38 	Answer was: Electric
+[Regis Philbot v1.0] 04:46:54 Asking question: [0mWhat are Salamence's type(s)?[Dragon and Flying]
+[Regis Philbot v1.0] 04:47:14 	Giving hint: D_a__n___________
+[Regis Philbot v1.0] 04:47:34 	Answer was: Dragon and Flying
+[Regis Philbot v1.0] 04:47:59 Asking question: [0mWhat Pokemon does Kricketot evolve into?[Kricketune]
+[Regis Philbot v1.0] 04:48:20 	Giving hint: Kr________
+[Regis Philbot v1.0] 04:48:40 	Answer was: Kricketune
+[Regis Philbot v1.0] 04:49:02 Asking question: [0mWhat are Snover's type(s)?[Grass and Ice]
+[Regis Philbot v1.0] 04:49:22 	Giving hint: _r_ss________
+[Regis Philbot v1.0] 04:49:43 	Answer was: Grass and Ice
+[Regis Philbot v1.0] 04:50:01 Asking question: [0mWhose bike does Ash break?[Misty]
+[Regis Philbot v1.0] 04:50:21 	Giving hint: Mi___
+[Regis Philbot v1.0] 04:50:42 	Answer was: Misty
+[Regis Philbot v1.0] 04:51:08 Asking question: [0mWho is the water starter in Pokemon Gold/Silver/Crystal?[Totodile]
+[Regis Philbot v1.0] 04:51:28 	Giving hint: _o______
+[Regis Philbot v1.0] 04:51:48 	Answer was: Totodile
+[Regis Philbot v1.0] 04:52:08 Asking question: [0mWhat Pokemon does Snorunt evolve into if female and exposed to radiation from a Dawn Stone?[Froslass]
+[Regis Philbot v1.0] 04:52:28 	Giving hint: _ro_____
+[Regis Philbot v1.0] 04:52:48 	Answer was: Froslass
+[Regis Philbot v1.0] 04:53:10 Asking question: [0mWhat Pokemon does Metagross evolve from?[Metang]
+[Regis Philbot v1.0] 04:53:30 	Giving hint: M_t___
+[Regis Philbot v1.0] 04:53:50 	Answer was: Metang
+[Regis Philbot v1.0] 04:54:08 Asking question: [0mWhat badge do you receive from Fuchsia City?[Soul Badge]
+[Regis Philbot v1.0] 04:54:29 	Giving hint: S_ul______
+[Regis Philbot v1.0] 04:54:49 	Answer was: Soul Badge
+[Regis Philbot v1.0] 04:55:12 Asking question: [0mWhat are Mantine's type(s)?[Water and Flying]
+[Regis Philbot v1.0] 04:55:32 	Giving hint: _ater___________
+[Regis Philbot v1.0] 04:55:52 	Answer was: Water and Flying
+[Regis Philbot v1.0] 04:56:20 Asking question: [0mWhat are Raticate's type(s)?[Normal]
+[Regis Philbot v1.0] 04:56:41 	Giving hint: _or___
+[Regis Philbot v1.0] 04:57:01 	Answer was: Normal
+[Regis Philbot v1.0] 04:57:23 Asking question: [0mWho is the Gym Leader of Navel Island?[Danny]
+[Regis Philbot v1.0] 04:57:44 	Giving hint: _an__
+[Regis Philbot v1.0] 04:58:04 	Answer was: Danny
+[Regis Philbot v1.0] 04:58:25 Asking question: [0mWhat are Omanyte's type(s)?[Rock and Water]
+[Regis Philbot v1.0] 04:58:46 	Giving hint: _ock _________
+[Regis Philbot v1.0] 04:59:06 	Answer was: Rock and Water
+[Regis Philbot v1.0] 04:59:27 Asking question: [0mAccording to Misty, she hates three things. Carrots and bugs are two. Which is the third?[peppers]
+[Regis Philbot v1.0] 04:59:47 	Giving hint: pe_____
+[Regis Philbot v1.0] 05:00:08 	Answer was: peppers
+[Regis Philbot v1.0] 05:00:33 Asking question: [0mWhat are Ekans's type(s)?[Poison]
+[Regis Philbot v1.0] 05:00:53 	Giving hint: _oi___
+[Regis Philbot v1.0] 05:01:14 	Answer was: Poison
+[Regis Philbot v1.0] 05:01:44 Asking question: [0mWhat are Feebas's type(s)?[Water]
+[Regis Philbot v1.0] 05:02:04 	Giving hint: W____
+[Regis Philbot v1.0] 05:02:24 	Answer was: Water
+[Regis Philbot v1.0] 05:02:49 Asking question: [0mWhat are Misdreavus's type(s)?[Ghost]
+[Regis Philbot v1.0] 05:03:09 	Giving hint: G____
+[Regis Philbot v1.0] 05:03:29 	Answer was: Ghost
+[Regis Philbot v1.0] 05:03:47 Asking question: [0mWhat Pokemon does Vileplume evolve from?[Gloom]
+[Regis Philbot v1.0] 05:04:07 	Giving hint: Gl___
+[Regis Philbot v1.0] 05:04:27 	Answer was: Gloom
+[Regis Philbot v1.0] 05:04:55 Asking question: [0mWhat Pokemon does a male Burmy evolve into at level 20?[Mothim]
+[Regis Philbot v1.0] 05:05:15 	Giving hint: M_t___
+[Regis Philbot v1.0] 05:05:35 	Answer was: Mothim
+[Regis Philbot v1.0] 05:05:56 Asking question: [0mWhat Pokemon does Salamence evolve from?[Shelgon]
+[Regis Philbot v1.0] 05:06:16 	Giving hint: Sh_____
+[Regis Philbot v1.0] 05:06:36 	Answer was: Shelgon
+[Regis Philbot v1.0] 05:06:52 Asking question: [0mWhat are Palkia's type(s)?[Water and Dragon]
+[Regis Philbot v1.0] 05:07:12 	Giving hint: W___r___________
+[Regis Philbot v1.0] 05:07:32 	Answer was: Water and Dragon
+[Regis Philbot v1.0] 05:07:51 Asking question: [0mWhat are Kricketot's type(s)?[Bug]
+[Regis Philbot v1.0] 05:08:11 	Giving hint: B__
+[Regis Philbot v1.0] 05:08:31 	Answer was: Bug
+[Regis Philbot v1.0] 05:08:58 Asking question: [0mWhat Pokemon does Alakazam evolve from?[Kadabra]
+[Regis Philbot v1.0] 05:09:18 	Giving hint: _a_____
+[Regis Philbot v1.0] 05:09:38 	Answer was: Kadabra
+[Regis Philbot v1.0] 05:09:54 Stopping due to inactivity. Will resume on request
+[Regis Philbot v1.0] 05:10:07 Shutting down
+[Regis Philbot v1.0] 15:26:53 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 15:26:53 Loading config...
+[Regis Philbot v1.0] 15:26:53 Loading questions from: "pokemon.json"
+[Regis Philbot v1.0] 15:27:05 Asking question: [0mWho is the starter Pokemon in Pokemon XD: Gale of Darkness?[Eevee]
+[Regis Philbot v1.0] 15:27:25 	Giving hint: _ev__
+[Regis Philbot v1.0] 15:27:28 	Correct answer given by: pat
+[Regis Philbot v1.0] 15:27:50 Asking question: [0mWhat Pokemon does Walrein evolve from?[Sealeo]
+[Regis Philbot v1.0] 15:27:55 	Correct answer given by: pat
+[Regis Philbot v1.0] 15:28:15 Shutting down
+[Regis Philbot v1.0] 16:13:52 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:13:52 Loading config...
+[Regis Philbot v1.0] 16:13:52 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:14:14 Asking question: [0mWhat is the name of the most popular network reconnaissance tool? [NMap]
+[Regis Philbot v1.0] 16:14:18 	Correct answer given by: pat
+[Regis Philbot v1.0] 16:14:22 Shutting down
+[Regis Philbot v1.0] 16:17:19 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:17:19 Loading config...
+[Regis Philbot v1.0] 16:17:19 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:17:59 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:17:59 Loading config...
+[Regis Philbot v1.0] 16:17:59 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:18:16 Asking question: [security] [0mWhat is the practice of concealing a message within another message? [Steganography]
+[Regis Philbot v1.0] 16:18:36 	Giving hint: _te_a________
+[Regis Philbot v1.0] 16:18:56 	Answer was: Steganography
+[Regis Philbot v1.0] 16:19:13 Asking question: [security] [0mWhat is the security measure called that prevent Javascript from accessing files on the hosts computer? [Same Origin Policy]
+[Regis Philbot v1.0] 16:19:33 	Giving hint: S_me_O____________
+[Regis Philbot v1.0] 16:19:52 Shutting down
+[Regis Philbot v1.0] 16:19:53 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:19:53 Loading config...
+[Regis Philbot v1.0] 16:19:53 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:20:13 Asking question: [security] [0mWhat is the security measure called that prevent Javascript from accessing files on the hosts computer? [Same Origin Policy]
+[Regis Philbot v1.0] 16:20:33 	Giving hint: S__e _____________
+[Regis Philbot v1.0] 16:20:37 Shutting down
+[Regis Philbot v1.0] 16:20:39 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:20:39 Loading config...
+[Regis Philbot v1.0] 16:20:39 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:20:44 Asking question: [security] [0mWhat is the name of the most popular network reconnaissance tool? [NMap]
+[Regis Philbot v1.0] 16:20:58 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:20:58 Loading config...
+[Regis Philbot v1.0] 16:20:58 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:21:15 Asking question: [security] [0mWhat is the name of the most popular network reconnaissance tool? [NMap]
+[Regis Philbot v1.0] 16:21:35 	Giving hint: N___
+[Regis Philbot v1.0] 16:21:55 	Answer was: NMap
+[Regis Philbot v1.0] 16:22:18 Shutting down
+[Regis Philbot v1.0] 16:22:19 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:22:19 Loading config...
+[Regis Philbot v1.0] 16:22:19 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:22:31 Asking question: [security] [0mWhat is the name of the most popular network reconnaissance tool? [NMap]
+[Regis Philbot v1.0] 16:22:42 Shutting down
+[Regis Philbot v1.0] 16:22:43 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:22:43 Loading config...
+[Regis Philbot v1.0] 16:22:43 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:22:49 Asking question: [security] [0mWhat is the practice of concealing a message within another message? [Steganography]
+[Regis Philbot v1.0] 16:23:09 	Giving hint: _te_a________
+[Regis Philbot v1.0] 16:23:29 	Answer was: Steganography
+[Regis Philbot v1.0] 16:23:59 Asking question: [security] [0mWhat is the security measure called that prevent Javascript from accessing files on the hosts computer? [Same Origin Policy]
+[Regis Philbot v1.0] 16:24:19 Shutting down
+[Regis Philbot v1.0] 16:24:20 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:24:20 Loading config...
+[Regis Philbot v1.0] 16:24:20 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:24:33 Asking question: [general] [0mWhat is it called when two system processes are simultaneous waiting for one another to finish? [deadlock]
+[Regis Philbot v1.0] 16:24:44 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:24:44 Loading config...
+[Regis Philbot v1.0] 16:24:44 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:24:57 Asking question: [general] [0mTrue or False: Strings in Java are immutable. [True]
+[Regis Philbot v1.0] 16:25:05 Shutting down
+[Regis Philbot v1.0] 16:25:48 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:25:48 Loading config...
+[Regis Philbot v1.0] 16:25:48 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:25:54 Asking question: [general] [0mwww.google.com is an example of what? [Domain Name]
+[Regis Philbot v1.0] 16:26:15 	Giving hint: Do_a_______
+[Regis Philbot v1.0] 16:26:20 Shutting down
+[Regis Philbot v1.0] 16:26:21 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:26:21 Loading config...
+[Regis Philbot v1.0] 16:26:21 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:26:28 Asking question: [general] [0mWhat is the design pattern that focus's on single instance? [Singleton]
+[Regis Philbot v1.0] 16:26:41 Shutting down
+[Regis Philbot v1.0] 16:26:42 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:26:42 Loading config...
+[Regis Philbot v1.0] 16:26:42 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:26:53 Asking question: [general] [0mHow many bytes are in a kilobyte? [1024]
+[Regis Philbot v1.0] 16:27:12 	Correct answer given by: pat
+[Regis Philbot v1.0] 16:27:30 Asking question: [general] [0mTrue or False: Strings in Java are immutable. [True]
+[Regis Philbot v1.0] 16:27:46 Shutting down
+[Regis Philbot v1.0] 16:27:48 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:27:48 Loading config...
+[Regis Philbot v1.0] 16:27:48 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:28:06 Asking question: [security] [0mWhat is the practice of concealing a message within another message? [Steganography]
+[Regis Philbot v1.0] 16:28:15 	Correct answer given by: pat
+[Regis Philbot v1.0] 16:28:33 Asking question: [security] [0mWhat is the practice of concealing a message within another message? [Steganography]
+[Regis Philbot v1.0] 16:28:40 	Correct answer given by: pat
+[Regis Philbot v1.0] 16:29:07 Asking question: [security] [0mWhat is the security measure called that prevent Javascript from accessing files on the hosts computer? [Same Origin Policy]
+[Regis Philbot v1.0] 16:29:15 	Correct answer given by: pat
+[Regis Philbot v1.0] 16:29:35 Asking question: [security] [0mWhat is the security measure called that prevent Javascript from accessing files on the hosts computer? [Same Origin Policy]
+[Regis Philbot v1.0] 16:29:44 	Correct answer given by: pat
+[Regis Philbot v1.0] 16:30:13 Asking question: [security] [0mWhat is the name of the Linux distro made specifically for hackers and penetration testers? [Kali Linux]
+[Regis Philbot v1.0] 16:30:34 	Giving hint: _a_i______
+[Regis Philbot v1.0] 16:30:38 	Correct answer given by: pat
+[Regis Philbot v1.0] 16:30:41 Shutting down
+[Regis Philbot v1.0] 16:30:45 Starting Regis Philbot v1.0
+[Regis Philbot v1.0] 16:30:45 Loading config...
+[Regis Philbot v1.0] 16:30:45 Loading questions from: "computing.json"
+[Regis Philbot v1.0] 16:30:56 Asking question: [Computing.Security 0x4] [0mA good reason to use prepared statements when interacting with databases is to prevent what? [SQL Injection]
+[Regis Philbot v1.0] 16:31:16 	Giving hint: SQ_ _________
+[Regis Philbot v1.0] 16:31:28 	Correct answer given by: pat
+[Regis Philbot v1.0] 16:31:47 Asking question: [Computing.Security 0x1] [0mWhat is the name of the Linux distro made specifically for hackers and penetration testers? [Kali Linux]
+[Regis Philbot v1.0] 16:31:51 	Correct answer given by: pat
+[Regis Philbot v1.0] 16:32:17 Asking question: [Computing.Security 0x3] [0mWhat is the name of the most popular network reconnaissance tool? [NMap]
+[Regis Philbot v1.0] 16:32:22 	Correct answer given by: pat
+[Regis Philbot v1.0] 16:32:38 Shutting down

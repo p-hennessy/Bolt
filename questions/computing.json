@@ -1,6 +1,45 @@
-{"computing": [
-	{"question": "What is the design pattern that focus's on single instance?","answer": "Singleton"},
-	{"question": "What year was the Unix operating system created?","answer": "1973"},
-	{"question": "What is the HTTP response code for 'I am a teapot'?","answer": "418"},
-	{"question": "What is the BigO notation of merge sort?","answer": "N Log(n)"}
-]}
+{
+	"networking": [
+		{"question": "In networking, what does 'CIDR' stand for?","answer": "Classless inter-domain routing"},
+		{"question": "True or False: Routers and switches are interchangeable terms.","answer": "False"},
+		{"question": "True or False: Fiber optic cables suffer heavily from signal attenuation.","answer": "False"},
+		{"question": "What is the conceptual model for how networking works?","answer": "OSI Model"}
+	],
+	
+	"security": [
+		{"question": "What is the security measure called that prevent Javascript from accessing files on the hosts computer?","answer": "Same Origin Policy"},
+		{"question": "What is the name of the Linux distro made specifically for hackers and penetration testers?","answer": "Kali Linux"},
+		{"question": "What is the practice of concealing a message within another message?","answer": "Steganography"},
+		{"question": "What is the name of the most popular network reconnaissance tool?","answer": "NMap"},
+		{"question": "A good reason to use prepared statements when interacting with databases is to prevent what?","answer": "SQL Injection"}
+	],
+	
+	"history": [
+		{"question": "What year was the Unix operating system created?","answer": "1969"},
+		{"question": "Who is the original author of the Linux kernel?","answer": "Linus Torvalds"},
+		{"question": "Who created Napster?","answer": "Shawn Fanning"}
+	],
+	
+	"web":[
+		{"question": "In Javascript, a function without an explicit name is called what?","answer": "Anonymous"},
+		{"question": "What is the symbol used to refer to the JQuery namespace?","answer": "$"},
+		{"question": "What is the HTTP response code for 'I am a teapot'?","answer": "418"}
+	],
+	
+	"abbreviations":[
+		{"question": "What does 'RAM' stand for?","answer": "Random Access Memory"},
+		{"question": "What does 'CPU' stand for?","answer": "Central Processing Unit"},
+		{"question": "What does 'LDAP' stand for?","answer": "Lightweight Directory Access Protocol"}
+	],
+	
+	"general":[
+		{"question": "What is the design pattern that focus's on single instance?","answer": "Singleton"},
+		{"question": "How many bits are in a byte?","answer": "8"},
+		{"question": "How many bytes are in a kilobyte?","answer": "1024"},
+		{"question": "True or False: Strings in Java are immutable.","answer": "True"},
+		{"question": "www.google.com is an example of what?","answer": "Domain Name"},
+		{"question": "What is it called when two system processes are simultaneous waiting for one another to finish?","answer": "deadlock"},
+		{"question": "True or False: Bubble sort is the most efficient sorting algorithm for all datasets.","answer": "False"},
+		{"question": "The name for the widely used language for managing data held in a database?","answer": "SQL"}
+	]
+}
