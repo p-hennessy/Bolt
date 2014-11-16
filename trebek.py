@@ -39,9 +39,9 @@ def main():
 				break
 
  			if(int(trebek.getElapsedTime()) == 15):
- 				print "Hint 1"
+ 				trebek.giveHint()
  			elif(int(trebek.getElapsedTime()) == 45):
- 				print "Hint 2"
+ 				trebek.giveHint()
  				
 		if(answerFound):
 			trebek.givePoints()
@@ -121,7 +121,7 @@ class RequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		if set(expectedRequestKeys).issubset(post.keys()):
 			self.send_response(200)
 		else:
-			self.send_response(418) # Tell the client about your teapot-ness
+			self.send_response(418)
 			return
 		
 		# Check security token
