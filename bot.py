@@ -1,44 +1,142 @@
 #!/usr/bin/python
 
 from lib.SlackClient import *
-import time
+from lib.Timer import *
 
-class Bot():
+import time
+import random
+import re
+import inspect
+        
+def main():        
+        
+    Regis = Trivia()
     
+    Regis.login("xoxb-6375106610-BkKQoLIxFIX1NacVr4FGSEEj")
+    Regis.say("Regis Philbot 2.0 Initializing...")
+    Regis.start()
+    
+    Regis.logout()
+
+class Bot():  
     def __init__(self):
-        self.socket = None
-        self.userData = {}
+        self.connection = None
+        self.userInfo = {}
         
     def login(self, token):
-        self.socket = SlackConnection(token)
-        self.userData = self.socket.getUserData()
-        
-        self.say("Regis Philbot 2.0 Initializing...")
-    
+        self.connection = SlackConnection(token)
+        self.userInfo = self.connection.getBotData()
+
     def logout(self):
-        self.socket.disconnect()
-    
-    def join(self, channel):
-        pass
-    
-    def whisper(self, message, user):
-        pass
+        self.connection.disconnect()
     
     def say(self, message, channel="general"):
-        self.socket.emit(channel, message)
+        self.connection.emit(channel, message)
         
     def listen(self):
-        return self.socket.recv()
-            
-
-bot = Bot()
-bot.login("xoxb-6375106610-BkKQoLIxFIX1NacVr4FGSEEj")
-
-time.sleep(1)
-
-while True:
-    message = bot.listen()
+        return self.connection.recv()
     
-    if(message):
-        print message
+    def parseMessage(self, messageData):    
+        if("type" in messageData.keys() and messageData["type"] == "message"): 
+            sender = messageData["user"]
+            message = messageData["text"]
 
+            # Don't care about own messages
+            if(sender == self.userInfo["id"]):
+                return
+
+            # If message is a command
+            elif(re.match(r"^regis\ ", message)):
+                self.parseCommand(re.sub(r"^regis\ ", "", message))
+                
+            # Check for answer
+            elif(message.lower() == "test"):
+                return messageData
+            
+            else:
+                return None
+    
+    def parseCommand(self, command):
+        args = command.split(" ")
+        
+        try:
+            commandInvocation = getattr(self, args[0])
+        except AttributeError:
+            return
+                
+        try:
+            commandInvocation(*args[1:])
+        except TypeError:
+            #self.say("[Command Error]: " + commandInvocation.__doc__ + " " + str(len(args[1:])) + " were given.")
+            return
+            
+        
+class Trivia(Bot):
+    def __init__(self):
+        self.timer = Timer()
+        self.questions = None
+        self.running = False
+    
+    def start(self):
+        if not self.running:
+            self.running = True
+            
+        while self.running:
+            
+            # Random Pause
+            self.wait(10)
+            
+            # Ask Question
+            self.say("Heres a question!")
+            
+            # Listen for answer, giving hint
+            for i in range(0, 2):
+                answer = self.wait(15)
+
+                # If found...
+                if(answer):
+                    print answer
+
+                    self.say("Correct! " + answer["user"] + ", you earned $10!")
+                    self.say("Your riches have amassed to a staggering $30!")
+                    
+                    break
+
+                # Give a hint
+                else:
+                    self.say("Giving hint...")
+          
+        
+        
+    def wait(self, seconds):
+        self.timer.start()
+        
+        while( self.timer.getElapsedTime() < seconds ):
+            line = self.listen()
+            
+            if(line):
+                message = self.parseMessage(line)
+
+                if(message):
+                    return message                
+                
+
+    def stop(self):        
+        """ Trivia.stop() | Stops playing trivia. Takes 0 arguments. """
+        self.running = False
+    
+    def _askQuestion(self, question):
+        pass
+    
+    def _checkAnswer(self, question):
+        pass
+
+    
+    
+    
+
+if __name__ == '__main__':
+	try:
+		main()
+	except KeyboardInterrupt:
+		sys.exit(1)
