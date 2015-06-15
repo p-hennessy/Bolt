@@ -3,25 +3,31 @@
 from lib.SlackClient import *
 from lib.Timer import *
 
+from select import select
+
 import time
 import random
 import re
-import inspect
+import sys
+
         
 def main():        
         
     Regis = Trivia()
     
-    Regis.login("xoxb-6375106610-BkKQoLIxFIX1NacVr4FGSEEj")
+    Regis.login("xoxb-6375106610-PiKFtyOj00bOBqTbaqCskYBb")
     Regis.say("Regis Philbot 2.0 Initializing...")
-    Regis.start()
+    Regis.listen(100)
     
     Regis.logout()
 
 class Bot():  
     def __init__(self):
         self.connection = None
+        self.session = None
+        
         self.userInfo = {}
+        self.timer = Timer()
         
     def login(self, token):
         self.connection = SlackConnection(token)
@@ -29,13 +35,40 @@ class Bot():
 
     def logout(self):
         self.connection.disconnect()
+        sys.exit(0)
     
     def say(self, message, channel="general"):
         self.connection.emit(channel, message)
-        
-    def listen(self):
-        return self.connection.recv()
     
+    def ping(self):
+        print self.connection.ping()
+        
+    def listen(self, duration, onMessage=None):
+        self.timer.start()
+        
+        if not onMessage:
+            onMessage = getattr(self, "_onMessage")
+        
+        self.listening = True
+        while(self.timer.getElapsedTime() < duration and self.listening):
+            message = self.connection.recv()
+
+            rlist, _, _ = select([sys.stdin], [], [], 0)
+            if rlist:
+                input = sys.stdin.readline()
+                self.parseCommand(input)
+            
+            if(message):
+                message = self.parseMessage(message)             
+                
+                if(message):
+                    onMessage(message)
+                    
+        self.listening = False
+     
+    def _onMessage(self, message):
+        print message
+            
     def parseMessage(self, messageData):    
         if("type" in messageData.keys() and messageData["type"] == "message"): 
             sender = messageData["user"]
@@ -49,19 +82,23 @@ class Bot():
             elif(re.match(r"^regis\ ", message)):
                 self.parseCommand(re.sub(r"^regis\ ", "", message))
             
-            else:
+            else:        
                 return messageData
                 
     def parseCommand(self, command):
-        args = command.split(" ")
+        args = []
         
+        for arg in re.findall(r'(?:"[^"]*"|\'[^\']*\'|[^\s\'"])+', command):
+            arg = re.sub(r'^["\']|["\']$', '', arg)
+            args.append(arg)
+            
+        print args
+            
         try:
             commandInvocation = getattr(self, args[0])
+            commandInvocation(*args[1:])
         except AttributeError:
             return
-                
-        try:
-            commandInvocation(*args[1:])
         except TypeError:
             #self.say("[Command Error]: " + commandInvocation.__doc__ + " " + str(len(args[1:])) + " were given.")
             return
@@ -76,47 +113,17 @@ class Trivia(Bot):
     def start(self):
         if not self.running:
             self.running = True
-            
+                        
         while self.running:
             
-            # Random Pause
-            self.wait(10)
-            
+            # Random Pause            
             # Ask Question
             self.say("Heres a question!")
-            
+            self.listen(10, self._checkAnswer)
+
             # Listen for answer, giving hint
-            for i in range(0, 2):
-                answer = self.wait(15, True)
-
-                # If found...
-                if(answer):
-                    username = self.connection.getUserData(answer["user"])["user"]["name"]
-                                        
-                    self.say("Correct! " + username + ", you earned $10!")
-                    self.say("Your riches have amassed to a staggering $30!")
-                    
-                    break
-
-                # Give a hint
-                else:
-                    self.say("Giving hint...")
-          
-        
-        
-    def wait(self, seconds, checking=False):
-        self.timer.start()
-        
-        while( self.timer.getElapsedTime() < seconds ):
-            line = self.listen()
+            # Give a hint
             
-            if(line):
-                message = self.parseMessage(line)
-
-                if(self._checkAnswer(message) and checking):
-                    return message                
-                
-
     def stop(self):        
         """ Trivia.stop() | Stops playing trivia. Takes 0 arguments. """
         self.running = False
@@ -126,6 +133,7 @@ class Trivia(Bot):
     
     def _checkAnswer(self, question):
         if(question and question["text"] == "test"):
+            self.listening = False
             return True
         else:
             return False

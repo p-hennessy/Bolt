@@ -6,6 +6,11 @@ from ssl import *
 from lib.SlackAPI import SlackAPI
 from lib.Logger import *
 
+class SlackSession():
+    def __init__(self):
+        pass
+
+
 class SlackConnection():
     def __init__(self, token):
         
@@ -17,43 +22,57 @@ class SlackConnection():
         self.socketURL  = None
 
         self.loginData  = None
-        self.users      = []
         self.channels   = []
         
         self.connected  = False
-        self.pingcounter = 0
-
         self.connect()
-
     
-    def getChannelID(self, searchTerm):
-        for channel in self.channels:
-            if(searchTerm.lower() == channel.name.lower() or searchTerm == channel.id):
-                return channel.id
-        
-        return False
-    
-    def getBotData(self):
-        return {"domain": self.loginData["team"]["domain"], "username": self.loginData["self"]["name"], "id": self.loginData["self"]["id"]}
-
-    def getUserData(self, id):
-        return self.slackAPI.users.info(self.token, id)
+    def ping(self):
+        return self.socket.send(json.dumps({"type":"ping"}))
     
     def connect(self):
         reply = self.slackAPI.rtm.start(self.token)
                 
         if(reply["ok"]):
+            self.connected = True
             self.parseLoginData(reply)
             
             try:
                 self.socket = websocket.create_connection(self.socketURL)
                 self.socket.sock.setblocking(0) 
             except:
-                raise SlackConnectionError
-                
+                raise SlackConnectionError # Could not establish a connection   
         else:
-            raise SlackLoginError
+            pass # Unable to login
 
+    def disconnect(self):
+        self.socket.close()
+        self.connected = False
+    
+    def emit(self, channel, message):
+        channelID = self.getChannelID(channel)
+        
+        if not channelID:
+            self.log.error("Channel \"" + channel + "\" does not exist")
+        else:
+            self.socket.send(json.dumps({"type": "message", "channel": channelID, "text": message}))
+        
+    def recv(self):
+        data = ""
+        while True:
+            try:
+                data += self.socket.recv()
+            except SSLError:
+                return None
+            except websocket._exceptions.WebSocketConnectionClosedException:
+                self.connect()
+                break
+            
+            data = data.rstrip()
+            data = json.loads(data)
+            
+            return data
+        
     def parseLoginData(self, loginData):
         
         self.loginData  = loginData
@@ -72,31 +91,21 @@ class SlackConnection():
                 channel["members"] = []
         
             self.channels.append(Channel(channel["name"], channel["id"], channel["members"]))
-
-    def disconnect(self):
-        self.socket.close()
     
-    def emit(self, channel, message):
-        channelID = self.getChannelID(channel)
+    def getChannelID(self, searchTerm):
+        for channel in self.channels:
+            if(searchTerm.lower() == channel.name.lower() or searchTerm == channel.id):
+                return channel.id
         
-        if not channelID:
-            self.log.error("Channel \"" + channel + "\" does not exist")
-        else:
-            self.socket.send(json.dumps({"type": "message", "channel": channelID, "text": message}))
-        
-    def recv(self):
-        data = ""
-        while True:
-            try:
-                data += self.socket.recv()
-            except SSLError:
-                return None
-            
-            data = data.rstrip()
-            data = json.loads(data)
-            
-            return data
+        return False
+    
+    def getBotData(self):
+        return {"domain": self.loginData["team"]["domain"], "username": self.loginData["self"]["name"], "id": self.loginData["self"]["id"]}
 
+    def getUserData(self, id):
+        return self.slackAPI.users.info(self.token, id)    
+        
+        
 class SlackConnectionError(Exception):
     pass        
         
