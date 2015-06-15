@@ -30,12 +30,27 @@ class _api():
 
         url = 'https://{}/api/{}'.format(domain, request)
 
-        returnData = urlopen(url, postData.encode('utf-8'))
+        response = urlopen(url, postData.encode('utf-8'))
         
-        if(returnData.code != 200):
+        if(response.code != 200):
             raise Exception
         else:
-            return json.loads(returnData.read().decode('utf-8'))
+            returnData = json.loads(response.read().decode('utf-8'))
+            
+            if not returnData["ok"]:
+                error = returnData["error"]
+                
+                if(error == "invalid_auth"):
+                    raise SlackAPI_InvalidAuth()                
+                elif(error == "not_authed"):
+                    raise SlackAPI_NotAuthed()
+                elif(error == "account_inactive"):
+                    raise SlackAPI_AccountInactive()
+                else:
+                    raise SlackAPI_Exception("Unknown error code: " + error)
+            
+            else:
+                return returnData
 
 class api(_api):
     def __init__(self):
