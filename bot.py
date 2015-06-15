@@ -48,14 +48,10 @@ class Bot():
             # If message is a command
             elif(re.match(r"^regis\ ", message)):
                 self.parseCommand(re.sub(r"^regis\ ", "", message))
-                
-            # Check for answer
-            elif(message.lower() == "test"):
-                return messageData
             
             else:
-                return None
-    
+                return messageData
+                
     def parseCommand(self, command):
         args = command.split(" ")
         
@@ -84,7 +80,7 @@ class Trivia(Bot):
         while self.running:
             
             # Random Pause
-            self.wait(10)
+            self.wait(0)
             
             # Ask Question
             self.say("Heres a question!")
@@ -95,9 +91,9 @@ class Trivia(Bot):
 
                 # If found...
                 if(answer):
-                    print answer
-
-                    self.say("Correct! " + answer["user"] + ", you earned $10!")
+                    username = self.connection.getUserData(answer["user"])["user"]["name"]
+                                        
+                    self.say("Correct! " + username + ", you earned $10!")
                     self.say("Your riches have amassed to a staggering $30!")
                     
                     break
@@ -117,7 +113,7 @@ class Trivia(Bot):
             if(line):
                 message = self.parseMessage(line)
 
-                if(message):
+                if(self._checkAnswer(message)):
                     return message                
                 
 
@@ -129,7 +125,10 @@ class Trivia(Bot):
         pass
     
     def _checkAnswer(self, question):
-        pass
+        if(question and question["text"] == "test"):
+            return True
+        else:
+            return False
 
     
     

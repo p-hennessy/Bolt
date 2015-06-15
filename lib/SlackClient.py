@@ -36,6 +36,9 @@ class SlackConnection():
     def getBotData(self):
         return {"domain": self.loginData["team"]["domain"], "username": self.loginData["self"]["name"], "id": self.loginData["self"]["id"]}
 
+    def getUserData(self, id):
+        return self.slackAPI.users.info(self.token, id)
+    
     def connect(self):
         reply = self.slackAPI.rtm.start(self.token)
                 

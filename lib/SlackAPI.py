@@ -7,6 +7,7 @@ class SlackAPI():
     def __init__(self):
         self.rtm = rtm()
         self.channels = channels()
+        self.users = users()
         
 class API():
     def __init__(self):
@@ -28,7 +29,13 @@ class API():
 class channels(API):
     def __init__(self):
         pass
+
+class users(API):
+    def __init__(self):
+        pass
     
+    def info(self, token, id):
+        return self.request(token, "users.info", postData={"user":id})
     
 class rtm(API):
     def __init__(self):
