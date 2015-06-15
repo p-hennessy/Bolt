@@ -1,6 +1,8 @@
 import websocket
 import json
+import time
 
+from ssl import *
 from lib.SlackAPI import SlackAPI
 
 class SlackConnection():
@@ -32,10 +34,8 @@ class SlackConnection():
         
         
     def connect(self):
-        self.slackAPI.rtm.start()
-        
-        reply = self.slackAPI.rtmStart(self.token)
-        
+        reply = self.slackAPI.rtm.start(self.token)
+                
         if (reply.code != 200):
             raise SlackConnectionError
         else:
@@ -56,6 +56,9 @@ class SlackConnection():
             else:
                 raise SlackLoginError
             
+    def disconnect(self):
+        self.websocket.close()
+            
     def emit(self, channel, message):
         channel = self.getChannelID(channel)
         
@@ -64,16 +67,21 @@ class SlackConnection():
         else:
             self.socket.send(json.dumps({"type": "message", "channel": channel, "text": message}))
         
-    def listen(self):
+    def recv(self):
         data = ""
         while True:
             try:
-                data += "{}\n".format(self.websocket.recv())
-            except SSLWantReadError:
-                return ''
+                data += self.socket.recv()
+            except SSLError:
+                continue
             
-            return data.rstrip()
-        
+            data = data.rstrip()
+            data = json.loads(data)
+            
+            if("type" in data.keys() and data["type"] == "message"):
+                return data
+            else:
+                return
 
 class SlackConnectionError(Exception):
     pass        

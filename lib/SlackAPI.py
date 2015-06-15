@@ -4,10 +4,10 @@ from urllib2 import urlopen
 class SlackAPI():
     def __init__(self):
         self.rtm = rtm()
-
-
+        
 class API():
     def __init__(self):
+        pass
         
     def request(self, token, request="?", postData={}, domain="slack.com"):
         postData["token"] = token
@@ -16,12 +16,11 @@ class API():
         url = 'https://{}/api/{}'.format(domain, request)
 
         return urlopen(url, postData.encode('utf-8')) 
-    
-        
-class rtm():
+
+class rtm(API):
     def __init__(self):
         pass
 
-    def start(self):
-        print "works"
-    
+    def start(self, token):
+        return self.request(token, "rtm.start")
+

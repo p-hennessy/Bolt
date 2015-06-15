@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from lib.SlackClient import *
+import time
 
 class Bot():
     
@@ -12,8 +13,10 @@ class Bot():
         self.socket = SlackConnection(token)
         self.userData = self.socket.getUserData()
         
-        print "ID: " + self.userData["id"]
-        print "Name: " + self.userData["name"]
+        self.say("Regis Philbot 2.0 Initializing...")
+    
+    def logout(self):
+        self.socket.disconnect()
     
     def join(self, channel):
         pass
@@ -21,12 +24,21 @@ class Bot():
     def whisper(self, message, user):
         pass
     
-    def say(self, message, channel="C06B11LBE"):
+    def say(self, message, channel="general"):
         self.socket.emit(channel, message)
+        
+    def listen(self):
+        return self.socket.recv()
             
 
 bot = Bot()
-
 bot.login("xoxb-6375106610-BkKQoLIxFIX1NacVr4FGSEEj")
 
-bot.say("hello")
+time.sleep(1)
+
+while True:
+    message = bot.listen()
+    
+    if(message):
+        print message
+
