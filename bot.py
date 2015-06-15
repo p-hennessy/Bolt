@@ -80,14 +80,14 @@ class Trivia(Bot):
         while self.running:
             
             # Random Pause
-            self.wait(0)
+            self.wait(10)
             
             # Ask Question
             self.say("Heres a question!")
             
             # Listen for answer, giving hint
             for i in range(0, 2):
-                answer = self.wait(15)
+                answer = self.wait(15, True)
 
                 # If found...
                 if(answer):
@@ -104,7 +104,7 @@ class Trivia(Bot):
           
         
         
-    def wait(self, seconds):
+    def wait(self, seconds, checking=False):
         self.timer.start()
         
         while( self.timer.getElapsedTime() < seconds ):
@@ -113,7 +113,7 @@ class Trivia(Bot):
             if(line):
                 message = self.parseMessage(line)
 
-                if(self._checkAnswer(message)):
+                if(self._checkAnswer(message) and checking):
                     return message                
                 
 
