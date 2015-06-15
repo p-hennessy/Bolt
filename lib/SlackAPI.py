@@ -19,7 +19,8 @@ class SlackAPI():
         self.rtm = rtm()
         self.users = users()
         
-class API():
+# Super class for all API calls 
+class _api():
     def __init__(self):
         pass
         
@@ -36,21 +37,21 @@ class API():
         else:
             return json.loads(returnData.read().decode('utf-8'))
 
-class api(API):
+class api(_api):
     def __init__(self):
         pass
     
     def test(self, token, error="", foo=""):
         return self.request(token, "api.test", postData={"error": error, "foo": foo})
 
-class auth(API):
+class auth(_api):
     def __init__(self):
         pass
     
     def test(self, token):
         return self.request(token, "auth.test")
         
-class channels(API):
+class channels(_api):
     def __init__(self):
         pass
     
@@ -72,7 +73,7 @@ class channels(API):
     def setTopic(self, token, channelID, topic):
         return self.request(token, "channels.list", postData={"channel": channelID, "topic": topic})
 
-class chat(API):
+class chat(_api):
     def __init__(self):
         pass
     
@@ -85,14 +86,14 @@ class chat(API):
     def update(self, token, channelID, message, timestamp):
         return self.request(token, "chat.update", postData={"channel":channelID, "text": message, "ts":timestamp})
        
-class emoji(API):
+class emoji(_api):
     def __init__(self):
         pass
     
     def list(self, token):
         return self.request(token, "emoji.list")
 
-class groups(API):
+class groups(_api):
     def __init__(self):
         pass
     
@@ -120,7 +121,7 @@ class groups(API):
     def setTopic(self, token, groupID, topic):
         return self.request(token, "groups.setPurpose", postData={"channel":groupID, "topic": topic})
 
-class im(API):
+class im(_api):
     def __init__(self):
         pass
 
@@ -139,14 +140,14 @@ class im(API):
     def open(self, token, userID):
         return self.request(token, "im.open", postData={"channel":channelID, "user": userID})
         
-class rtm(API):
+class rtm(_api):
     def __init__(self):
         pass
 
     def start(self, token):
         return self.request(token, "rtm.start")
 
-class users(API):
+class users(_api):
     def __init__(self):
         pass
     
@@ -161,3 +162,99 @@ class users(API):
     
     def setPresence(self, token, presence):
         return self.request(token, "users.getPresence", postData={"presence": presence})
+
+
+class SlackAPI_Exception(Exception):
+    def __init__(self, value=""):
+        self.value = value
+        
+    def __str__(self):
+        return repr(self.value)
+    
+class SlackAPI_InvalidAuth(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Invalid authentication token."
+    
+class SlackAPI_NotAuthed(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "No authentication token provided."
+
+class SlackAPI_AccountInactive(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Authentication token is for a deleted user or team."
+
+class SlackAPI_ChannelNotFound(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Value passed for channelID was invalid."
+
+class SlackAPI_NotInChannel(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Caller is not a member of the channel."
+
+class SlackAPI_UserRestricted(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "This method cannot be called by a restricted user or single channel guest."
+
+class SlackAPI_PurposeTooLong(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Value passed for purpose was longer than 250 characters."
+
+class SlackAPI_TopicTooLong(SlackAPI_Exception):
+     def __init__(self):
+        self.value = "Value passed for topic was longer than 250 characters."
+
+
+class SlackAPI_ChannelArchived(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Channel has been archived."
+
+class SlackAPI_MessageNotFound(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "No message exists with the requested timestamp."
+
+class SlackAPI_CannotDeleteMessage(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Authenticated user does not have permission to delete this message."
+
+class SlackAPI_MessageTooLong(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Message text is too long."
+
+class SlackAPI_NoTextProvided(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Message must contain text."
+
+class SlackAPI_UserNotInChannel(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Cannot post user messages to a channel they are not in."
+        
+class SlackAPI_RateLimited(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Application has posted too many messages too quickly."
+
+class SlackAPI_EditWindowClosed(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "The message cannot be edited due to the team message edit settings"
+
+class SlackAPI_DoesNotOwnChannel(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Calling user does not own this DM channel."
+
+class SlackAPI_UserNotVisible(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "The calling user is restricted from seeing the requested user."
+
+class SlackAPI_MigrationInProgress(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Team is being migrated between servers."
+
+class SlackAPI_UserNotFound(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Value passed for user was invalid."
+
+class SlackAPI_InvalidPressence(SlackAPI_Exception):
+    def __init__(self):
+        self.value = "Value passed for presence was invalid. Must be 'auto' or 'away'"
+
+
+
