@@ -15,11 +15,13 @@ class SlackConnection():
 
         self.socket     = None
         self.socketURL  = None
+        self.socketLock = threading.Lock()
 
         self.loginData  = None
         self.channels   = []
 
         self.messageThread = None
+        self.messageLock = threading.Lock()
         self.messageBuffer = []
 
         self.connected  = False
@@ -31,6 +33,7 @@ class SlackConnection():
         # Initialize Slack websocket by polling the [rtm.start] API method with authentication token
         reply = self.slackAPI.rtm.start(self.token)
 
+        # Slack will send back an "ok": True message from the API call
         if(reply["ok"]):
             self.connected = True
             self.parseLoginData(reply)
@@ -41,14 +44,19 @@ class SlackConnection():
             except:
                 raise SlackConnectionError # Could not establish a connection
 
+            # Start message collection daemon
             self.messageThread = threading.Thread(target=self.recv)
+            self.messageThread.daemon = True
             self.messageThread.start()
+
         else:
             pass # Unable to login
 
     def disconnect(self):
-        self.socket.close()
-        self.connected = False
+        if(self.connected):
+            self.connected = False
+            self.messageThread.join()
+            self.socket.close()
 
     def emit(self, channel, message):
         channelID = self.getChannelID(channel)
@@ -56,28 +64,43 @@ class SlackConnection():
         if not channelID:
             self.log.error("Channel \"" + channel + "\" does not exist")
         else:
-            self.socket.send(json.dumps({"type": "message", "channel": channelID, "text": message}))
+            with self.socketLock:
+                self.socket.send(json.dumps({"type": "message", "channel": channelID, "text": message}))
 
     def recv(self):
-        while True:
+        while self.connected:
             try:
-                data = self.socket.recv()
+                data = ""
 
-                data = data.rstrip()
-                data = json.loads(data)
+                # Get socket lock
+                with self.socketLock:
+                    # Read data off of socket buffer
+                    data = self.socket.recv()
 
-                self.messageBuffer.append(data)
+                if(data):
+                    # Parse incoming data into seperate messages
+                    data = data.rstrip()
+                    data = json.loads(data)
+
+                    # Load data into class-level message buffer for consumption of the bot
+                    with self.messageLock:
+                        self.messageBuffer.append(data)
+
             except SSLError:
                 pass
             except websocket._exceptions.WebSocketConnectionClosedException:
                 print "Disconnected while recv..."
 
-    def getMessage(self):
+    def getMessages(self):
+        # Check to see message buffer has data to collect
         if(len(self.messageBuffer) > 0 ):
-            returnBuffer = self.messageBuffer
-            self.messageBuffer = []
 
-            return returnBuffer
+            # Aquire messageBuffer lock, flush buffer and return it's data
+            with self.messageLock:
+                returnBuffer = self.messageBuffer
+                self.messageBuffer = []
+
+                return returnBuffer
         else:
             return None
 
