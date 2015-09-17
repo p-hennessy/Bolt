@@ -91,7 +91,7 @@ class SlackConnection():
             except websocket._exceptions.WebSocketConnectionClosedException:
                 print "Disconnected while recv..."
 
-    def getMessages(self):
+    def consumeMessageBuffer(self):
         # Check to see message buffer has data to collect
         if(len(self.messageBuffer) > 0 ):
 

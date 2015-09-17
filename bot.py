@@ -1,10 +1,17 @@
 from core import Bot
+from lib.ConfigParser import *
+import time
+import sys
 
 def main():
 
     regis = Bot()
     regis.login()
-    regis.say("Regis Philbot!")
+    regis.loadPlugins()
+
+    while True:
+        time.sleep(1)
+
     regis.logout()
 
 if __name__ == '__main__':
