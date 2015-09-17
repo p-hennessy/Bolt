@@ -1,7 +1,26 @@
-#!/usr/bin/python
+"""
+    Class Name : Core
 
-from lib.SlackClient import *
-from lib.MessageParser import *
+    Description:
+        Provides an extensible engine for plugins to interact with
+        Features:
+            - Publish / Subscribe Event System
+            - Plugin manager
+            - Configuration manager
+            - User, Channel and Group Date manager
+
+    Contributors:
+        - Patrick Hennessy
+
+    License:
+        PhilBot is free software: you can redistribute it and/or modify it
+        under the terms of the GNU General Public License v3; as published
+        by the Free Software Foundation
+"""
+
+from core.SlackWebSocket import *
+from core.Command import *
+
 import threading
 
 import plugins.Trivia
@@ -67,14 +86,12 @@ class Bot():
 
     def _parseMessageBuffer(self):
         while self.connection.connected:
-
             messageBuffer = self.connection.consumeMessageBuffer()
 
             if(messageBuffer):
                 for message in messageBuffer:
-                    #print message
                     if not("type" in message.keys()):
-                        return
+                        continue
 
                     if(message["type"] == "message"):
                         if(message["text"].startswith(self.trigger)):

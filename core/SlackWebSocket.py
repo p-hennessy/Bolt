@@ -1,10 +1,30 @@
+"""
+    Class Name : SlackWebSocket
+
+    Description:
+        Concerned with low level communication to Slack
+
+        Features:
+            - Interface to the full Slack API
+            - Websocket connection handler
+            - Threaded socket consumer
+
+    Contributors:
+        - Patrick Hennessy
+
+    License:
+        PhilBot is free software: you can redistribute it and/or modify it
+        under the terms of the GNU General Public License v3; as published
+        by the Free Software Foundation
+"""
+
 import websocket
 import json
 import time
 import threading
 
 from ssl import *
-from lib.SlackAPI import SlackAPI
+from core.SlackAPI import SlackAPI
 
 class SlackConnection():
 
@@ -21,7 +41,7 @@ class SlackConnection():
         self.channels   = []
 
         self.messageThread = None
-        self.messageLock = threading.Lock()
+        self.messageLock   = threading.Lock()
         self.messageBuffer = []
 
         self.connected  = False
@@ -30,10 +50,11 @@ class SlackConnection():
         return self.socket.send(json.dumps({"type":"ping"}))
 
     def connect(self):
-        # Initialize Slack websocket by polling the [rtm.start] API method with authentication token
+        # Initialize Slack websocket by polling the rtm.start() API method with authentication token
         reply = self.slackAPI.rtm.start(self.token)
 
         # Slack will send back an "ok": True message from the API call
+        #   https://api.slack.com/methods/rtm.start
         if(reply["ok"]):
             self.connected = True
             self.parseLoginData(reply)
@@ -44,7 +65,7 @@ class SlackConnection():
             except:
                 raise SlackConnectionError # Could not establish a connection
 
-            # Start message collection daemon
+            # Start message consumer thread
             self.messageThread = threading.Thread(target=self.recv)
             self.messageThread.daemon = True
             self.messageThread.start()
@@ -82,7 +103,7 @@ class SlackConnection():
                     data = data.rstrip()
                     data = json.loads(data)
 
-                    # Load data into class-level message buffer for consumption of the bot
+                    # Load data into class-level message buffer for consumption of the core
                     with self.messageLock:
                         self.messageBuffer.append(data)
 
@@ -96,11 +117,13 @@ class SlackConnection():
         if(len(self.messageBuffer) > 0 ):
 
             # Aquire messageBuffer lock, flush buffer and return it's data
+            returnBuffer = None
+
             with self.messageLock:
                 returnBuffer = self.messageBuffer
                 self.messageBuffer = []
 
-                return returnBuffer
+            return returnBuffer
         else:
             return None
 
