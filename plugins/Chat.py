@@ -14,30 +14,22 @@
         by the Free Software Foundation
 """
 
-import threading
 import datetime
 
-from core.Command import *
+from core.Command import Command
+from core.Plugin import Plugin
 
 # Init is how every plugin is invoked
 def init(core):
-    chatThread = Chat(core)
-    chatThread.start()
+    pluginThread = Chat(core)
+    pluginThread.start()
 
-    return chatThread
+    return pluginThread
 
-# This will be called so we can safely exit our threads and do any garbage collection
-def destroy():
-    pass
-
-class Chat(threading.Thread):
+class Chat(Plugin):
     def __init__(self, core):
-
         # Call super constructor
-        super(Chat, self).__init__()
-
-        # Save core instance
-        self.core = core
+        super(Chat, self).__init__(core, "ChatPlugin")
 
         # Subsrcribe to Core events
         self.core.subscribe("recieve.message", self.onMessage)
@@ -51,8 +43,14 @@ class Chat(threading.Thread):
         for command in commands:
             self.core.registerCommand( command )
 
-    def run(self):
-        pass
+    # Destructor, do any garbage collection here
+    def __del__(self):
+        self.core.unsubscribe("recieve.message")
+        self.core.unsubscribe("recieve.command")
+
+    # Entry to the thread
+    def startThread(self):
+        print "Started ChatPlugin"
 
     # Commands Implementations
     def ping(self, *args):
