@@ -15,6 +15,7 @@
 """
 
 import datetime
+import time
 
 from core.Command import Command
 from core.Plugin import Plugin
@@ -22,6 +23,7 @@ from core.Plugin import Plugin
 # Init is how every plugin is invoked
 def init(core):
     pluginThread = Chat(core)
+    pluginThread.daemon = True
     pluginThread.start()
 
     return pluginThread
@@ -50,7 +52,9 @@ class Chat(Plugin):
 
     # Entry to the thread
     def startThread(self):
-        print "Started ChatPlugin"
+        while not self.kill:
+            print "Started ChatPlugin"
+            time.sleep(4)
 
     # Commands Implementations
     def ping(self, *args):

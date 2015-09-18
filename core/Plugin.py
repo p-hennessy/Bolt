@@ -21,6 +21,7 @@ class Plugin(threading.Thread):
     def __init__(self, core, name="GenericPlugin"):
         super(Plugin, self).__init__(name=name)
         self.core = core
+        self.kill = False
 
     def run(self):
         try:
@@ -30,3 +31,6 @@ class Plugin(threading.Thread):
 
     def startThread(self):
         pass
+
+    def stopThread(self):
+        self.kill = True

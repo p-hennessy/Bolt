@@ -21,19 +21,16 @@
 from core.SlackWebSocket import *
 from core.Command import *
 from core.Plugin import *
+from core.ConfigParser import *
 
 import threading
-
-import plugins.Trivia
-import plugins.Chat
+import imp
 
 class Bot():
 
     def __init__(self):
-        self.token = "xoxb-6375106610-PiKFtyOj00bOBqTbaqCskYBb"
-        self.trigger = "."
-
-        self.connection = SlackConnection(self.token)
+        self.botConfig = getConfig("conf/bot.conf")
+        self.connection = SlackConnection(self.botConfig["authToken"])
 
         self.commands = []
         self.commandLock = threading.Lock()
@@ -79,7 +76,14 @@ class Bot():
         self.connection.emit(channel, message)
 
     def loadPlugins(self):
-        myPlugin = plugins.Chat.init(self)
+        for pluginName in self.botConfig["plugins"]:
+            plugin = imp.load_source(pluginName, 'plugins/' + pluginName + ".py")
+            pluginThread = plugin.init(self)
+
+            self.plugins.append(pluginThread)
+
+            pluginThread.stopThread()
+            pluginThread.join()
 
     def subscribe(self, event, callback):
         if(callback not in self.subscriptions[event]):
@@ -111,7 +115,7 @@ class Bot():
                         continue
 
                     if(message["type"] == "message"):
-                        if(message["text"].startswith(self.trigger)):
+                        if(message["text"].startswith(self.botConfig["trigger"])):
                             cmd = message["text"][1:].split(" ")[0]
 
                             for command in self.commands:
