@@ -27,7 +27,8 @@ class Plugin(threading.Thread):
         try:
             self.startThread()
         except:
-            self.core.publish("plugin.exception", thread=self.name, exception=sys.exc_info())
+            self.core.event.publish("plugin.exception", thread=self.name, exception=sys.exc_info())
+            self.stopThread()
 
     def startThread(self):
         pass

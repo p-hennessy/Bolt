@@ -34,8 +34,8 @@ class Chat(Plugin):
         super(Chat, self).__init__(core, "ChatPlugin")
 
         # Subsrcribe to Core events
-        self.core.subscribe("recieve.message", self.onMessage)
-        self.core.subscribe("recieve.command", self.onMessage)
+        self.core.event.subscribe("recieve.message", self.onMessage)
+        self.core.event.subscribe("recieve.command", self.onMessage)
 
         # Register plugin-level commands
         commands = [
@@ -43,18 +43,16 @@ class Chat(Plugin):
         ]
 
         for command in commands:
-            self.core.registerCommand( command )
+            self.core.command.register( command )
 
     # Destructor, do any garbage collection here
     def __del__(self):
-        self.core.unsubscribe("recieve.message")
-        self.core.unsubscribe("recieve.command")
+        self.core.event.unsubscribe("recieve.message")
+        self.core.event.unsubscribe("recieve.command")
 
     # Entry to the thread
     def startThread(self):
-        while not self.kill:
-            print "Started ChatPlugin"
-            time.sleep(4)
+        pass
 
     # Commands Implementations
     def ping(self, *args):

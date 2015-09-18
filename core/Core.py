@@ -19,9 +19,10 @@
 """
 
 from core.SlackWebSocket import *
-from core.Command import *
-from core.Plugin import *
 from core.ConfigParser import *
+from core.Command import Command
+from core.Command import CommandManager
+from core.Event import EventManager
 
 import threading
 import imp
@@ -32,45 +33,32 @@ class Bot():
         self.botConfig = getConfig("conf/bot.conf")
         self.connection = SlackConnection(self.botConfig["authToken"])
 
-        self.commands = []
-        self.commandLock = threading.Lock()
-
         self.plugins = []
-
-        # Core events to subscribe to
-        self.subscriptions = {}
+        self.event = EventManager()
+        self.command = CommandManager()
 
         # Initialize core events
-        self.registerEvent("connection.login")
-        self.registerEvent("connection.logout")
-        self.registerEvent("recieve.message")
-        self.registerEvent("recieve.command")
-        self.registerEvent("user.typing")
-        self.registerEvent("user.pressence")
-        self.registerEvent("send.message")
-        self.registerEvent("plugin.exception")
-
-        self.subscribe("plugin.exception", self.pluginCrash)
+        self.event.register("connection.login")
+        self.event.register("connection.logout")
+        self.event.register("recieve.message")
+        self.event.register("recieve.command")
+        self.event.register("send.message")
+        self.event.register("plugin.exception")
 
         self.messageThread = threading.Thread(target=self._parseMessageBuffer)
         self.messageThread.daemon = True
-
-    def pluginCrash(self, args):
-        print "Exception caught in thread: " + args['thread']
-        exc_type, exc_obj, exc_trace = args['exception']
-        traceback.print_exception(exc_type, exc_obj, exc_trace)
 
     def login(self):
         self.connection.connect()
         self.messageThread.start()
 
-        self.publish("connection.login")
+        self.event.publish("connection.login")
 
     def logout(self):
         self.connection.disconnect()
         self.messageThread.join()
 
-        self.publish("connection.logout")
+        self.event.publish("connection.logout")
 
     def say(self, message, channel="general"):
         self.connection.emit(channel, message)
@@ -81,29 +69,6 @@ class Bot():
             pluginThread = plugin.init(self)
 
             self.plugins.append(pluginThread)
-
-            pluginThread.stopThread()
-            pluginThread.join()
-
-    def subscribe(self, event, callback):
-        if(callback not in self.subscriptions[event]):
-            self.subscriptions[event].append(callback)
-            return True
-        else:
-            raise CoreSubscriptionError("Callback \"" + str(callback.__name__) + "\" was already subscribed to \"" + event + "\"")
-
-    def unsubscribe(self, event, callback):
-        if(callback in self.subscriptions[event]):
-            self.subscriptions[event].remove(callback)
-            return True
-        else:
-            raise CoreSubscriptionError("Callback \"" + str(callback.__name__) + "\" was not subscribed to \"" + event + "\"")
-
-    def registerCommand(self, command):
-        self.commands.append(command)
-
-    def registerEvent(self, event):
-        self.subscriptions[event] = []
 
     def _parseMessageBuffer(self):
         while self.connection.connected:
@@ -117,26 +82,12 @@ class Bot():
                     if(message["type"] == "message"):
                         if(message["text"].startswith(self.botConfig["trigger"])):
                             cmd = message["text"][1:].split(" ")[0]
+                            self.command.invoke(str(cmd))
 
-                            for command in self.commands:
-                                if(command.invocation == cmd):
-                                    command.callback()
-
-                            self.publish("recieve.command", text=message["text"], uid=message["user"], timestamp=message["ts"], channel=message["channel"])
+                            self.event.publish("recieve.command", text=message["text"], uid=message["user"], timestamp=message["ts"], channel=message["channel"])
                         else:
-                            self.publish("recieve.message", text=message["text"], uid=message["user"], timestamp=message["ts"], channel=message["channel"])
+                            self.event.publish("recieve.message", text=message["text"], uid=message["user"], timestamp=message["ts"], channel=message["channel"])
 
-    def publish(self, event, **kwargs):
-        for callback in self.subscriptions[event]:
-            callback(kwargs)
 
     def getUserInfo(self, uid):
-        return self.connection.slackAPI.users.info(self.token, uid)
-
-class CoreSubscriptionError(Exception):
-    def __init__(self, msg):
-        super(CoreSubscriptionError, self).__init__(msg)
-        self.msg = msg
-
-    def __str__(self):
-        return self.msg
+        return self.connection.slackAPI.users.info(self.botConfig["authToken"], uid)
