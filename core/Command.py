@@ -33,14 +33,28 @@ class CommandManager():
     def getCommands(self):
         pass
 
+    def find(self, commandName):
+        for command in self.commands:
+            if(commandName.startswith(command.trigger + command.invocation)):
+                return command
+
+        return None
+
     def register(self, command):
         self.commands.append(command)
 
     def unregister(self, commandName):
         self.commands.remove(commandName)
 
-    def invoke(self, commandName, **kwargs):
-        command = filter(lambda command: command.invocation == commandName, self.commands)[0]
+    def check(self, commandName):
+        pass
 
-        if(command):
-            command.callback(kwargs)
+    def invoke(self, commandName):
+        command = self.find(commandName)
+
+        if not command:
+            return
+
+        args = commandName.split(command.invocation)[1:]
+
+        return command.callback(args)

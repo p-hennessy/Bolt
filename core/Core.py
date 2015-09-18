@@ -20,6 +20,7 @@
 
 from core.SlackWebSocket import *
 from core.ConfigParser import *
+from core.MessageParser import MessageParser
 from core.Command import Command
 from core.Command import CommandManager
 from core.Event import EventManager
@@ -45,48 +46,30 @@ class Bot():
         self.event.register("send.message")
         self.event.register("plugin.exception")
 
-        self.messageThread = threading.Thread(target=self._parseMessageBuffer)
-        self.messageThread.daemon = True
+        self.messageParserThread = MessageParser(self)
+        self.messageParserThread.daemon = True
 
     def login(self):
         self.connection.connect()
-        self.messageThread.start()
-
+        self.messageParserThread.start()
         self.event.publish("connection.login")
 
     def logout(self):
         self.connection.disconnect()
-        self.messageThread.join()
-
+        self.messageParserThread.join()
         self.event.publish("connection.logout")
 
     def say(self, message, channel="general"):
         self.connection.emit(channel, message)
+        self.event.publish("send.message", message=message)
 
     def loadPlugins(self):
         for pluginName in self.botConfig["plugins"]:
             plugin = imp.load_source(pluginName, 'plugins/' + pluginName + ".py")
-            pluginThread = plugin.init(self)
 
-            self.plugins.append(pluginThread)
-
-    def _parseMessageBuffer(self):
-        while self.connection.connected:
-            messageBuffer = self.connection.consumeMessageBuffer()
-
-            if(messageBuffer):
-                for message in messageBuffer:
-                    if not("type" in message.keys()):
-                        continue
-
-                    if(message["type"] == "message"):
-                        if(message["text"].startswith(self.botConfig["trigger"])):
-                            cmd = message["text"][1:].split(" ")[0]
-                            self.command.invoke(str(cmd))
-
-                            self.event.publish("recieve.command", text=message["text"], uid=message["user"], timestamp=message["ts"], channel=message["channel"])
-                        else:
-                            self.event.publish("recieve.message", text=message["text"], uid=message["user"], timestamp=message["ts"], channel=message["channel"])
+            if(plugin):
+                pluginThread = plugin.init(self)
+                self.plugins.append(pluginThread)
 
 
     def getUserInfo(self, uid):

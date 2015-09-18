@@ -39,7 +39,8 @@ class Chat(Plugin):
 
         # Register plugin-level commands
         commands = [
-            Command("ping", self.ping, access=0)
+            Command("ping", self.ping, access=0),
+            Command("inspire me", self.inspire, access=0, trigger="?")
         ]
 
         for command in commands:
@@ -57,6 +58,9 @@ class Chat(Plugin):
     # Commands Implementations
     def ping(self, *args):
         self.core.say("Pong!")
+
+    def inspire(self, args):
+        self.core.say("It is when we are at our lowest point that we are open to the greatest change.")
 
     # Event Handlers
     def onMessage(self, args):
