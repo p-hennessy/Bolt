@@ -7,6 +7,7 @@
             - Publish / Subscribe Event System
             - Plugin manager
             - Configuration manager
+            - Slack message parser
             - User, Channel and Group Date manager
 
     Contributors:
@@ -24,6 +25,7 @@ from core.MessageParser import MessageParser
 from core.Command import Command
 from core.Command import CommandManager
 from core.Event import EventManager
+from core.User import UserManager
 
 import threading
 import imp
@@ -38,14 +40,15 @@ class Bot():
         self.event = EventManager()
         self.command = CommandManager()
 
+        self.users = UserManager(self)
+
         # Initialize core events
         self.event.register("connection.login")
         self.event.register("connection.logout")
-        self.event.register("recieve.message")
-        self.event.register("recieve.command")
         self.event.register("send.message")
         self.event.register("plugin.exception")
 
+        # Start Message Parser Thread
         self.messageParserThread = MessageParser(self)
         self.messageParserThread.daemon = True
 
@@ -70,7 +73,3 @@ class Bot():
             if(plugin):
                 pluginThread = plugin.init(self)
                 self.plugins.append(pluginThread)
-
-
-    def getUserInfo(self, uid):
-        return self.connection.slackAPI.users.info(self.botConfig["authToken"], uid)

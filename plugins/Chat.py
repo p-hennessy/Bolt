@@ -66,6 +66,6 @@ class Chat(Plugin):
     def onMessage(self, args):
 
         timestamp = datetime.datetime.fromtimestamp( float(args["timestamp"]) ).strftime('%m/%d/%Y %H:%M:%S')
-        username = self.core.getUserInfo(args["uid"])["user"]["name"]
+        username = self.core.users.getUsername(args["uid"])
 
         print "[" + timestamp + "] <" + username + "> "+ args["text"]

@@ -18,6 +18,14 @@
         by the Free Software Foundation
 """
 
+"""
+    pressence_change
+    hello
+    user_typing
+
+
+"""
+
 import json
 import threading
 
@@ -25,6 +33,9 @@ class MessageParser(threading.Thread):
     def __init__(self, core):
         super(MessageParser, self).__init__(name="MessageParser")
         self.core = core
+
+        self.core.event.register("recieve.message")
+        self.core.event.register("recieve.command")
 
     def run(self):
         while self.core.connection.connected:
