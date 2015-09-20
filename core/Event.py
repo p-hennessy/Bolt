@@ -35,7 +35,7 @@ class EventManager():
         else:
             self.eventSubscriptions.pop(event, None)
 
-    def publish(self, event, **kwargs):
+    def notify(self, event, **kwargs):
         for callback in self.eventSubscriptions[event]:
             callback(kwargs)
 

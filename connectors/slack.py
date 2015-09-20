@@ -1,3 +1,19 @@
+"""
+    Class Name : Slack Connector
+
+    Description:
+        Low-level communication interface between the bot core and the chat server
+        This connector is intended for Slack.com
+        It MUST subclass the abstract Connector class for consistancy and interoperability
+
+    Contributors:
+        - Patrick Hennessy
+
+    License:
+        PhilBot is free software: you can redistribute it and/or modify it
+        under the terms of the GNU General Public License v3; as published
+        by the Free Software Foundation
+"""
 
 from core.Connector import Connector
 from core.User import User
@@ -8,7 +24,6 @@ from urllib import urlencode
 from urllib2 import urlopen
 import json
 import websocket
-import time
 import threading
 from ssl import *
 
@@ -202,7 +217,7 @@ class channels(_api):
     def info(self, token, channelID):
         return self.request(token, "channels.info", postData={"channel":channelID})
 
-    def list(self, token, channelID, excludeArchived=0):
+    def list(self, token, excludeArchived=0):
         return self.request(token, "channels.list", postData={"exclude_archived": excludeArchived})
 
     def mark(self, token, channelID, timestamp):

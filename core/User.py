@@ -24,13 +24,13 @@ class User():
         self.realName = realName
         self.email = email
         self.isAdmin = False
-        self.access = 0
+        self._access = 0
 
-    def grantAccess(self, access):
-        self.access = access
+    def setAccess(self, access):
+        self._access = access
 
-    def isAdmin(self):
-        return self.isAdmin
+    def getAccess(self):
+        return self._access
 
     def getPreferedName(self):
         if(self.realName != None and len(self.realName) > 0):
@@ -39,52 +39,35 @@ class User():
             return self.username
 
 class UserManager():
-    def __init__(self, core):
+    def __init__(self, core, users=[]):
         self.core = core
-        self.users = []
+        self.users = users
 
-        # Get an initial list of users
-        userList = self.core.connection.slackAPI.users.list(self.core.botConfig["authToken"])
+    def addUser(self, user):
+        self.users.append(user)
 
-        for user in userList["members"]:
-            self.addUser(user)
+    def removeUser(self, uid):
+        for user in self.users:
+            if(user.id == uid):
+                self.users.remove(user)
 
-    def addUser(self, userData):
-        newUser = User(
-            userData["id"],
-            userData["name"],
-            userData["is_admin"],
-            userData["is_owner"],
-            userData["profile"]["real_name"]
-        )
+    def updateUserList(self):
+        self.users = self.core.connection.getUsers()
 
-        self.users.append(newUser)
+    def getUserList(self):
+        self.updateUserList()
+
+        return self.users
+
+    def getUser(self, uid):
+        for user in self.users:
+            if(user.id == uid):
+                return user
+
+        newUser = self.core.connection.getUser(uid)
+        self.addUser(newUser)
+
         return newUser
 
-    def getAccess(self, uid):
-        for user in self.users:
-            if(user.id == uid):
-                return user.access
-
-        return 0
-
-    def getUID(self, username):
-        for user in self.users:
-            if(user.username == username):
-                return user.id
-
-        return None
-
     def getUsername(self, uid):
-        # Check if user is in our list
-        for user in self.users:
-            if(user.id == uid):
-                return str(user.getPreferedName())
-
-        # If not, we must get their info and add them
-        newUser = self.addUser(self.getUserInfo(uid)["user"])
-        if not newUser:
-            return uid
-
-    def getUserInfo(self, uid):
-        return self.core.connection.slackAPI.users.info(self.core.botConfig["authToken"], uid)
+        return self.getUser(uid).getPreferedName()

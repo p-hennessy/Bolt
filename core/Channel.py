@@ -20,3 +20,9 @@ class Channel():
         self.created = created
         self.creator = creator
         self.archived = archived
+
+class ChannelManager():
+
+    def __init__(self, core, channels=[]):
+        self.core = core
+        self.channels = channels
