@@ -18,14 +18,12 @@ import functools
 import time
 
 class User():
-    def __init__(self, id, username, isAdmin=False, isOwner=False, realName=None, email=None, phone=None):
+    def __init__(self, id, username, isAdmin=False, realName=None, email=None):
         self.id = id
         self.username = username
         self.realName = realName
         self.email = email
-        self.phone = phone
         self.isAdmin = False
-        self.isOwner = False
         self.access = 0
 
     def grantAccess(self, access):
@@ -33,9 +31,6 @@ class User():
 
     def isAdmin(self):
         return self.isAdmin
-
-    def isOwner(self):
-        return self.isOwner
 
     def getPreferedName(self):
         if(self.realName != None and len(self.realName) > 0):
@@ -65,6 +60,13 @@ class UserManager():
 
         self.users.append(newUser)
         return newUser
+
+    def getAccess(self, uid):
+        for user in self.users:
+            if(user.id == uid):
+                return user.access
+
+        return 0
 
     def getUID(self, username):
         for user in self.users:

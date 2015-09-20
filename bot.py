@@ -20,13 +20,9 @@ import sys
 def main():
 
     Philbot = Bot()
-    Philbot.login()
-    Philbot.loadPlugins()
 
     while True:
         time.sleep(1)
-
-    Philbot.logout()
 
 if __name__ == '__main__':
 	try:

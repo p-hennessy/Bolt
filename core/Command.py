@@ -25,6 +25,9 @@ class Command():
     def __str__(self):
         return self.invocation
 
+    def getAccess(self):
+        return self.access
+
 class CommandManager():
     def __init__(self):
         self.commands = []
@@ -49,12 +52,7 @@ class CommandManager():
     def check(self, commandName):
         pass
 
-    def invoke(self, commandName):
-        command = self.find(commandName)
-
-        if not command:
-            return
-
-        args = commandName.split(command.invocation)[1:]
+    def invoke(self, command, rawMsg):
+        args = rawMsg.split(command.invocation)[1:]
 
         return command.callback(args)

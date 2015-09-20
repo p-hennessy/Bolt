@@ -19,13 +19,14 @@
         by the Free Software Foundation
 """
 
-from core.SlackWebSocket import *
 from core.ConfigParser import *
 from core.MessageParser import MessageParser
 from core.Command import Command
 from core.Command import CommandManager
 from core.Event import EventManager
 from core.User import UserManager
+
+from connectors.slack import SlackConnection
 
 import threading
 import imp
@@ -34,13 +35,12 @@ class Bot():
 
     def __init__(self):
         self.botConfig = getConfig("conf/bot.conf")
-        self.connection = SlackConnection(self.botConfig["authToken"])
 
         self.plugins = []
         self.event = EventManager()
         self.command = CommandManager()
 
-        self.users = UserManager(self)
+        self.connection = SlackConnection(**self.botConfig["connectorOptions"])
 
         # Initialize core events
         self.event.register("connection.login")
@@ -48,23 +48,10 @@ class Bot():
         self.event.register("send.message")
         self.event.register("plugin.exception")
 
-        # Start Message Parser Thread
-        self.messageParserThread = MessageParser(self)
-        self.messageParserThread.daemon = True
+        self.login()
 
     def login(self):
         self.connection.connect()
-        self.messageParserThread.start()
-        self.event.publish("connection.login")
-
-    def logout(self):
-        self.connection.disconnect()
-        self.messageParserThread.join()
-        self.event.publish("connection.logout")
-
-    def say(self, message, channel="general"):
-        self.connection.emit(channel, message)
-        self.event.publish("send.message", message=message)
 
     def loadPlugins(self):
         for pluginName in self.botConfig["plugins"]:
