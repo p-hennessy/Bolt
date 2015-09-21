@@ -37,7 +37,8 @@ class Chat(Plugin):
 
         # Register plugin-level commands
         commands = [
-            ["^ping me$", self.ping, 0]
+            ["^ping", self.ping, 0],
+            ["^whoami", self.whoami, 0],
         ]
 
         for command in commands:
@@ -49,7 +50,15 @@ class Chat(Plugin):
 
     # Commands Implementations
     def ping(self, message):
-        self.core.connection.send("Pong!", message.channel)
+        ping = self.core.connection.ping()
+        self.core.connection.send("My ping is: " + str(ping) + "ms", message.channel)
+
+    def whoami(self, message):
+        self.core.connection.send(
+            "Name: \t" + message.sender.getPreferedName() + "\n" +
+            "UID: \t\t" + message.sender.id + "\n" +
+            " You have " + str(message.sender.getAccess()) + " access."
+        , message.channel)
 
     # Event Handlers
     def onMessage(self, args):

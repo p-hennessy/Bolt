@@ -1,3 +1,19 @@
+"""
+    Class Name : MessageConsumer
+
+    Description:
+        Daemon thread that is responsible for dispatching the message recieve event
+        as well as invoking registered commands that match incoming messages
+
+    Contributors:
+        - Patrick Hennessy
+
+    License:
+        PhilBot is free software: you can redistribute it and/or modify it
+        under the terms of the GNU General Public License v3; as published
+        by the Free Software Foundation
+"""
+
 from core.Command import *
 import threading
 import time

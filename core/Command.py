@@ -45,9 +45,9 @@ class CommandManager():
         matches = []
 
         for command in self.commands:
-            if(command.useDefaultTrigger and match.startswith(self.core.botConfig["trigger"]) and re.match(command.invocation, match.split(self.core.botConfig["trigger"])[1])):
+            if( (command.useDefaultTrigger or self.core.config["alwaysUseTrigger"]) and match.startswith(self.core.config["trigger"]) and re.match(command.invocation, match.split(self.core.config["trigger"])[1])):
                 matches.append(command)
-            elif(not command.useDefaultTrigger and re.match(command.invocation, match)):
+            elif( (not command.useDefaultTrigger and not self.core.config["alwaysUseTrigger"]) and re.match(command.invocation, match)):
                 matches.append(command)
 
         return matches

@@ -35,13 +35,13 @@ import json
 class Bot():
 
     def __init__(self):
-        self.botConfig = self.loadConfig("conf/bot.conf")
+        self.config = self.loadConfig("conf/bot.conf")
 
         self.plugins = []
         self.event = EventManager()
         self.command = CommandManager(self)
 
-        self.connection = SlackConnection(**self.botConfig["connectorOptions"])
+        self.connection = SlackConnection(**self.config["connectorOptions"])
 
         self.user = UserManager(self)
         self.channel = ChannelManager(self)
@@ -95,7 +95,7 @@ class Bot():
         pass
 
     def loadPlugins(self):
-        for pluginName in self.botConfig["plugins"]:
+        for pluginName in self.config["plugins"]:
             plugin = imp.load_source(pluginName, 'plugins/' + pluginName + ".py")
 
             if(plugin):
