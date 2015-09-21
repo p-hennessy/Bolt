@@ -21,10 +21,11 @@ class Plugin(threading.Thread):
     def __init__(self, core, name="GenericPlugin"):
         super(Plugin, self).__init__(name=name)
         self.core = core
-        self.kill = False
+        self.stopped = threading.Event()
 
     def run(self):
         try:
+            self.stopped.clear()
             self.startThread()
         except:
             self.core.event.publish("plugin.exception", thread=self.name, exception=sys.exc_info())
@@ -33,5 +34,5 @@ class Plugin(threading.Thread):
     def startThread(self):
         pass
 
-    def stopThread(self):
-        self.kill = True
+    def stop(self):
+        self.stop.set()

@@ -14,12 +14,13 @@
 """
 
 import threading
+import re
 
 class Command():
-    def __init__(self, invocation, callback, trigger=".", access=0):
+    def __init__(self, invocation, callback, access=0, useDefaultTrigger=False):
         self.invocation = invocation
         self.access = access
-        self.trigger = trigger
+        self.useDefaultTrigger = useDefaultTrigger
         self.callback = callback
 
     def __str__(self):
@@ -28,31 +29,38 @@ class Command():
     def getAccess(self):
         return self.access
 
+    def invoke(self, message):
+        self.callback(message)
+
 class CommandManager():
-    def __init__(self):
+    def __init__(self, core):
         self.commands = []
         self.lock = threading.Lock()
+        self.core = core
 
     def getCommands(self):
-        pass
+        return self.commands
 
-    def find(self, commandName):
+    def matchCommands(self, match):
+        matches = []
+
         for command in self.commands:
-            if(commandName.startswith(command.trigger + command.invocation)):
-                return command
+            if(command.useDefaultTrigger and match.startswith(self.core.botConfig["trigger"]) and re.match(command.invocation, match.split(self.core.botConfig["trigger"])[1])):
+                matches.append(command)
+            elif(not command.useDefaultTrigger and re.match(command.invocation, match)):
+                matches.append(command)
 
-        return None
+        return matches
 
-    def register(self, command):
-        self.commands.append(command)
+    def register(self, invocation, callback, access=0, useDefaultTrigger=False):
+        self.commands.append(
+            Command(
+                invocation,
+                callback,
+                access,
+                useDefaultTrigger
+            )
+        )
 
     def unregister(self, commandName):
         self.commands.remove(commandName)
-
-    def check(self, commandName):
-        pass
-
-    def invoke(self, command, rawMsg):
-        args = rawMsg.split(command.invocation)[1:]
-
-        return command.callback(args)

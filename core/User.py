@@ -13,10 +13,6 @@
         by the Free Software Foundation
 """
 
-import collections
-import functools
-import time
-
 class User():
     def __init__(self, id, username, isAdmin=False, realName=None, email=None):
         self.id = id

@@ -17,7 +17,6 @@
 import datetime
 import time
 
-from core.Command import Command
 from core.Plugin import Plugin
 
 # Init is how every plugin is invoked
@@ -35,37 +34,23 @@ class Chat(Plugin):
 
         # Subsrcribe to Core events
         self.core.event.subscribe("recieve.message", self.onMessage)
-        self.core.event.subscribe("recieve.command", self.onMessage)
 
         # Register plugin-level commands
         commands = [
-            Command("ping", self.ping, access=0),
-            Command("inspire me", self.inspire, access=0, trigger="?")
+            ["^ping me$", self.ping, 0]
         ]
 
         for command in commands:
-            self.core.command.register( command )
-
-    # Destructor, do any garbage collection here
-    def __del__(self):
-        self.core.event.unsubscribe("recieve.message")
-        self.core.event.unsubscribe("recieve.command")
+            self.core.command.register( *command )
 
     # Entry to the thread
     def startThread(self):
         pass
 
     # Commands Implementations
-    def ping(self, *args):
-        self.core.say("Pong!")
-
-    def inspire(self, args):
-        self.core.say("It is when we are at our lowest point that we are open to the greatest change.")
+    def ping(self, message):
+        self.core.connection.send("Pong!", message.channel)
 
     # Event Handlers
     def onMessage(self, args):
-
-        timestamp = datetime.datetime.fromtimestamp( float(args["timestamp"]) ).strftime('%m/%d/%Y %H:%M:%S')
-        username = self.core.users.getUsername(args["uid"])
-
-        print "[" + timestamp + "] <" + username + "> "+ args["text"]
+        pass

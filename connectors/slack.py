@@ -56,9 +56,6 @@ class SlackConnection(Connector):
 
             self.connected = True
 
-            while True:
-                self.recieve()
-
         else:
             raise Exception("Authentication to Slack failed.")
 
@@ -71,9 +68,13 @@ class SlackConnection(Connector):
         # https://api.slack.com/rtm
         return self.socket.send(json.dumps({"type":"ping"}))
 
-    def send(self, message):
+    def send(self, message, channels):
         with self.socketLock:
-            self.socket.send(json.dumps({"type": "message", "text": message}))
+            if(channels is not list and isinstance(channels, Channel)):
+                channels = [channels]
+
+            for channel in channels:
+                self.socket.send(json.dumps({"type": "message", "channel": channel.id, "text": message}))
 
     def whisper(self, userID, message):
         pass
@@ -86,7 +87,7 @@ class SlackConnection(Connector):
             if(messages):
                 message = json.loads(messages.rstrip())
 
-                if(message["type"] == "message"):
+                if("type" in message.keys() and message["type"] == "message"):
 
                     return Message(
                         message["user"],
@@ -94,6 +95,8 @@ class SlackConnection(Connector):
                         message["ts"],
                         message["text"]
                     )
+            else:
+                return None
 
         # Catch exception where socket has not been fully read
         except SSLError:
@@ -106,10 +109,10 @@ class SlackConnection(Connector):
             return [self._parseUserData(user) for user in reply["members"]]
 
     def getUser(self, userID):
-        reply = self.api.users.info(self.token)
+        reply = self.api.users.info(self.token, userID)
 
         if(reply["ok"]):
-            return self._parseUserData(reply)
+            return self._parseUserData(reply["user"])
 
     def _parseUserData(self, userData):
         user = User(
