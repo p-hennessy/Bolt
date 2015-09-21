@@ -32,6 +32,14 @@ class Command():
     def invoke(self, message):
         self.callback(message)
 
+    def help(self):
+        docstring = self.callback.__doc__
+
+        if(docstring):
+            return docstring
+        else:
+            return "That command is currently undocumented"
+
 class CommandManager():
     def __init__(self, core):
         self.commands = []
@@ -45,12 +53,19 @@ class CommandManager():
         matches = []
 
         for command in self.commands:
-            if( (command.useDefaultTrigger or self.core.config["alwaysUseTrigger"]) and match.startswith(self.core.config["trigger"]) and re.match(command.invocation, match.split(self.core.config["trigger"])[1])):
+            if( (command.useDefaultTrigger == True or self.core.config["alwaysUseTrigger"] == True) and match.startswith(self.core.config["trigger"]) and re.match(command.invocation, match.split(self.core.config["trigger"])[1])):
                 matches.append(command)
-            elif( (not command.useDefaultTrigger and not self.core.config["alwaysUseTrigger"]) and re.match(command.invocation, match)):
+            elif(re.match(command.invocation, match)):
                 matches.append(command)
 
         return matches
+
+    def find(self, commandName):
+        for command in self.commands:
+            if(re.match(command.invocation, commandName)):
+                return command
+
+        return None
 
     def register(self, invocation, callback, access=0, useDefaultTrigger=False):
         self.commands.append(

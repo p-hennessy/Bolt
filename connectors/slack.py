@@ -25,6 +25,7 @@ from urllib2 import urlopen
 import json
 import websocket
 import threading
+import time
 from ssl import *
 
 class SlackConnection(Connector):

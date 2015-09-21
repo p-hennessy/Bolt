@@ -39,6 +39,7 @@ class Chat(Plugin):
         commands = [
             ["^ping", self.ping, 0],
             ["^whoami", self.whoami, 0],
+            ["^help", self.help, 0]
         ]
 
         for command in commands:
@@ -50,6 +51,8 @@ class Chat(Plugin):
 
     # Commands Implementations
     def ping(self, message):
+        """ This is the ping doc string """
+
         ping = self.core.connection.ping()
         self.core.connection.send("My ping is: " + str(ping) + "ms", message.channel)
 
@@ -59,6 +62,14 @@ class Chat(Plugin):
             "UID: \t\t" + message.sender.id + "\n" +
             " You have " + str(message.sender.getAccess()) + " access."
         , message.channel)
+
+    def help(self, message):
+        command = self.core.command.find(message.text[5:])
+
+        if(command):
+            self.core.connection.send(command.help(), message.channel)
+        else:
+            self.core.connection.send("Sorry, I don't have that command.",message.channel)
 
     # Event Handlers
     def onMessage(self, args):
