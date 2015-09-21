@@ -101,3 +101,9 @@ class Bot():
             if(plugin):
                 pluginThread = plugin.init(self)
                 self.plugins.append(pluginThread)
+
+    def loadPlugin(self):
+        pass
+
+    def stopPlugin(self):
+        pass

@@ -14,9 +14,7 @@
         by the Free Software Foundation
 """
 
-from core.Command import *
 import threading
-import time
 import re
 
 class MessageConsumer(threading.Thread):

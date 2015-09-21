@@ -32,31 +32,44 @@ class Chat(Plugin):
         # Call super constructor
         super(Chat, self).__init__(core, "ChatPlugin")
 
-        # Subsrcribe to Core events
-        self.core.event.subscribe("recieve.message", self.onMessage)
+        # Class level variables
+        self.loginTime = 0
 
         # Register plugin-level commands
         commands = [
             ["^ping", self.ping, 0],
             ["^whoami", self.whoami, 0],
-            ["^help", self.help, 0]
+            ["^help", self.help, 0],
+            ["^uptime", self.uptime, 0]
         ]
 
         for command in commands:
             self.core.command.register( *command )
 
-    # Entry to the thread
-    def startThread(self):
-        pass
+        # Subscribe to core events
+        self.core.event.subscribe("connection.login", self.startTimer)
+
+    def startTimer(self, *args):
+        self.loginTime = time.time()
 
     # Commands Implementations
     def ping(self, message):
-        """ This is the ping doc string """
+        """
+        Ping
+            Returns time in milliseconds to reach the Slack server.
+            Arguments: None
+        """
 
         ping = self.core.connection.ping()
         self.core.connection.send("My ping is: " + str(ping) + "ms", message.channel)
 
     def whoami(self, message):
+        """
+        Whoami
+            Returns relevant information about you and your relation to the bot.
+            Arguments: None
+        """
+
         self.core.connection.send(
             "Name: \t" + message.sender.getPreferedName() + "\n" +
             "UID: \t\t" + message.sender.id + "\n" +
@@ -64,6 +77,12 @@ class Chat(Plugin):
         , message.channel)
 
     def help(self, message):
+        """
+        Help
+            Returns the documentation for a command.
+            Arguments: [commandName]
+        """
+
         command = self.core.command.find(message.text[5:])
 
         if(command):
@@ -71,6 +90,31 @@ class Chat(Plugin):
         else:
             self.core.connection.send("Sorry, I don't have that command.",message.channel)
 
-    # Event Handlers
-    def onMessage(self, args):
-        pass
+    def uptime(self, message):
+        """
+        Uptime
+            Returns amount of time the bot has been connected.
+            Arguments: None
+        """
+        uptime = time.time() - self.loginTime
+
+        def readableTime(elapsedTime):
+            readable = ""
+
+            days = int(elapsedTime / (60 * 60 * 24))
+            hours = int((uptime / (60 * 60)) % 24)
+            minutes = int((uptime % (60 * 60)) / 60)
+            seconds = int(uptime % 60)
+
+            if(days > 0):
+                readable += str(days) + " days "
+            if(hours > 0):
+                readable += str(hours) + "hours "
+            if(minutes > 0):
+                readable += str(minutes) + " minutes "
+            if(seconds > 0):
+                readable += str(seconds) + " seconds "
+
+            return readable
+
+        self.core.connection.send("I have been connected for: " + readableTime(uptime), message.channel)
