@@ -22,11 +22,10 @@
 from core.Command import Command
 from core.Command import CommandManager
 from core.Event import EventManager
-from core.User import UserManager
-from core.Channel import ChannelManager
 from core.MessageConsumer import MessageConsumer
 
 from connectors.slack import SlackConnection
+from connectors.discord import DiscordConnection
 
 import threading
 import imp
@@ -41,10 +40,7 @@ class Bot():
         self.event = EventManager()
         self.command = CommandManager(self)
 
-        self.connection = SlackConnection(**self.config["connectorOptions"])
-
-        self.user = UserManager(self)
-        self.channel = ChannelManager(self)
+        self.connection = DiscordConnection(**self.config["connectorOptions"])
 
         self.messageConsumerThread = MessageConsumer(self)
         self.messageConsumerThread.daemon = True
@@ -60,15 +56,16 @@ class Bot():
         # Connect to the websocket
         self.connection.connect()
 
+        self.servers = self.connection.getServers()
+        self.users = self.connection.getUsers()
+
         # Notify login event
         self.event.notify("connection.login")
 
         # Start message consumer thread
         self.messageConsumerThread.start()
 
-        # Get our channel and user data up to date
-        self.user.updateUserList()
-        self.channel.updateChannelList()
+        self.connection.say("96451923229556736", "**CL4M-B0T** login successful.")
 
     def logout(self):
         # Send stop to message consumer, wait for it to finish it's run.
@@ -95,15 +92,15 @@ class Bot():
         pass
 
     def loadPlugins(self):
-        for pluginName in self.config["plugins"]:
-            plugin = imp.load_source(pluginName, 'plugins/' + pluginName + ".py")
+        for plugin in self.config["plugins"]:
+            self.loadPlugin(plugin)
 
-            if(plugin):
-                pluginThread = plugin.init(self)
-                self.plugins.append(pluginThread)
+    def loadPlugin(self, name):
+        plugin = imp.load_source(name, 'plugins/' + name + ".py")
 
-    def loadPlugin(self):
-        pass
+        if(plugin):
+            pluginThread = plugin.init(self)
+            self.plugins.append(pluginThread)
 
     def stopPlugin(self):
         pass

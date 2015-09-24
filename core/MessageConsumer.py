@@ -16,6 +16,9 @@
 
 import threading
 import re
+import datetime
+
+from core.Message import *
 
 class MessageConsumer(threading.Thread):
     def __init__(self, core):
@@ -28,20 +31,26 @@ class MessageConsumer(threading.Thread):
     def run(self):
         self.stopped.clear()
 
-        while not self.stopped.isSet():
+        while True:
             message = self.core.connection.recieve()
 
             if(message):
-                self.core.event.notify("recieve.message", message=message)
+                if(isinstance(message, Message.text)):
+                    if message.sender in self.core.users:
+                        message.sender = self.core.users[message.sender]
 
-                for command in self.core.command.matchCommands(message.text):
-                    message.sender = self.core.user.getUser(message.sender)
-                    message.channel = self.core.channel.getChannel(message.channel)
+                    for server in self.core.servers:
+                        channel = server.getChannel(message.channel)
+                        if(channel):
+                            message.channel = channel
+                            message.server = server
 
-                    if(message.sender.getAccess() >= command.getAccess()):
-                        command.invoke(message)
+                    print datetime.datetime.strptime(message.timestamp.split(".")[0], "%Y-%m-%dT%H:%M:%S").strftime("%s")
+                    print message.sender
+                    print message.channel
+                    print message.server
+                    print message.text
 
-            message = None
 
     def stop(self):
         self.stopped.set()

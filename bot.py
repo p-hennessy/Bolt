@@ -17,7 +17,31 @@ from core.Core import Bot
 import time
 import sys
 
+from colorlog import ColoredFormatter
+import logging
+
 def main():
+    logging.getLogger("requests").setLevel(logging.WARNING)
+
+    logger = logging.getLogger('')
+
+    console_hdlr = logging.StreamHandler(sys.stdout)
+    formatter = ColoredFormatter(
+        "%(asctime)s %(log_color)s%(levelname)-8s%(reset)s %(blue)s%(name)-25.25s%(reset)s %(white)s%(message)s%(reset)s",
+        datefmt="[%m/%d/%Y %H:%M:%S]",
+        reset=True,
+        log_colors={
+            'DEBUG': 'cyan',
+            'INFO': 'green',
+            'WARNING': 'yellow',
+            'ERROR': 'red',
+            'CRITICAL': 'bg_red',
+        }
+    )
+
+    console_hdlr.setFormatter(formatter)
+    logger.addHandler(console_hdlr)
+    logger.setLevel(logging.INFO)
 
     Philbot = Bot()
 

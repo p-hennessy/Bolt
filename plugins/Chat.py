@@ -17,6 +17,7 @@
 import datetime
 import time
 
+from core.Decorators import *
 from core.Plugin import Plugin
 
 # Init is how every plugin is invoked
@@ -36,19 +37,32 @@ class Chat(Plugin):
         self.loginTime = 0
 
         # Register plugin-level commands
-        commands = [
-            ["^ping", self.ping, 0],
-            ["^whoami", self.whoami, 0],
-            ["^help", self.help, 0],
-            ["^uptime", self.uptime, 0]
-        ]
-
-        for command in commands:
-            self.core.command.register( *command )
+        self.core.command.register("^ping", self.ping, 0)
+        self.core.command.register("^help", self.help, 0)
+        self.core.command.register("^whoami", self.whoami, 0)
+        self.core.command.register("^uptime", self.uptime, 0)
+        self.core.command.register("^commands", self.commands, 0)
 
         # Subscribe to core events
         self.core.event.subscribe("connection.login", self.startTimer)
 
+    # For when we want to unload or restart a plugin
+    def __del__(self):
+        # Unregister plugin commands
+        self.core.command.unregister("^ping")
+        self.core.command.unregister("^help")
+        self.core.command.unregister("^whoami")
+        self.core.command.unregister("^uptime")
+        self.core.command.unregister("^commands")
+
+        # Unsubscribe from core events
+        self.core.event.unsubscribe("connection.login", self.startTimer)
+
+    # Thread logic
+    def startThread(self):
+        pass
+
+    # Event Implementations
     def startTimer(self, *args):
         self.loginTime = time.time()
 
@@ -59,7 +73,6 @@ class Chat(Plugin):
             Returns time in milliseconds to reach the Slack server.
             Arguments: None
         """
-
         ping = self.core.connection.ping()
         self.core.connection.send("My ping is: " + str(ping) + "ms", message.channel)
 
@@ -82,13 +95,16 @@ class Chat(Plugin):
             Returns the documentation for a command.
             Arguments: [commandName]
         """
+        if(len(message.text[5:]) <= 0):
+            self.core.connection.send("Hi " + message.sender.getPreferedName() + ", what can I help you with?", message.channel)
+            return
 
         command = self.core.command.find(message.text[5:])
 
         if(command):
             self.core.connection.send(command.help(), message.channel)
         else:
-            self.core.connection.send("Sorry, I don't have that command.",message.channel)
+            self.core.connection.send("Sorry, I don't have that command.", message.channel)
 
     def uptime(self, message):
         """
@@ -107,14 +123,37 @@ class Chat(Plugin):
             seconds = int(uptime % 60)
 
             if(days > 0):
-                readable += str(days) + " days "
+                readable += str(days)
+                if(days == 1):
+                    readable += " day "
+                else:
+                    readable += " days "
             if(hours > 0):
-                readable += str(hours) + "hours "
+                readable += str(hours)
+                if(hours == 1):
+                    readable += " hour "
+                else:
+                    readable += " hours "
             if(minutes > 0):
-                readable += str(minutes) + " minutes "
+                readable += str(minutes)
+                if(minutes == 1):
+                    readable += " minute "
+                else:
+                    readable += " minutes "
             if(seconds > 0):
-                readable += str(seconds) + " seconds "
+                readable += str(seconds)
+                if(seconds == 1):
+                    readable += " second "
+                else:
+                    readable += " seconds "
 
             return readable
 
         self.core.connection.send("I have been connected for: " + readableTime(uptime), message.channel)
+
+    def commands(self, message):
+        commandList = ""
+        for command in self.core.command.getCommands():
+                commandList += command.callback.__name__ + "\n\t"
+
+        self.core.connection.send("I will repond to the following commands:\n\t" + commandList + "\n Type \"help <command>\" for more information", message.channel)

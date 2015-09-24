@@ -33,37 +33,3 @@ class User():
             return self.realName
         else:
             return self.username
-
-class UserManager():
-    def __init__(self, core, users=[]):
-        self.core = core
-        self.users = users
-
-    def addUser(self, user):
-        self.users.append(user)
-
-    def removeUser(self, uid):
-        for user in self.users:
-            if(user.id == uid):
-                self.users.remove(user)
-
-    def updateUserList(self):
-        self.users = self.core.connection.getUsers()
-
-    def getUserList(self):
-        self.updateUserList()
-
-        return self.users
-
-    def getUser(self, uid):
-        for user in self.users:
-            if(user.id == uid):
-                return user
-
-        newUser = self.core.connection.getUser(uid)
-        self.addUser(newUser)
-
-        return newUser
-
-    def getUsername(self, uid):
-        return self.getUser(uid).getPreferedName()

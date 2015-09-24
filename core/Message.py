@@ -12,13 +12,19 @@
         under the terms of the GNU General Public License v3; as published
         by the Free Software Foundation
 """
-import datetime
+import time
 
 class Message():
+    class text():
+        def __init__(self, sender, channel, text, timestamp=time.time(), server=None):
+            self.sender = sender
+            self.channel = channel
+            self.server = server
+            self.timestamp = timestamp
+            self.text = text
 
-    def __init__(self, sender, channel, timestamp, text, mention=None):
-        self.sender = sender
-        self.channel = channel
-        self.timestamp = timestamp
-        self.text = text
-        self.mention = mention
+    class pressence():
+        def __init__(self, sender, status, timestamp=time.time()):
+            self.sender = sender
+            self.status = status
+            self.timestamp = timestamp

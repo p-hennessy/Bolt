@@ -49,6 +49,7 @@ class CommandManager():
     def getCommands(self):
         return self.commands
 
+    # I only need to call the first one i find?
     def matchCommands(self, match):
         matches = []
 
@@ -68,6 +69,9 @@ class CommandManager():
         return None
 
     def register(self, invocation, callback, access=0, useDefaultTrigger=False):
+        if(self.find(invocation)):
+            return
+
         self.commands.append(
             Command(
                 invocation,
@@ -78,4 +82,6 @@ class CommandManager():
         )
 
     def unregister(self, commandName):
-        self.commands.remove(commandName)
+        for command in self.commands:
+            if(command.invocation == commandName):
+                self.commands.remove(command)
