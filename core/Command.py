@@ -42,44 +42,24 @@ class Command():
 
 class CommandManager():
     def __init__(self, core):
-        self.commands = []
+        self.commands = {}
         self.lock = threading.Lock()
         self.core = core
 
     def getCommands(self):
         return self.commands
 
-    # I only need to call the first one i find?
-    def matchCommands(self, match):
-        matches = []
+    def register(self, invocation, callback, access=0):
+        name = callback.__name__
 
-        for command in self.commands:
-            if( (command.useDefaultTrigger == True or self.core.config["alwaysUseTrigger"] == True) and match.startswith(self.core.config["trigger"]) and re.match(command.invocation, match.split(self.core.config["trigger"])[1])):
-                matches.append(command)
-            elif(re.match(command.invocation, match)):
-                matches.append(command)
-
-        return matches
-
-    def find(self, commandName):
-        for command in self.commands:
-            if(re.match(command.invocation, commandName)):
-                return command
-
-        return None
-
-    def register(self, invocation, callback, access=0, useDefaultTrigger=False):
-        if(self.find(invocation)):
+        if( name in self.commands ):
             return
-
-        self.commands.append(
-            Command(
+        else:
+            self.commands[name] = Command(
                 invocation,
                 callback,
-                access,
-                useDefaultTrigger
+                access
             )
-        )
 
     def unregister(self, commandName):
         for command in self.commands:

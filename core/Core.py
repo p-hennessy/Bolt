@@ -19,24 +19,27 @@
         by the Free Software Foundation
 """
 
-from core.Command import Command
 from core.Command import CommandManager
 from core.Event import EventManager
 from core.MessageConsumer import MessageConsumer
+from core.Plugin import PluginManager
 
-from connectors.slack import SlackConnection
 from connectors.discord import DiscordConnection
 
 import threading
 import imp
 import json
+import logging
+
+log = logging.getLogger(__name__)
 
 class Bot():
 
     def __init__(self):
+        log.info("Loading configuration")
         self.config = self.loadConfig("conf/bot.conf")
 
-        self.plugins = []
+        self.plugins = PluginManager(self)
         self.event = EventManager()
         self.command = CommandManager(self)
 
@@ -49,8 +52,8 @@ class Bot():
         self.event.register("connection.login")
         self.event.register("connection.logout")
 
-        self.loadPlugins()
-        self.login()
+        self.plugins.load("Chat")
+        #self.login()
 
     def login(self):
         # Connect to the websocket
@@ -65,7 +68,7 @@ class Bot():
         # Start message consumer thread
         self.messageConsumerThread.start()
 
-        self.connection.say("96451923229556736", "**CL4M-B0T** login successful.")
+        #self.connection.say("96451923229556736", "**CL4M-B0T** login successful.")
 
     def logout(self):
         # Send stop to message consumer, wait for it to finish it's run.

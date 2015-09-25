@@ -38,11 +38,6 @@ class DiscordConnection(Connector):
     def connect(self):
         # Connect to Discord, post login credentials
         log.info("Attempting connection to Discord servers")
-        log.debug("Attempting connection to Discord servers")
-        log.warning("Attempting connection to Discord servers")
-        log.error("Attempting connection to Discord servers")
-        log.critical("Attempting connection to Discord servers")
-
         login = self.api.auth.login(self.email, self.password)
         self.token = login["token"]
 

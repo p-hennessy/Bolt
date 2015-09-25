@@ -12,9 +12,6 @@
         under the terms of the GNU General Public License v3; as published
         by the Free Software Foundation
 """
-class Event():
-    def __init__(self):
-        pass
 
 class EventManager():
     def __init__(self):
