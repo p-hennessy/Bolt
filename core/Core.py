@@ -29,21 +29,23 @@ from connectors.discord import DiscordConnection
 import threading
 import imp
 import json
+import sys
 import logging
-
-log = logging.getLogger(__name__)
+import inspect
+from colorlog import ColoredFormatter
 
 class Bot():
 
     def __init__(self):
-        log.info("Loading configuration")
-        self.config = self.loadConfig("conf/bot.conf")
+        self.setupLogger()
+        self.logger.info("Loading bot configuration")
+        self.config = self.loadConfig("settings")
 
         self.plugins = PluginManager(self)
         self.event = EventManager()
         self.command = CommandManager(self)
 
-        self.connection = DiscordConnection(**self.config["connectorOptions"])
+        self.connection = DiscordConnection(**self.config.connectorOptions)
 
         self.messageConsumerThread = MessageConsumer(self)
         self.messageConsumerThread.daemon = True
@@ -55,6 +57,31 @@ class Bot():
         self.plugins.load("Chat")
         self.plugins.unload("Chat")
         #self.login()
+
+    def setupLogger(self):
+        logging.getLogger("requests").setLevel(logging.WARNING)
+
+        log = logging.getLogger('')
+
+        console_hdlr = logging.StreamHandler(sys.stdout)
+        formatter = ColoredFormatter(
+            "%(asctime)s %(log_color)s%(levelname)-8s%(reset)s %(blue)s%(name)-25.25s%(reset)s %(white)s%(message)s%(reset)s",
+            datefmt="[%m/%d/%Y %H:%M:%S]",
+            reset=True,
+            log_colors={
+                'DEBUG': 'cyan',
+                'INFO': 'green',
+                'WARNING': 'yellow',
+                'ERROR': 'red',
+                'CRITICAL': 'bg_red',
+            }
+        )
+
+        console_hdlr.setFormatter(formatter)
+        log.addHandler(console_hdlr)
+        log.setLevel(logging.DEBUG)
+
+        self.logger = logging.getLogger(__name__)
 
     def login(self):
         # Connect to the websocket
@@ -84,27 +111,28 @@ class Bot():
         # Notify logout event
         self.event.notify("connection.logout")
 
-    def loadConfig(self, fileName):
-        configData = None
+    def loadConfig(self, configName):
+        sys.path.append("conf")
 
-        with open(fileName) as file:
-            configData = json.load(file)
+        try:
+            configCanadiate = imp.find_module(configName)
+            configModule = imp.load_module(configName, *configCanadiate)
 
-        return configData
+            config = configModule.Config()
+            self.logger.info("Loaded configuration from \"conf." + configName + "\"")
+            logging.getLogger('').setLevel(config.loglevel)
+
+            return config
+
+        except ImportError as e:
+            self.logger.critical("ImportError: " + str(e))
+            sys.exit(1)
+        except AttributeError as e:
+            self.logger.critical("Config class not found in conf/" + configName)
+            sys.exit(1)
 
     def loadConnector(self):
         pass
 
     def loadPlugins(self):
-        for plugin in self.config["plugins"]:
-            self.loadPlugin(plugin)
-
-    def loadPlugin(self, name):
-        plugin = imp.load_source(name, 'plugins/' + name + ".py")
-
-        if(plugin):
-            pluginThread = plugin.init(self)
-            self.plugins.append(pluginThread)
-
-    def stopPlugin(self):
         pass

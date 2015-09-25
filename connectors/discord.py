@@ -19,7 +19,7 @@ from core.Message import *
 from core.Channel import Channel
 from core.Server import Server
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class DiscordConnection(Connector):
     def __init__(self, email, password):
@@ -37,7 +37,7 @@ class DiscordConnection(Connector):
 
     def connect(self):
         # Connect to Discord, post login credentials
-        log.info("Attempting connection to Discord servers")
+        logger.info("Attempting connection to Discord servers")
         login = self.api.auth.login(self.email, self.password)
         self.token = login["token"]
 
@@ -72,6 +72,8 @@ class DiscordConnection(Connector):
         self.socket.sock.setblocking(0)
         self.connected = True
 
+        logger.info("Succesful login to Discord")
+
         self.keepAliveThread = threading.Thread(target=self.keepAlive, name="KeepAliveThread")
         self.keepAliveThread.daemon = True
         self.keepAliveThread.start()
@@ -86,6 +88,7 @@ class DiscordConnection(Connector):
     def keepAlive(self):
         startTime = time.time()
 
+        logger.debug("Spawning keepAlive thread at interval: " + self.heartbeatInterval)
         while self.connected:
             now = time.time()
 

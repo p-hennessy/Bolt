@@ -43,7 +43,7 @@ class PluginManager():
         """
 
         try:
-            pluginCanadiate = imp.find_module("Chat")
+            pluginCanadiate = imp.find_module(moduleName)
             pluginModule = imp.load_module(moduleName, *pluginCanadiate)
         except ImportError as e:
             self.logger.error(e)
@@ -75,7 +75,6 @@ class PluginManager():
         # Push plugin to our hashtable
         self.plugins[plugin.name] = plugin
         self.logger.info("Loaded plugin \"" + plugin.name + "\"")
-
 
     def unload(self, pluginName):
         """

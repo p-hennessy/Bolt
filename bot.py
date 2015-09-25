@@ -14,42 +14,22 @@
 """
 
 from core.Core import Bot
+import logging
 import time
 import sys
 
-from colorlog import ColoredFormatter
-import logging
+logger = logging.getLogger(__name__)
 
 def main():
-    logging.getLogger("requests").setLevel(logging.WARNING)
+    try:
+        bot = Bot()
 
-    logger = logging.getLogger('')
+        while True:
+            time.sleep(1)
 
-    console_hdlr = logging.StreamHandler(sys.stdout)
-    formatter = ColoredFormatter(
-        "%(asctime)s %(log_color)s%(levelname)-8s%(reset)s %(blue)s%(name)-25.25s%(reset)s %(white)s%(message)s%(reset)s",
-        datefmt="[%m/%d/%Y %H:%M:%S]",
-        reset=True,
-        log_colors={
-            'DEBUG': 'cyan',
-            'INFO': 'green',
-            'WARNING': 'yellow',
-            'ERROR': 'red',
-            'CRITICAL': 'bg_red',
-        }
-    )
-
-    console_hdlr.setFormatter(formatter)
-    logger.addHandler(console_hdlr)
-    logger.setLevel(logging.DEBUG)
-
-    bot = Bot()
-
-    while True:
-        time.sleep(1)
+    except KeyboardInterrupt:
+        logger.info("Caught SIGINT from keyboard. Exiting")
+        sys.exit(0)
 
 if __name__ == '__main__':
-	try:
-		main()
-	except KeyboardInterrupt:
-		sys.exit(1)
+    main()
