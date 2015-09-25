@@ -20,7 +20,6 @@ from core.Decorators import *
 class Chat(Plugin):
 
     def activate(self):
-        self.ping("i am the message")
         pass
 
     @command("^ping$")
@@ -28,5 +27,6 @@ class Chat(Plugin):
         pass
 
     @subscriber("connection.login")
-    def uptime(self, msg):
-        pass
+    def uptime(self, *args, **kwargs):
+        print args
+        print kwargs

@@ -14,8 +14,8 @@ def command(trigger):
 
 def subscriber(event):
     def decorate(callback):
-        def wrapper(self, msg):
-            return callback(self, msg)
+        def wrapper(self, *args, **kwargs):
+            return callback(self, *args, **kwargs)
 
         if not hasattr(wrapper, 'is_command'):
             wrapper.__name__ = callback.__name__
@@ -27,8 +27,8 @@ def subscriber(event):
 
 def publisher(event):
     def decorate(callback):
-        def wrapper(self, msg):
-            return callback(self, msg)
+        def wrapper(self, *args, **kwargs):
+            return callback(self, *args, **kwargs)
 
         if not hasattr(wrapper, 'is_command'):
             wrapper.__name__ = callback.__name__
