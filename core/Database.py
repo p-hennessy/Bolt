@@ -13,16 +13,21 @@
 """
 
 import shelve
+import os.path
 
 class Database():
-    def __init__(self):
-        pass
-
+    def __init__(self, name):
+        self.fileName = "databases/" + name + ".db"
+    
     def get(self, key):
-        pass
+        shelf = shelve.open(self.fileName)
+        value = shelf[key]
 
-    def set(self, key):
-        pass
+        shelf.close()
+        return value
 
-    def update(self, key):
-        pass
+    def set(self, key, value):
+        shelf = shelve.open(self.fileName)
+        shelf[key] = value
+
+        shelf.close()
