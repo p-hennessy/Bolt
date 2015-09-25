@@ -14,13 +14,6 @@
         by the Free Software Foundation
 """
 
-Metadata = {
-    "Name": "Chat",
-    "Description": "Basic stuff",
-    "Version": 1,
-    "Entrypoint": "Chat"
-}
-
 from core.Plugin import Plugin
 from core.Decorators import command
 
