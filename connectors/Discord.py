@@ -19,7 +19,7 @@ from core.Message import *
 from core.Channel import Channel
 from core.Server import Server
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("connector." + __name__)
 
 class Discord(Connector):
     def __init__(self, email, password):
@@ -88,13 +88,15 @@ class Discord(Connector):
     def keepAlive(self):
         startTime = time.time()
 
-        logger.debug("Spawning keepAlive thread at interval: " + self.heartbeatInterval)
+        logger.debug("Spawning keepAlive thread at interval: " + str(self.heartbeatInterval))
+
         while self.connected:
             now = time.time()
 
             if(now - startTime >= ((self.heartbeatInterval / 1000) - 1)):
                 self.send({"op":1,"d": now})
                 startTime = now
+                logger.debug("KeepAlive")
 
     def say(self, channelID, message):
         self.api.channels.send(self.token, channelID, message)
@@ -287,6 +289,9 @@ class channels(_api):
 
     def send(self, token, channelID, content):
         return self.request("POST", "channels/" + channelID + "/messages", postData={"content": content, "nonce": random.getrandbits(64), "mentions":[]}, token=token)
+
+    def typing(self, token, channelID):
+        return self.request("POST", "channels/" + channelID + "/typing", token)
 
 class guilds(_api):
     def __init__(self):

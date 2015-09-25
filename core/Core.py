@@ -24,12 +24,10 @@ from core.MessageConsumer import MessageConsumer
 from core.PluginManager import PluginManager
 
 import threading
-import imp
-import json
-import sys
+from imp import load_module, find_module
+from sys import stdout, path, exit
 import logging
-import inspect
-from colorlog import ColoredFormatter
+import time
 
 class Bot():
 
@@ -70,12 +68,12 @@ class Bot():
             Returns:
                 None
         """
-
+        from colorlog import ColoredFormatter
         logging.getLogger("requests").setLevel(logging.WARNING)
 
         log = logging.getLogger('')
 
-        console_hdlr = logging.StreamHandler(sys.stdout)
+        console_hdlr = logging.StreamHandler(stdout)
         formatter = ColoredFormatter(
             "%(asctime)s %(log_color)s%(levelname)-8s%(reset)s %(blue)s%(name)-25.25s%(reset)s %(white)s%(message)s%(reset)s",
             datefmt="[%m/%d/%Y %H:%M:%S]",
@@ -122,8 +120,6 @@ class Bot():
         # Start message consumer thread
         self.messageConsumerThread.start()
 
-        #self.connection.say("96451923229556736", "**CL4M-B0T** login successful.")
-
     def logout(self):
         """
             Summary:
@@ -164,11 +160,11 @@ class Bot():
                 (Config): instance of Config class, storing all global config options
         """
 
-        sys.path.append("conf")
+        path.append("conf")
 
         try:
-            configCanadiate = imp.find_module(configName)
-            configModule = imp.load_module(configName, *configCanadiate)
+            configCanadiate = find_module(configName)
+            configModule = load_module(configName, *configCanadiate)
 
             config = configModule.Config()
             self.logger.info("Loaded configuration from \"" + configCanadiate[1] + "\"")
@@ -195,11 +191,11 @@ class Bot():
             Returns:
                 (Connector): The low level connection manager instance
         """
-        sys.path.append("connectors")
+        path.append("connectors")
 
         try:
-            connectorCanadiate = imp.find_module(self.config.connector)
-            connectorModule = imp.load_module(self.config.connector, *connectorCanadiate)
+            connectorCanadiate = find_module(self.config.connector)
+            connectorModule = load_module(self.config.connector, *connectorCanadiate)
 
             connector = getattr(connectorModule, self.config.connector)(**self.config.connectorOptions)
             self.logger.info("Loaded connector from: \"" +  connectorCanadiate[1] + "\"")
@@ -208,11 +204,11 @@ class Bot():
 
         except ImportError as e:
             self.logger.critical("ImportError: " + str(e))
-            sys.exit(1)
+            exit(1)
         except AttributeError as e:
             print e
             self.logger.critical("Could not find connector class: " + self.config.connector)
-            sys.exit(1)
+            exit(1)
 
     def loadPlugins(self):
         """

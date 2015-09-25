@@ -15,7 +15,7 @@
 """
 
 from core.Plugin import Plugin
-from core.Decorators import command
+from core.Decorators import *
 
 class Chat(Plugin):
 
@@ -27,6 +27,6 @@ class Chat(Plugin):
     def ping(self, msg):
         pass
 
-    @command("^uptime$")
+    @subscriber("connection.login")
     def uptime(self, msg):
         pass

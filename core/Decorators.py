@@ -6,15 +6,34 @@ def command(trigger):
         if not hasattr(wrapper, 'is_command'):
             wrapper.__name__ = callback.__name__
             setattr(wrapper, 'is_command', True)
-            setattr(wrapper, 'is_registered', False)
             setattr(wrapper, 'trigger', trigger)
 
 
         return wrapper
     return decorate
 
-def subscription():
-    pass
+def subscriber(event):
+    def decorate(callback):
+        def wrapper(self, msg):
+            return callback(self, msg)
 
-def publisher():
-    pass
+        if not hasattr(wrapper, 'is_command'):
+            wrapper.__name__ = callback.__name__
+            setattr(wrapper, 'is_subscriber', True)
+            setattr(wrapper, 'event', event)
+
+        return wrapper
+    return decorate
+
+def publisher(event):
+    def decorate(callback):
+        def wrapper(self, msg):
+            return callback(self, msg)
+
+        if not hasattr(wrapper, 'is_command'):
+            wrapper.__name__ = callback.__name__
+            setattr(wrapper, 'is_publisher', True)
+            setattr(wrapper, 'event', event)
+
+        return wrapper
+    return decorate
