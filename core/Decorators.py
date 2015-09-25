@@ -1,3 +1,4 @@
+# Adds attributes to decorated methods that will be picked up when plugin is loaded
 def command(trigger):
     def decorate(callback):
         def wrapper(self, msg):
@@ -7,7 +8,6 @@ def command(trigger):
             wrapper.__name__ = callback.__name__
             setattr(wrapper, 'is_command', True)
             setattr(wrapper, 'trigger', trigger)
-
 
         return wrapper
     return decorate

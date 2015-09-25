@@ -26,7 +26,10 @@ class Chat(Plugin):
     def ping(self, msg):
         pass
 
-    @subscriber("connection.login")
+    @subscriber("connection.logout")
     def uptime(self, *args, **kwargs):
-        print args
-        print kwargs
+        pass
+
+    @publisher("super.top")
+    def butt(self, *args, **kwargs):
+        pass

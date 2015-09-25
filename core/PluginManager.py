@@ -72,6 +72,12 @@ class PluginManager():
             if( hasattr(callback, "is_command") ):
                 self.core.command.register(getattr(callback, "trigger"), callback)
 
+            if( hasattr(callback, "is_subscriber") ):
+                self.core.event.subscribe(getattr(callback, "event"), callback)
+
+            if( hasattr(callback, "is_publisher") ):
+                self.core.event.register(getattr(callback, "event"))
+
         # Push plugin to our hashtable
         self.plugins[plugin.name] = plugin
         self.logger.info("Loaded plugin \"" + plugin.name + "\"")
