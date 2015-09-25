@@ -7,7 +7,6 @@
             - Publish / Subscribe Event System
             - Plugin manager
             - Configuration manager
-            - Slack message parser
             - User, Channel and Group Date manager
 
     Contributors:
@@ -37,16 +36,20 @@ from colorlog import ColoredFormatter
 class Bot():
 
     def __init__(self):
+        # Setup logger and load config
         self.setupLogger()
         self.logger.info("Loading bot configuration")
         self.config = self.loadConfig("settings")
 
+        # Setup managers
         self.plugins = PluginManager(self)
         self.event = EventManager()
         self.command = CommandManager(self)
 
+        # Setup connection
         self.connection = DiscordConnection(**self.config.connectorOptions)
 
+        # Create message consumer thread
         self.messageConsumerThread = MessageConsumer(self)
         self.messageConsumerThread.daemon = True
 
@@ -54,11 +57,23 @@ class Bot():
         self.event.register("connection.login")
         self.event.register("connection.logout")
 
+        # Load plugins
         self.plugins.load("Chat")
         self.plugins.unload("Chat")
-        #self.login()
 
     def setupLogger(self):
+        """
+            Summary:
+                Creates global settings for all logging
+                Pretty colors are pretty
+
+            Args:
+                None
+
+            Returns:
+                None
+        """
+
         logging.getLogger("requests").setLevel(logging.WARNING)
 
         log = logging.getLogger('')
@@ -84,6 +99,20 @@ class Bot():
         self.logger = logging.getLogger(__name__)
 
     def login(self):
+        """
+            Summary:
+                Establishes a connection to the server
+                Emits login event
+                Starts message consumer thread
+                Expects to have already loaded connection module
+
+            Args:
+                None
+
+            Returns:
+                None
+        """
+
         # Connect to the websocket
         self.connection.connect()
 
@@ -99,11 +128,22 @@ class Bot():
         #self.connection.say("96451923229556736", "**CL4M-B0T** login successful.")
 
     def logout(self):
+        """
+            Summary:
+                Stops message consumer
+                Sends disconnect to connection
+                Notifies on logout event
+
+            Args:
+                None
+
+            Returns:
+                None
+        """
+
         # Send stop to message consumer, wait for it to finish it's run.
         self.messageConsumerThread.stop()
         self.messageConsumerThread.join()
-
-        # Send stop to all plugins
 
         # Disconnect from the websocket
         self.connection.disconnect()
@@ -112,6 +152,20 @@ class Bot():
         self.event.notify("connection.logout")
 
     def loadConfig(self, configName):
+        """
+            Summary:
+                Establishes a connection to the server
+                Emits login event
+                Starts message consumer thread
+                Expects to have already loaded connection module
+
+            Args:
+                configName (str): Name of the config module to be loaded
+
+            Returns:
+                (Config): instance of Config class, storing all global config options
+        """
+
         sys.path.append("conf")
 
         try:

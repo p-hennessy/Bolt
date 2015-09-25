@@ -12,3 +12,9 @@ def command(trigger):
 
         return wrapper
     return decorate
+
+def subscription():
+    pass
+
+def publisher():
+    pass

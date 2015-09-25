@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 def main():
     try:
         bot = Bot()
+        bot.login()
 
         while True:
             time.sleep(1)
