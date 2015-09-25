@@ -2,13 +2,13 @@
     Class Name : Main
 
     Description:
-        Entry point for loading PhilBot
+        Entry point for loading CL4M-B0T
 
     Contributors:
         - Patrick Hennessy
 
     License:
-        PhilBot is free software: you can redistribute it and/or modify it
+        CL4M-B0T is free software: you can redistribute it and/or modify it
         under the terms of the GNU General Public License v3; as published
         by the Free Software Foundation
 """
@@ -43,7 +43,7 @@ def main():
     logger.addHandler(console_hdlr)
     logger.setLevel(logging.INFO)
 
-    Philbot = Bot()
+    bot = Bot()
 
     while True:
         time.sleep(1)
