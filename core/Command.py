@@ -15,6 +15,9 @@
 
 import threading
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Command():
     def __init__(self, invocation, callback, access=0, useDefaultTrigger=False):
@@ -43,18 +46,60 @@ class Command():
 class CommandManager():
     def __init__(self, core):
         self.commands = {}
-        self.lock = threading.Lock()
         self.core = core
 
     def getCommands(self):
+        """
+            Summary:
+                Returns command hashtable
+
+            Args:
+                None
+
+            Returns:
+                (dict): Hashtable containing Command instances
+        """
         return self.commands
 
+    def getCommand(self, commandName):
+        """
+            Summary:
+                Returns a Command instance
+
+            Args:
+                commandName (str): Name of command to get
+
+            Returns:
+                (Command): Instance of Command
+        """
+        if(commandName in self.commands):
+            return self.commands[commandName]
+        else:
+            return None
+
     def register(self, invocation, callback, access=0):
+        """
+            Summary:
+                Registers a command
+                Pushes command instance to hashtable
+
+            Args:
+                invocation (str): Regex that the message parser will match with
+                callback (func): Function object that will be invoked when message parser finds a match
+
+            Returns:
+                None
+        """
+
         name = callback.__name__
+        clazz = callback.im_class.__name__
 
         if( name in self.commands ):
+            logger.warning("Duplicate command \"" + clazz + "." + name + "\". Skipping registration.")
             return
         else:
+            logger.debug("Registered command \"" +  clazz + "." + name + "\"")
+
             self.commands[name] = Command(
                 invocation,
                 callback,
@@ -62,6 +107,26 @@ class CommandManager():
             )
 
     def unregister(self, commandName):
-        for command in self.commands:
-            if(command.invocation == commandName):
-                self.commands.remove(command)
+        """
+            Summary:
+                Unregisters a command
+                Removes command instance to hashtable
+                Command will no longer run when message parser finds a match
+
+            Args:
+                commandName (str): Name of the command to unregister
+
+            Returns:
+                None
+        """
+        if(commandName in self.commands):
+            command = self.commands[commandName]
+
+            name = command.callback.__name__
+            clazz = command.callback.im_class.__name__
+
+            del self.commands[commandName]
+            logger.debug("Unregistered command \"" + clazz + "." + name + "\"")
+
+        else:
+            logger.warning("Cannot unregister \"" + commandName + "\", command not found.")

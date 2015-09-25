@@ -53,6 +53,7 @@ class Bot():
         self.event.register("connection.logout")
 
         self.plugins.load("Chat")
+        self.plugins.unload("Chat")
         #self.login()
 
     def login(self):

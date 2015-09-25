@@ -41,7 +41,7 @@ def main():
 
     console_hdlr.setFormatter(formatter)
     logger.addHandler(console_hdlr)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     bot = Bot()
 

@@ -16,14 +16,11 @@
 import logging
 
 class Plugin(object):
-    logger = None
-
     def __init__(self, core, name):
         self.core = core
         self.name = name
 
         self.logger = logging.getLogger("plugins." + self.name)
-        self.logger.info("Plugin loaded successfully")
 
     def activate(self):
         pass

@@ -6,7 +6,9 @@ def command(trigger):
         if not hasattr(wrapper, 'is_command'):
             wrapper.__name__ = callback.__name__
             setattr(wrapper, 'is_command', True)
+            setattr(wrapper, 'is_registered', False)
             setattr(wrapper, 'trigger', trigger)
+
 
         return wrapper
     return decorate

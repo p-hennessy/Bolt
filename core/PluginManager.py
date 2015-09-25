@@ -30,7 +30,16 @@ class PluginManager():
 
     def load(self, moduleName):
         """
-            Take a file name and loads the module, and initializes it
+            Summary:
+                Loads a plugin,
+                registers all commands and events,
+                pushes plugin instance to internal hashtable.
+
+            Args:
+                moduleName (str): Name of the file that needs to be imported
+
+            Returns:
+                None
         """
 
         try:
@@ -65,9 +74,55 @@ class PluginManager():
 
         # Push plugin to our hashtable
         self.plugins[plugin.name] = plugin
+        self.logger.info("Loaded plugin \"" + plugin.name + "\"")
+
 
     def unload(self, pluginName):
-        pass
+        """
+            Summary:
+                Unloads a plugin,
+                unregisters all commands and events,
+                removes plugin instance from internal hashtable.
 
-    def reload(pluginName):
-        pass
+            Args:
+                pluginName (str): Name of the plugin class instance to be unloaded
+
+            Returns:
+                None
+        """
+
+        # Check if we are managing that plugin
+        if(pluginName not in self.plugins):
+            self.logger.warning("Unable to unload plugin " + pluginName + ", plugin not loaded")
+            return
+
+        # Get plugin object from our hashtable
+        plugin = self.plugins[pluginName]
+
+        # Unregister plugin commands and events
+        for name, callback in inspect.getmembers(plugin, inspect.ismethod):
+            if( hasattr(callback, "is_command") ):
+                self.core.command.unregister(callback.__name__)
+
+        # Remove from our hashtable
+        del self.plugins[pluginName]
+        self.logger.info("Unloaded plugin \"" + plugin.name + "\"")
+
+    def reload(self, pluginName):
+        """
+            Summary:
+                Wrapper for unload + load
+
+            Args:
+                pluginName (str): Name of the plugin class instance to be reloaded
+
+            Returns:
+                None
+        """
+
+        if(pluginName not in self.plugins):
+            self.logger.warning("Unable to reload plugin " + pluginName + ", plugin not loaded")
+            return
+
+        self.unload(pluginName)
+        self.load(pluginName)

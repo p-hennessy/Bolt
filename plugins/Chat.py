@@ -23,6 +23,10 @@ class Chat(Plugin):
         self.ping("i am the message")
         pass
 
-    @command("^.ping$")
+    @command("^ping$")
     def ping(self, msg):
+        pass
+
+    @command("^uptime$")
+    def uptime(self, msg):
         pass
