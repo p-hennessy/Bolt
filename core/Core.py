@@ -23,8 +23,6 @@ from core.Event import EventManager
 from core.MessageConsumer import MessageConsumer
 from core.PluginManager import PluginManager
 
-from connectors.discord import DiscordConnection
-
 import threading
 import imp
 import json
@@ -47,7 +45,7 @@ class Bot():
         self.command = CommandManager(self)
 
         # Setup connection
-        self.connection = DiscordConnection(**self.config.connectorOptions)
+        self.connection = self.loadConnector()
 
         # Create message consumer thread
         self.messageConsumerThread = MessageConsumer(self)
@@ -58,8 +56,7 @@ class Bot():
         self.event.register("connection.logout")
 
         # Load plugins
-        self.plugins.load("Chat")
-        self.plugins.unload("Chat")
+        self.loadPlugins()
 
     def setupLogger(self):
         """
@@ -158,6 +155,7 @@ class Bot():
                 Emits login event
                 Starts message consumer thread
                 Expects to have already loaded connection module
+                Exits if it cannot find or load the config
 
             Args:
                 configName (str): Name of the config module to be loaded
@@ -173,7 +171,7 @@ class Bot():
             configModule = imp.load_module(configName, *configCanadiate)
 
             config = configModule.Config()
-            self.logger.info("Loaded configuration from \"conf." + configName + "\"")
+            self.logger.info("Loaded configuration from \"" + configCanadiate[1] + "\"")
             logging.getLogger('').setLevel(config.loglevel)
 
             return config
@@ -186,7 +184,46 @@ class Bot():
             sys.exit(1)
 
     def loadConnector(self):
-        pass
+        """
+            Summary:
+                Looks for and loads the connector defined in config
+                Will exit if cannot find or load the connector module
+
+            Args:
+                None
+
+            Returns:
+                (Connector): The low level connection manager instance
+        """
+        sys.path.append("connectors")
+
+        try:
+            connectorCanadiate = imp.find_module(self.config.connector)
+            connectorModule = imp.load_module(self.config.connector, *connectorCanadiate)
+
+            connector = getattr(connectorModule, self.config.connector)(**self.config.connectorOptions)
+            self.logger.info("Loaded connector from: \"" +  connectorCanadiate[1] + "\"")
+
+            return connector
+
+        except ImportError as e:
+            self.logger.critical("ImportError: " + str(e))
+            sys.exit(1)
+        except AttributeError as e:
+            print e
+            self.logger.critical("Could not find connector class: " + self.config.connector)
+            sys.exit(1)
 
     def loadPlugins(self):
-        pass
+        """
+            Summary:
+                Looks in plugins list in config and attempts to load each
+
+            Args:
+                None
+
+            Returns:
+                None
+        """
+        for pluginName in self.config.plugins:
+            self.plugins.load(pluginName)

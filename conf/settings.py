@@ -27,12 +27,13 @@ class Config():
     loglevel = logging.DEBUG
 
     # Connector to use
-    connector = "discord"
+    connector = "Discord"
     connectorOptions = {
         "email": "pmh35480@gmail.com",
         "password": "clambotpassword"
     }
 
+    # Names of plugins to be loaded. Will search the "plugin/" directory
     plugins = [
         "Chat",
     ]
