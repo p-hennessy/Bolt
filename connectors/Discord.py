@@ -115,6 +115,8 @@ class Discord(Connector):
         self.logger.debug("Spawning messageConsumer thread")
 
         while self.connected:
+            time.sleep(0.1)
+
             # Read data off of socket
             rawMessage = self.readSocket()
             if not rawMessage: continue
@@ -136,17 +138,12 @@ class Discord(Connector):
                 self.core.event.notify("pressence", message=message)
 
     def keepAlive(self):
-        startTime = time.time()
-
         self.logger.debug("Spawning keepAlive thread at interval: " + str(self.heartbeatInterval))
 
         while self.connected:
-            now = time.time()
-
-            if(now - startTime >= ((self.heartbeatInterval / 1000) - 1)):
-                self.writeSocket({"op":1,"d": now})
-                startTime = now
-                self.logger.debug("KeepAlive")
+            time.sleep((self.heartbeatInterval / 1000) - 1)
+            self.writeSocket({"op":1,"d": time.time()})
+            self.logger.debug("KeepAlive")
 
     def writeSocket(self, data):
         self.socket.send(json.dumps(data))
@@ -163,8 +160,8 @@ class Discord(Connector):
                     return None
 
             except ValueError as e:
-                # Raised when it
-                continue
+                print "0"
+                return None
             except SSLError as e:
                 # Raised when we can't read the entire buffer at once
                 if e.errno == 2:

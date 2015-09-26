@@ -26,7 +26,7 @@ def main():
         bot.login()
 
         while True:
-            time.sleep(1)
+            time.sleep(1000)
 
     except KeyboardInterrupt:
         logger.info("Caught SIGINT from keyboard. Exiting")
