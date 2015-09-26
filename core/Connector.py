@@ -18,9 +18,6 @@ from abc import *
 class Connector():
     __metaclass__ = ABCMeta
 
-    _connected = False
-    _messageBuffer = None
-
     def __init__(self):
         pass
 
@@ -33,29 +30,19 @@ class Connector():
         pass
 
     @abstractmethod
-    def ping(self):
-        """
-            Purpose
-                - Send packet to server to check connection
-            Arguments
-                - None
-            Returns
-                - Integer
-                - Time in milliseconds it took to reach the server
-                - If cannot reach server; raise exception
-        """
+    def send(self, envelope, message):
         pass
 
     @abstractmethod
-    def send(self, message):
+    def emote(self, envelope, message):
         pass
 
     @abstractmethod
-    def whisper(self, userID, message):
+    def reply(self, envelope, message):
         pass
 
     @abstractmethod
-    def recieve(self):
+    def whisper(self, envelope, message):
         pass
 
     @abstractmethod
@@ -64,12 +51,4 @@ class Connector():
 
     @abstractmethod
     def getUser(self, userID):
-        pass
-
-    @abstractmethod
-    def getChannels(self):
-        pass
-
-    @abstractmethod
-    def getChannel(self, channelID):
         pass

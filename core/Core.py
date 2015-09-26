@@ -38,23 +38,21 @@ class Bot():
         self.config = self.loadConfig("settings")
 
         # Setup managers
-        self.plugins = PluginManager(self)
+        self.plugin = PluginManager(self)
         self.event = EventManager()
         self.command = CommandManager(self)
 
         # Setup connection
-        self.connection = self.loadConnector()
-
-        # Create message consumer thread
-        self.messageConsumerThread = MessageConsumer(self)
-        self.messageConsumerThread.daemon = True
-
-        # Initialize core events
-        self.event.register("connection.login")
-        self.event.register("connection.logout")
+        self.connection = self.loadConnector(self)
 
         # Load plugins
         self.loadPlugins()
+
+    def login(self):
+        self.connection.connect()
+
+    def logout(self):
+        self.connection.disconnect()
 
     def setupLogger(self):
         """
@@ -93,57 +91,6 @@ class Bot():
 
         self.logger = logging.getLogger(__name__)
 
-    def login(self):
-        """
-            Summary:
-                Establishes a connection to the server
-                Emits login event
-                Starts message consumer thread
-                Expects to have already loaded connection module
-
-            Args:
-                None
-
-            Returns:
-                None
-        """
-
-        # Connect to the websocket
-        self.connection.connect()
-
-        self.servers = self.connection.getServers()
-        self.users = self.connection.getUsers()
-
-        # Notify login event
-        self.event.notify("connection.login")
-
-        # Start message consumer thread
-        self.messageConsumerThread.start()
-
-    def logout(self):
-        """
-            Summary:
-                Stops message consumer
-                Sends disconnect to connection
-                Notifies on logout event
-
-            Args:
-                None
-
-            Returns:
-                None
-        """
-
-        # Send stop to message consumer, wait for it to finish it's run.
-        self.messageConsumerThread.stop()
-        self.messageConsumerThread.join()
-
-        # Disconnect from the websocket
-        self.connection.disconnect()
-
-        # Notify logout event
-        self.event.notify("connection.logout")
-
     def loadConfig(self, configName):
         """
             Summary:
@@ -179,7 +126,7 @@ class Bot():
             self.logger.critical("Config class not found in conf/" + configName)
             sys.exit(1)
 
-    def loadConnector(self):
+    def loadConnector(self, core):
         """
             Summary:
                 Looks for and loads the connector defined in config
@@ -197,7 +144,7 @@ class Bot():
             connectorCanadiate = find_module(self.config.connector)
             connectorModule = load_module(self.config.connector, *connectorCanadiate)
 
-            connector = getattr(connectorModule, self.config.connector)(**self.config.connectorOptions)
+            connector = getattr(connectorModule, self.config.connector)(core, **self.config.connectorOptions)
             self.logger.info("Loaded connector from: \"" +  connectorCanadiate[1] + "\"")
 
             return connector
@@ -222,4 +169,4 @@ class Bot():
                 None
         """
         for pluginName in self.config.plugins:
-            self.plugins.load(pluginName)
+            self.plugin.load(pluginName)

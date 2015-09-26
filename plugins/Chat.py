@@ -22,11 +22,11 @@ class Chat(Plugin):
     def activate(self):
         pass
 
-    @command("^ping$")
+    @command("^ping")
     def ping(self, msg):
-        pass
+        self.core.connection.reply(msg, "Pong")
 
-    @subscriber("connection.logout")
+    #@subscriber("connection.logout")
     def uptime(self, *args, **kwargs):
         pass
 

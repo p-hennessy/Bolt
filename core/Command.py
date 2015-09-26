@@ -20,10 +20,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Command():
-    def __init__(self, invocation, callback, access=0, useDefaultTrigger=False):
+    def __init__(self, invocation, callback, access=0):
         self.invocation = invocation
         self.access = access
-        self.useDefaultTrigger = useDefaultTrigger
         self.callback = callback
 
     def __str__(self):
@@ -47,6 +46,11 @@ class CommandManager():
     def __init__(self, core):
         self.commands = {}
         self.core = core
+
+    def check(self, message):
+        for key, command in self.commands.iteritems():
+            if(re.search(command.invocation, message.content)):
+                command.invoke(message)
 
     def getCommands(self):
         """

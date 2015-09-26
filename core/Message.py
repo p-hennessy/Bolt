@@ -14,25 +14,22 @@
 """
 import time
 
+class messageType:
+    MESSAGE = 0
+    PRESSENCE = 1
+
+class Envelope():
+    def __init__(self, sender, channel):
+        self.sender = sender
+        self.channel = channel
+
 class Message():
+    def __init__(self, type, senderID, channelID, content=None, timestamp=time.time()):
+        self.type = type
+        self.timestamp = timestamp
+        self.sender = senderID
+        self.channel = channelID
+        self.content = content
 
-    def __init__(self):
-        pass
-        # timestamp
-        # type          pressence update, message, server changed, channel changed
-        # sender
-        # channel
-
-    class text():
-        def __init__(self, sender, channel, text, timestamp=time.time(), server=None):
-            self.sender = sender
-            self.channel = channel
-            self.server = server
-            self.timestamp = timestamp
-            self.text = text
-
-    class pressence():
-        def __init__(self, sender, status, timestamp=time.time()):
-            self.sender = sender
-            self.status = status
-            self.timestamp = timestamp
+    def __call__(self):
+        return Envelope(self.sender,self.channel)

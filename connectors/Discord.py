@@ -10,19 +10,18 @@ import sys
 import threading
 import random
 import logging
+import datetime
 
 from platform import system
 
 from core.Connector import Connector
-from core.User import User
 from core.Message import *
-from core.Channel import Channel
-from core.Server import Server
-
-logger = logging.getLogger("connector." + __name__)
 
 class Discord(Connector):
-    def __init__(self, email, password):
+    def __init__(self, core, email, password):
+        self.core = core
+        self.logger = logging.getLogger("connector." + __name__)
+
         self.email = email
         self.password = password
 
@@ -33,11 +32,19 @@ class Discord(Connector):
         self.socket = None
         self.connected = False
 
+        self.heartbeatInterval = 41250
         self.keepAliveThread = None
+        self.messageConsumerThread = None
+
+        self.core.event.register("connect")
+        self.core.event.register("connectionInterupted")
+        self.core.event.register("disconnect")
+        self.core.event.register("message")
+        self.core.event.register("pressence")
 
     def connect(self):
         # Connect to Discord, post login credentials
-        logger.info("Attempting connection to Discord servers")
+        self.logger.info("Attempting connection to Discord servers")
         login = self.api.auth.login(self.email, self.password)
         self.token = login["token"]
 
@@ -64,61 +71,100 @@ class Discord(Connector):
             "v": 2
         }
 
-        self.send(initData)
-        loginData = self.recieve()
-        self.parseLoginData(loginData)
+        self.writeSocket(initData)
+        self.loginData = self.readSocket()
 
         # Set websocket to nonblocking
         self.socket.sock.setblocking(0)
         self.connected = True
 
-        logger.info("Succesful login to Discord")
+        self.logger.info("Succesful login to Discord")
 
         self.keepAliveThread = threading.Thread(target=self.keepAlive, name="KeepAliveThread")
         self.keepAliveThread.daemon = True
         self.keepAliveThread.start()
 
+        self.messageConsumerThread = threading.Thread(target=self.messageConsumer, name="MessageConsumerThread")
+        self.messageConsumerThread.daemon = True
+        self.messageConsumerThread.start()
+
     def disconnect(self):
         self.connected = False
         self.socket.close()
 
-    def whisper(self):
+    def send(self, envelope, message):
         pass
+
+    def emote(self, envelope, message):
+        pass
+
+    def reply(self, envelope, message):
+        self.logger.debug("Sending reply to " + envelope.sender)
+        self.api.channels.send(self.token, envelope.channel, message)
+
+    def whisper(self, envelope, message):
+        pass
+
+    def getUsers(self):
+        pass
+
+    def getUser(self, userID):
+        pass
+
+
+    def messageConsumer(self):
+        self.logger.debug("Spawning messageConsumer thread")
+
+        while self.connected:
+            # Read data off of socket
+            rawMessage = self.readSocket()
+            if not rawMessage: continue
+
+            # Parse raw message
+            message = self.parseMessageData(rawMessage)
+
+            # If incoming message is a MESSAGE text
+            if(message.type == messageType.MESSAGE):
+                self.core.event.notify("message",  message=newMessage)
+
+                if(message.content.startswith(self.core.config.trigger)):
+                    message.content = message.content[1:]
+                    self.core.command.check(message)
+
+            # If incoming message is PRESSENCE update
+            elif(type == messageType.PRESSENCE):
+                self.core.event.notify("pressence", message=message)
 
     def keepAlive(self):
         startTime = time.time()
 
-        logger.debug("Spawning keepAlive thread at interval: " + str(self.heartbeatInterval))
+        self.logger.debug("Spawning keepAlive thread at interval: " + str(self.heartbeatInterval))
 
         while self.connected:
             now = time.time()
 
             if(now - startTime >= ((self.heartbeatInterval / 1000) - 1)):
-                self.send({"op":1,"d": now})
+                self.writeSocket({"op":1,"d": now})
                 startTime = now
-                logger.debug("KeepAlive")
+                self.logger.debug("KeepAlive")
 
-    def say(self, channelID, message):
-        self.api.channels.send(self.token, channelID, message)
-
-    def send(self, data):
+    def writeSocket(self, data):
         self.socket.send(json.dumps(data))
 
-    def recieve(self):
+    def readSocket(self):
         data = ""
         while True:
             try:
                 data += self.socket.recv()
 
                 if(data):
-                    return self.parseMessageData(json.loads(data.rstrip()))
+                    return json.loads(data.rstrip())
                 else:
                     return None
 
             except ValueError as e:
                 # Raised when it
                 continue
-
             except SSLError as e:
                 # Raised when we can't read the entire buffer at once
                 if e.errno == 2:
@@ -131,51 +177,25 @@ class Discord(Connector):
                 raise
 
     def parseMessageData(self, message):
-        if(message["t"] == "PRESENCE_UPDATE"):
-            return Message.pressence(
-                message["d"]["status"],
-                message["d"]["id"],
-            )
+        type = content = sender = channel = content = timestamp = None
+
+        if(message["t"] == "MESSAGE_CREATE"):
+            type = messageType.MESSAGE
+            sender = message["d"]["author"]['id']
+            channel = message['d']['channel_id']
+            content = message["d"]["content"]
+
         elif(message["t"] == "TYPING_START"):
-            return Message.pressence(
-                "TYPING",
-                message["d"]["user_id"],
-            )
-        elif(message["t"] == "MESSAGE_CREATE"):
-            return Message.text(
-                message["d"]["author"]["id"],
-                message["d"]["channel_id"],
-                message["d"]["content"],
-                message["d"]["timestamp"]
-            )
+            type = messageType.PRESSENCE
+            sender = message["d"]["user_id"]
+            channel = message['d']['channel_id']
+
         else:
-            return message
+            print message
+            return None
 
-    def ping(self):
-        pass
+        return Message(type, sender, channel, content, timestamp=time.time())
 
-    def getUsers(self, serverID=None):
-        if(self.users):
-            returnUsers = self.users
-            del self.users
-            return returnUsers
-        else:
-            pass
-
-    def getServers(self):
-        if(self.servers):
-            returnServers = self.servers
-            del self.servers
-            return returnServers
-
-    def getUser(self, userID):
-        pass
-
-    def getChannels(self, serverID):
-        pass
-
-    def getChannel(self, serverID, channelID):
-        pass
 
     def parseLoginData(self, data):
 
@@ -287,8 +307,8 @@ class channels(_api):
     def info(self, token, channelID):
         return self.request("GET", "channels/" + channelID, token)
 
-    def send(self, token, channelID, content):
-        return self.request("POST", "channels/" + channelID + "/messages", postData={"content": content, "nonce": random.getrandbits(64), "mentions":[]}, token=token)
+    def send(self, token, channelID, content, mentions=[]):
+        return self.request("POST", "channels/" + channelID + "/messages", postData={"content": content, "nonce": random.getrandbits(64), "mentions":mentions}, token=token)
 
     def typing(self, token, channelID):
         return self.request("POST", "channels/" + channelID + "/typing", token)
