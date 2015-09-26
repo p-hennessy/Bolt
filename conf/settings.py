@@ -37,3 +37,11 @@ class Config():
     plugins = [
         "Chat",
     ]
+
+    # ACL
+    ranks = {
+        "owner": 1000,
+        "admin": 999,
+        "member": 100,
+        "guest": 10,
+    }

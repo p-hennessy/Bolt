@@ -15,6 +15,14 @@
 import time
 
 class Message():
+
+    def __init__(self):
+        pass
+        # timestamp
+        # type          pressence update, message, server changed, channel changed
+        # sender
+        # channel
+
     class text():
         def __init__(self, sender, channel, text, timestamp=time.time(), server=None):
             self.sender = sender

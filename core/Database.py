@@ -18,7 +18,20 @@ import os.path
 class Database():
     def __init__(self, name):
         self.fileName = "databases/" + name + ".db"
-    
+
+    def hasKey(self, key):
+        shelf = shelve.open(self.fileName)
+        value = shelf.has_key(key)
+
+        shelf.close()
+        return value
+
+    def delete(self, key):
+        shelf = shelve.open(self.fileName)
+        del shelf[key]
+
+        shelf.close()
+
     def get(self, key):
         shelf = shelve.open(self.fileName)
         value = shelf[key]
