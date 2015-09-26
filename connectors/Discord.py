@@ -100,7 +100,7 @@ class Discord(Connector):
 
     def reply(self, envelope, message):
         self.logger.debug("Sending reply to " + envelope.sender)
-        self.api.channels.send(self.token, envelope.channel, message)
+        self.api.channels.send(self.token, envelope.channel, "<@{}> {}".format(envelope.sender, message), mentions=[envelope.sender])
 
     def whisper(self, envelope, message):
         pass
@@ -110,7 +110,6 @@ class Discord(Connector):
 
     def getUser(self, userID):
         pass
-
 
     def messageConsumer(self):
         self.logger.debug("Spawning messageConsumer thread")
@@ -122,10 +121,11 @@ class Discord(Connector):
 
             # Parse raw message
             message = self.parseMessageData(rawMessage)
+            if not message: continue
 
             # If incoming message is a MESSAGE text
             if(message.type == messageType.MESSAGE):
-                self.core.event.notify("message",  message=newMessage)
+                self.core.event.notify("message",  message=message)
 
                 if(message.content.startswith(self.core.config.trigger)):
                     message.content = message.content[1:]
@@ -308,7 +308,7 @@ class channels(_api):
         return self.request("GET", "channels/" + channelID, token)
 
     def send(self, token, channelID, content, mentions=[]):
-        return self.request("POST", "channels/" + channelID + "/messages", postData={"content": content, "nonce": random.getrandbits(64), "mentions":mentions}, token=token)
+        return self.request("POST", "channels/" + channelID + "/messages", postData={"content": content, "mentions":mentions}, token=token)
 
     def typing(self, token, channelID):
         return self.request("POST", "channels/" + channelID + "/typing", token)

@@ -19,9 +19,12 @@ class messageType:
     PRESSENCE = 1
 
 class Envelope():
-    def __init__(self, sender, channel):
+    def __init__(self, sender, channel, **kwargs):
         self.sender = sender
         self.channel = channel
+
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 class Message():
     def __init__(self, type, senderID, channelID, content=None, timestamp=time.time()):

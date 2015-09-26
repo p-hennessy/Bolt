@@ -14,13 +14,18 @@
 """
 
 class User():
-    def __init__(self, id, username, isAdmin=False, realName=None, email=None):
+    def __init__(self, id, username, isAdmin=False, email=None):
         self.id = id
         self.username = username
-        self.realName = realName
         self.email = email
         self.isAdmin = False
         self._access = 0
+
+    def __call__(self):
+        return self.id
+
+    def __str__(self):
+        return self.getName()
 
     def setAccess(self, access):
         self._access = access
@@ -28,8 +33,5 @@ class User():
     def getAccess(self):
         return self._access
 
-    def getPreferedName(self):
-        if(self.realName != None and len(self.realName) > 0):
-            return self.realName
-        else:
-            return self.username
+    def getName(self):
+        return self.username
