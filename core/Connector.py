@@ -30,11 +30,7 @@ class Connector():
         pass
 
     @abstractmethod
-    def send(self, envelope, message):
-        pass
-
-    @abstractmethod
-    def emote(self, envelope, message):
+    def send(self, envelope, message, mentions=[]):
         pass
 
     @abstractmethod

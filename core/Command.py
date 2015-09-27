@@ -48,9 +48,10 @@ class CommandManager():
         self.core = core
 
     def check(self, message):
-        for key, command in self.commands.iteritems():
-            if(re.search(command.invocation, message.content)):
-                command.invoke(message)
+        if(message.content.startswith(self.core.config.trigger)):
+            for key, command in self.commands.iteritems():
+                if(re.search(command.invocation, message.content[1:])):
+                    command.invoke(message)
 
     def getCommands(self):
         """

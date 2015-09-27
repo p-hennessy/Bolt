@@ -92,11 +92,9 @@ class Discord(Connector):
         self.connected = False
         self.socket.close()
 
-    def send(self, envelope, message):
-        pass
-
-    def emote(self, envelope, message):
-        pass
+    def send(self, envelope, message, mentions=[]):
+        self.logger.debug("Sending message to channel " + envelope.channel)
+        self.api.channels.send(self.token, envelope.channel, "{}".format(message), mentions=mentions)
 
     def reply(self, envelope, message):
         self.logger.debug("Sending reply to " + envelope.sender)
@@ -115,7 +113,8 @@ class Discord(Connector):
         self.logger.debug("Spawning messageConsumer thread")
 
         while self.connected:
-            time.sleep(0.1)
+            # Sleep is good for the body; also so we don't hog the CPU polling the socket
+            time.sleep(0.5)
 
             # Read data off of socket
             rawMessage = self.readSocket()
@@ -128,10 +127,7 @@ class Discord(Connector):
             # If incoming message is a MESSAGE text
             if(message.type == messageType.MESSAGE):
                 self.core.event.notify("message",  message=message)
-
-                if(message.content.startswith(self.core.config.trigger)):
-                    message.content = message.content[1:]
-                    self.core.command.check(message)
+                self.core.command.check(message)
 
             # If incoming message is PRESSENCE update
             elif(type == messageType.PRESSENCE):
@@ -160,8 +156,7 @@ class Discord(Connector):
                     return None
 
             except ValueError as e:
-                print "0"
-                return None
+                continue
             except SSLError as e:
                 # Raised when we can't read the entire buffer at once
                 if e.errno == 2:
@@ -188,49 +183,9 @@ class Discord(Connector):
             channel = message['d']['channel_id']
 
         else:
-            print message
             return None
 
         return Message(type, sender, channel, content, timestamp=time.time())
-
-
-    def parseLoginData(self, data):
-
-        self.users = {}
-        self.servers = []
-        self.channels = {}
-        self.heartbeatInterval = data["d"]["heartbeat_interval"]
-
-        for guild in data["d"]["guilds"]:
-
-            newServer = Server(
-                guild["id"],
-                guild["name"]
-            )
-
-            for channel in guild["channels"]:
-                if(channel["type"] == "text"):
-                    newChannel = Channel(
-                        channel["id"],
-                        channel["name"]
-                    )
-
-                    newServer.addChannel(newChannel)
-
-            self.servers.append(newServer)
-
-            for member in guild["members"]:
-                newUser = User(
-                    member["user"]["id"],
-                    member["user"]["username"]
-                )
-
-                if member["user"]["id"] in self.users:
-                    continue
-                else:
-                    self.users[ member["user"]["id"] ] = newUser
-
-
 
 # Super class for all API calls
 class _api():
