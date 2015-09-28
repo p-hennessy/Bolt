@@ -34,7 +34,7 @@ class EventManager():
 
     def notify(self, event, **kwargs):
         for callback in self.eventSubscriptions[event]:
-            callback(kwargs)
+            callback(**kwargs)
 
     def subscribe(self, event, callback):
         if(callback not in self.eventSubscriptions[event]):

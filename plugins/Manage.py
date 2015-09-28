@@ -52,7 +52,7 @@ class Manage(Plugin):
         else:
             self.say(msg.channel, "I don't have that command!")
 
-    @command("^plugin")
+    @command("^plugin (list|[A-Za-z]+ (enable|disable|reload|status))")
     def plugin(self, msg):
         """*Plugin* : Allows one to manage plugins
 Usage:

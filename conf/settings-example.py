@@ -18,19 +18,19 @@ import logging
 class Config():
 
     # Name the bot will refer to itself; will change name on server if it is not this
-    name = "Arbot"
+    name = "Arcbot"
 
     # Default command trigger. Messages that being with this are considered commands
     trigger = "."
 
     # Log level: https://docs.python.org/2/library/logging.html#logging-levels
-    loglevel = logging.DEBUG
+    loglevel = logging.INFO
 
     # Connector to use
     connector = "Discord"
     connectorOptions = {
-        "email": "pmh35480@gmail.com",
-        "password": "clambotpassword"
+        "email": "",
+        "password": ""
     }
 
     # Names of plugins to be loaded. Will search the "plugin/" directory
