@@ -1,2 +1,3 @@
 *.pyc
 *.db
+unhandled_messages.txt

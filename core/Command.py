@@ -52,6 +52,10 @@ class CommandManager():
             for key, command in self.commands.iteritems():
                 if(re.search(command.invocation, message.content[1:])):
                     command.invoke(message)
+                    return
+
+            self.core.connection.send(message, "I dont have that command")
+
 
     def getCommands(self):
         """

@@ -27,3 +27,13 @@ class Plugin(object):
 
     def deactivate(self):
         pass
+
+    # Exposed methods for Plugin use
+    def reply(self, envelope, message):
+        self.core.connection.reply(envelope, message)
+
+    def say(self, channel, message):
+        self.core.connection.send(channel, message)
+
+    def whisper(self, user, message):
+        pass

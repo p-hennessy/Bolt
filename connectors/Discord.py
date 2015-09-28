@@ -79,6 +79,7 @@ class Discord(Connector):
         self.connected = True
 
         self.logger.info("Succesful login to Discord")
+        self.core.event.notify('connect')
 
         self.keepAliveThread = threading.Thread(target=self.keepAlive, name="KeepAliveThread")
         self.keepAliveThread.daemon = True
@@ -89,19 +90,25 @@ class Discord(Connector):
         self.messageConsumerThread.start()
 
     def disconnect(self):
+        self.core.event.notify('disconnect')
         self.connected = False
-        self.socket.close()
 
-    def send(self, envelope, message, mentions=[]):
-        self.logger.debug("Sending message to channel " + envelope.channel)
-        self.api.channels.send(self.token, envelope.channel, "{}".format(message), mentions=mentions)
+        self.keepAliveThread.join()
+        self.messageConsumerThread.join()
+
+        self.socket.close()
+        self.logger.info("Succesful logout from Discord")
+
+    def send(self, channel, message):
+        self.logger.debug("Sending message to channel " + channel)
+        self.api.channels.send(self.token, channel, "{}".format(message))
 
     def reply(self, envelope, message):
         self.logger.debug("Sending reply to " + envelope.sender)
         self.api.channels.send(self.token, envelope.channel, "<@{}> {}".format(envelope.sender, message), mentions=[envelope.sender])
 
-    def whisper(self, envelope, message):
-        pass
+    def whisper(self, sender, message):
+        self.logger.debug("Whisper to " + envelope.sender)
 
     def getUsers(self):
         pass
@@ -183,9 +190,35 @@ class Discord(Connector):
             channel = message['d']['channel_id']
 
         else:
+            with open('unhandled_messages.txt', "w+") as file:
+                file.write(json.dumps(message))
+
             return None
 
         return Message(type, sender, channel, content, timestamp=time.time())
+
+    def parseLoginData(self, data):
+        self.users = {}
+        self.servers = {}
+        self.channels = {}
+        self.heartbeatInterval = data["d"]["heartbeat_interval"]
+
+        print json.dumps(data)
+
+        for guild in data["d"]["guilds"]:
+            guildID = guild['id']
+
+            print json.dumps(guild)
+
+            self.servers[guildID] = []
+
+            for channel in guild["channels"]:
+                print channel
+
+
+
+
+
 
 # Super class for all API calls
 class _api():
@@ -262,6 +295,9 @@ class channels(_api):
     def send(self, token, channelID, content, mentions=[]):
         return self.request("POST", "channels/" + channelID + "/messages", postData={"content": content, "mentions":mentions}, token=token)
 
+    def directMessage(self, token):
+        pass
+
     def typing(self, token, channelID):
         return self.request("POST", "channels/" + channelID + "/typing", token)
 
@@ -274,6 +310,9 @@ class guilds(_api):
 
     def members(self, token, serverID):
         return self.request("GET", "guilds/" + serverID + "/members", token)
+
+    def createChannel(self, token, serverID, channelName, type):
+        return self.request("POST", "guilds/" + serverID + "/channels", token, postData={"name":channelName, "type": type})
 
     def channels(self, token, serverID):
         return self.request("GET", "guilds/" + serverID + "/channels", token)

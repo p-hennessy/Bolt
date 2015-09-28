@@ -15,6 +15,7 @@
 """
 
 import sys
+import os
 import imp
 import logging
 import inspect
@@ -25,8 +26,31 @@ class PluginManager():
     def __init__(self, core):
         self.core = core
         self.plugins = {}
+
         self.logger = logging.getLogger("core.PluginManager")
+        self.findPlugins()
         sys.path.append("plugins")
+
+    def findPlugins(self):
+        for file in os.listdir("plugins"):
+            if(file.endswith(".py") and not file.startswith('__')):
+                name = os.path.splitext(file)[0]
+                self.plugins[name] = {"instance": None, "status": "Disabled"}
+
+    def getPluginNames(self):
+        return self.plugins.keys()
+
+    def getPlugin(self, pluginName):
+        if(pluginName in self.plugins):
+            return self.plugins[pluginName]
+        else:
+            return None
+
+    def exists(self, pluginName):
+        return pluginName in self.plugins
+
+    def status(self, pluginName):
+        return self.getPlugin(pluginName)["status"]
 
     def load(self, moduleName):
         """
@@ -79,7 +103,7 @@ class PluginManager():
                 self.core.event.register(getattr(callback, "event"))
 
         # Push plugin to our hashtable
-        self.plugins[plugin.name] = plugin
+        self.plugins[plugin.name] = {"instance":plugin, "status": "Enabled"}
         self.logger.info("Loaded plugin \"" + plugin.name + "\"")
 
     def unload(self, pluginName):
@@ -110,7 +134,7 @@ class PluginManager():
                 self.core.command.unregister(callback.__name__)
 
         # Remove from our hashtable
-        del self.plugins[pluginName]
+        self.plugins[plugin.name] = {"instance":None, "status": "Disabled"}
         self.logger.info("Unloaded plugin \"" + plugin.name + "\"")
 
     def reload(self, pluginName):
@@ -125,9 +149,13 @@ class PluginManager():
                 None
         """
 
-        if(pluginName not in self.plugins):
-            self.logger.warning("Unable to reload plugin " + pluginName + ", plugin not loaded")
+        plugin = self.getPlugin(pluginName)
+
+        if not plugin:
             return
 
-        self.unload(pluginName)
-        self.load(pluginName)
+        elif(plugin['status'] == 'Disabled'):
+            self.load(pluginName)
+        else:
+            self.unload(pluginName)
+            self.load(pluginName)

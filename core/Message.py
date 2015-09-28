@@ -13,18 +13,16 @@
         by the Free Software Foundation
 """
 import time
+import shlex
 
 class messageType:
     MESSAGE = 0
     PRESSENCE = 1
 
 class Envelope():
-    def __init__(self, sender, channel, **kwargs):
+    def __init__(self, user, channel):
         self.sender = sender
         self.channel = channel
-
-        for key, value in kwargs.items():
-            setattr(self, key, value)
 
 class Message():
     def __init__(self, type, senderID, channelID, content=None, timestamp=time.time()):
@@ -34,5 +32,8 @@ class Message():
         self.channel = channelID
         self.content = content
 
+    def asArgs(self):
+        return shlex.split(self.content)
+
     def __call__(self):
-        return Envelope(self.sender,self.channel)
+        return Envelope(self.sender, self.channel)

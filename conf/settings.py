@@ -35,7 +35,7 @@ class Config():
 
     # Names of plugins to be loaded. Will search the "plugin/" directory
     plugins = [
-        "Chat",
+        "Manage",
     ]
 
     # ACL

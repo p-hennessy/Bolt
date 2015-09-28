@@ -19,17 +19,6 @@ from core.Decorators import *
 
 class Chat(Plugin):
 
-    def activate(self):
-        pass
-
-    @command("^ping")
-    def ping(self, msg):
-        self.core.connection.reply(msg, "Pong")
-
-    #@subscriber("connection.logout")
-    def uptime(self, *args, **kwargs):
-        pass
-
-    @publisher("super.top")
-    def butt(self, *args, **kwargs):
-        pass
+    @command("^chat")
+    def chat(self, msg):
+        self.say(msg.channel, "I'm the chat plugin")
