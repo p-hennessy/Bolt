@@ -28,6 +28,10 @@ class Manage(Plugin):
     def startTimer(self, *args, **kwargs):
         self.loginTime = time.time()
 
+    @command("^test")
+    def test(self, msg):
+        self.reply(msg, "Dude it worked!")
+
     @command("^help")
     def help(self, msg):
         """*Help* : Shows docs for commands. This help page is kinda meta..."""
@@ -82,11 +86,13 @@ Usage:
                         self.say(msg.channel, "Plugin " + args[1] + " [" + self.core.plugin.status(args[1]) + "]")
                     elif(args[2] == "reload"):
                         self.core.plugin.reload(args[1])
-                        self.say(msg.channel, "Reloading " + args[1] + "plugin")
+                        self.say(msg.channel, "Reloading " + args[1] + " plugin")
                     elif(args[2] == "disable"):
-                        pass
+                        self.core.plugin.unload(args[1])
+                        self.say(msg.channel, "Disabled " + args[1] + " plugin")
                     elif(args[2] == "enable"):
-                        pass
+                        self.core.plugin.load(args[1])
+                        self.say(msg.channel, "Enabled " + args[1] + " plugin")
                     else:
                         self.say(msg.channel, "Operation doesnt exist")
                 else:

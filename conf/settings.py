@@ -18,7 +18,7 @@ import logging
 class Config():
 
     # Name the bot will refer to itself; will change name on server if it is not this
-    name = "CL4M-B0T"
+    name = "Arbot"
 
     # Default command trigger. Messages that being with this are considered commands
     trigger = "."

@@ -126,7 +126,7 @@ class PluginManager():
             return
 
         # Get plugin object from our hashtable
-        plugin = self.plugins[pluginName]
+        plugin = self.plugins[pluginName]["instance"]
 
         # Unregister plugin commands and events
         for name, callback in inspect.getmembers(plugin, inspect.ismethod):
@@ -134,8 +134,8 @@ class PluginManager():
                 self.core.command.unregister(callback.__name__)
 
         # Remove from our hashtable
-        self.plugins[plugin.name] = {"instance":None, "status": "Disabled"}
-        self.logger.info("Unloaded plugin \"" + plugin.name + "\"")
+        self.plugins[pluginName] = {"instance":None, "status": "Disabled"}
+        self.logger.info("Unloaded plugin \"" + pluginName + "\"")
 
     def reload(self, pluginName):
         """
