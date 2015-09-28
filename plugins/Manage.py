@@ -30,10 +30,30 @@ class Manage(Plugin):
 
     @command("^help")
     def help(self, msg):
-        pass
+        """*Help* : Shows docs for commands. This help page is kinda meta..."""
+
+        args = msg.asArgs()
+        commands = self.core.command.getCommands()
+
+        if(len(args) == 1):
+            self.say(msg.channel, "Type: help [command] to get help docs or help [list] to list commands")
+        elif( args[1] in commands ):
+            self.say(msg.channel, commands[args[1]].help())
+        elif( args[1] == "list"):
+            commandList = ""
+            for command in self.core.command.getCommands().keys():
+                commandList += "\n\t" + command
+
+            self.say(msg.channel, "Heres a list of my commands: " +  commandList)
+        else:
+            self.say(msg.channel, "I don't have that command!")
 
     @command("^plugin")
     def plugin(self, msg):
+        """*Plugin* : Allows one to manage plugins
+Usage:
+    plugin list
+    plugin [name] [enable|disable|reload|status]"""
         args = msg.asArgs()
 
         if(len(args) > 1):
@@ -62,7 +82,7 @@ class Manage(Plugin):
                         self.say(msg.channel, "Plugin " + args[1] + " [" + self.core.plugin.status(args[1]) + "]")
                     elif(args[2] == "reload"):
                         self.core.plugin.reload(args[1])
-                        self.say(msg.channel, "Reloading plugin")
+                        self.say(msg.channel, "Reloading " + args[1] + "plugin")
                     elif(args[2] == "disable"):
                         pass
                     elif(args[2] == "enable"):
@@ -74,10 +94,12 @@ class Manage(Plugin):
 
     @command("^ping")
     def ping(self, msg):
+        """*Ping* : Basic command to check if bot responds to messages"""
         self.say(msg.channel, "Pong")
 
     @command("^uptime")
     def uptime(self, msg):
+        """*Uptime*: Will show a human-readable time duration since the bot logged in."""
         uptime = time.time() - self.loginTime
 
         def readableTime(elapsedTime):

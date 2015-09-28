@@ -54,9 +54,6 @@ class CommandManager():
                     command.invoke(message)
                     return
 
-            self.core.connection.send(message, "I dont have that command")
-
-
     def getCommands(self):
         """
             Summary:

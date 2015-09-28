@@ -6,6 +6,7 @@ def command(trigger):
 
         if not hasattr(wrapper, 'is_command'):
             wrapper.__name__ = callback.__name__
+            wrapper.__doc__ = callback.__doc__
             setattr(wrapper, 'is_command', True)
             setattr(wrapper, 'trigger', trigger)
 
