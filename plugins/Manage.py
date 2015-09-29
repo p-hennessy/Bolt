@@ -34,7 +34,9 @@ class Manage(Plugin):
 
     @command("^help")
     def help(self, msg):
-        """*Help* : Shows docs for commands. This help page is kinda meta..."""
+        """
+        *Help* : Shows docs for commands. This help page is kinda meta...
+        """
 
         args = msg.asArgs()
         commands = self.core.command.getCommands()
@@ -54,10 +56,12 @@ class Manage(Plugin):
 
     @command("^plugin (list|[A-Za-z]+ (enable|disable|reload|status))")
     def plugin(self, msg):
-        """*Plugin* : Allows one to manage plugins
-Usage:
-    plugin list
-    plugin [name] [enable|disable|reload|status]"""
+        """
+        *Plugin* : Allows one to manage plugins
+        Usage:
+        plugin list
+        plugin [name] [enable|disable|reload|status]
+        """
         args = msg.asArgs()
 
         if(len(args) > 1):
@@ -100,12 +104,16 @@ Usage:
 
     @command("^ping")
     def ping(self, msg):
-        """*Ping* : Basic command to check if bot responds to messages"""
+        """
+        *Ping* : Basic command to check if bot responds to messages
+        """
         self.say(msg.channel, "Pong")
 
     @command("^uptime")
     def uptime(self, msg):
-        """*Uptime*: Will show a human-readable time duration since the bot logged in."""
+        """
+        *Uptime*: Will show a human-readable time duration since the bot logged in.
+        """
         uptime = time.time() - self.loginTime
 
         def readableTime(elapsedTime):

@@ -18,6 +18,9 @@
         by the Free Software Foundation
 """
 
+from __future__ import print_function
+import sys
+
 from core.Command import CommandManager
 from core.Event import EventManager
 from core.PluginManager import PluginManager
@@ -159,7 +162,6 @@ class Bot():
         try:
             connectorCandidate = find_module(self.config.connector)
             connectorModule = load_module(self.config.connector, *connectorCandidate)
-
             connector = getattr(connectorModule, self.config.connector)(core, **self.config.connectorOptions)
             self.logger.info("Loaded connector from: \"" +  connectorCandidate[1] + "\"")
 
@@ -169,7 +171,7 @@ class Bot():
             self.logger.critical("ImportError: " + str(e))
             exit(1)
         except AttributeError as e:
-            print e
+            print(e)
             self.logger.critical("Could not find connector class: " + self.config.connector)
             exit(1)
 

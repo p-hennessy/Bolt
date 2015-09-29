@@ -16,6 +16,7 @@
 import threading
 import re
 import logging
+import six
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ class CommandManager():
 
     def check(self, message):
         if(message.content.startswith(self.core.config.trigger)):
-            for key, command in self.commands.iteritems():
+            for key, command in six.iteritems(self.commands):
                 if(re.search(command.invocation, message.content[1:])):
                     command.invoke(message)
                     return
@@ -96,9 +97,12 @@ class CommandManager():
             Returns:
                 None
         """
-
+        import pprint
         name = callback.__name__
-        clazz = callback.im_class.__name__
+        try:
+            clazz = callback.im_class.__name__
+        except:
+            clazz = type(callback.__self__).__name__
 
         if( name in self.commands ):
             logger.warning("Duplicate command \"" + clazz + "." + name + "\". Skipping registration.")
