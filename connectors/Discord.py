@@ -20,7 +20,7 @@ from core.Message import *
 
 class Discord(Connector):
     def __init__(self, core, email, password):
-        super().__init__()
+        super(Discord, self).__init__()
         self.core = core
         self.logger = logging.getLogger("connector." + __name__)
 
