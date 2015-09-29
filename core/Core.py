@@ -157,11 +157,11 @@ class Bot():
         path.append("connectors")
 
         try:
-            connectorCanadiate = find_module(self.config.connector)
-            connectorModule = load_module(self.config.connector, *connectorCanadiate)
+            connectorCandidate = find_module(self.config.connector)
+            connectorModule = load_module(self.config.connector, *connectorCandidate)
 
             connector = getattr(connectorModule, self.config.connector)(core, **self.config.connectorOptions)
-            self.logger.info("Loaded connector from: \"" +  connectorCanadiate[1] + "\"")
+            self.logger.info("Loaded connector from: \"" +  connectorCandidate[1] + "\"")
 
             return connector
 
