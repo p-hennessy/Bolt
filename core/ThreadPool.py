@@ -14,7 +14,11 @@
 """
 
 import threading
-import Queue
+import six
+if six.PY2:
+    import Queue
+else:
+    import queue as Queue
 import time
 import logging
 
