@@ -1,4 +1,5 @@
-#! /usr/bin/python2.7
+#! /usr/bin/python
+from __future__ import print_function
 
 import requests
 import json
@@ -19,6 +20,7 @@ from core.Message import *
 
 class Discord(Connector):
     def __init__(self, core, email, password):
+        super().__init__()
         self.core = core
         self.logger = logging.getLogger("connector." + __name__)
 
@@ -75,7 +77,7 @@ class Discord(Connector):
         self.loginData = self.readSocket()
 
         # Set websocket to nonblocking
-        self.socket.sock.setblocking(0)
+        self.socket.sock.setblocking(1)
         self.connected = True
 
         self.logger.info("Succesful login to Discord")
@@ -99,7 +101,7 @@ class Discord(Connector):
         self.socket.close()
         self.logger.info("Succesful logout from Discord")
 
-    def send(self, channel, message):
+    def send(self, channel, message, mentions=[]):
         self.logger.debug("Sending message to channel " + channel)
         self.api.channels.send(self.token, channel, "{}".format(message))
 
@@ -108,7 +110,7 @@ class Discord(Connector):
         self.api.channels.send(self.token, envelope.channel, "<@{}> {}".format(envelope.sender, message), mentions=[envelope.sender])
 
     def whisper(self, sender, message):
-        self.logger.debug("Whisper to " + envelope.sender)
+        self.logger.debug("Whisper to " + message.sender)
 
     def getUsers(self):
         pass
@@ -203,17 +205,17 @@ class Discord(Connector):
         self.channels = {}
         self.heartbeatInterval = data["d"]["heartbeat_interval"]
 
-        print json.dumps(data)
+        print(json.dumps(data))
 
         for guild in data["d"]["guilds"]:
             guildID = guild['id']
 
-            print json.dumps(guild)
+            print(json.dumps(guild))
 
             self.servers[guildID] = []
 
             for channel in guild["channels"]:
-                print channel
+                print(channel)
 
 
 
@@ -230,18 +232,8 @@ class _api():
 
         url = 'http://{}/api/{}'.format(domain, request)
 
-        if(method == "POST"):
-            response = requests.post(url, json=postData, headers=headers)
-        elif(method == "GET"):
-            response = requests.get(url, postData, headers=headers)
-        elif(method == "DELETE"):
-            response = requests.delete(url, postData, headers=headers)
-        elif(method == "HEAD"):
-            response = requests.head(url, postData, headers=headers)
-        elif(method == "OPTIONS"):
-            response = requests.options(url, postData, headers=headers)
-        elif(method == "PUT"):
-            response = requests.put(url, postData, headers=headers)
+        if(method.lower() in ["post", "get", "delete", "head", "options", "put"]):
+            response = requests.request(method.lower(), url, json=postData, headers=headers)
         else:
             raise Exception("Invalid HTTP request method")
 
@@ -272,23 +264,14 @@ class auth(_api):
         return self.request("POST", "auth/logout", token)
 
 class users(_api):
-    def __init__(self):
-        pass
-
     def info(self, token, userID):
         return self.request("GET", "users/" + userID, token)
 
 class gateway(_api):
-    def __init__(self):
-        pass
-
     def __call__(self, token):
         return self.request("GET", "gateway", token)
 
 class channels(_api):
-    def __init__(self):
-        pass
-
     def info(self, token, channelID):
         return self.request("GET", "channels/" + channelID, token)
 
@@ -302,9 +285,6 @@ class channels(_api):
         return self.request("POST", "channels/" + channelID + "/typing", token)
 
 class guilds(_api):
-    def __init__(self):
-        pass
-
     def info(self, token, serverID):
         return self.request("GET", "guilds/" + serverID, token)
 
@@ -318,8 +298,5 @@ class guilds(_api):
         return self.request("GET", "guilds/" + serverID + "/channels", token)
 
 class voice(_api):
-    def __init__(self):
-        pass
-
     def regions(self):
         self.request("GET", "voice/regions", token)

@@ -18,9 +18,11 @@
         by the Free Software Foundation
 """
 
+from __future__ import print_function
+import sys
+
 from core.Command import CommandManager
 from core.Event import EventManager
-from core.MessageConsumer import MessageConsumer
 from core.PluginManager import PluginManager
 
 import threading
@@ -141,11 +143,10 @@ class Bot():
         path.append("connectors")
 
         try:
-            connectorCanadiate = find_module(self.config.connector)
-            connectorModule = load_module(self.config.connector, *connectorCanadiate)
-
+            connectorCandidate = find_module(self.config.connector)
+            connectorModule = load_module(self.config.connector, *connectorCandidate)
             connector = getattr(connectorModule, self.config.connector)(core, **self.config.connectorOptions)
-            self.logger.info("Loaded connector from: \"" +  connectorCanadiate[1] + "\"")
+            self.logger.info("Loaded connector from: \"" +  connectorCandidate[1] + "\"")
 
             return connector
 
@@ -153,7 +154,7 @@ class Bot():
             self.logger.critical("ImportError: " + str(e))
             exit(1)
         except AttributeError as e:
-            print e
+            print(e)
             self.logger.critical("Could not find connector class: " + self.config.connector)
             exit(1)
 
