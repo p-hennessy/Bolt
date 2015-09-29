@@ -30,6 +30,7 @@ def main():
 
     except KeyboardInterrupt:
         logger.info("Caught SIGINT from keyboard. Exiting")
+        bot.cleanup()
         sys.exit(0)
 
 if __name__ == '__main__':

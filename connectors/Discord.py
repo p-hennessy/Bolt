@@ -131,14 +131,17 @@ class Discord(Connector):
             message = self.parseMessageData(rawMessage)
             if not message: continue
 
-            # If incoming message is a MESSAGE text
-            if(message.type == messageType.MESSAGE):
-                self.core.event.notify("message",  message=message)
-                self.core.command.check(message)
+            self.core.threadPool.queueTask(self.handleMessage, message)
 
-            # If incoming message is PRESSENCE update
-            elif(type == messageType.PRESSENCE):
-                self.core.event.notify("pressence", message=message)
+    def handleMessage(self, message):
+        # If incoming message is a MESSAGE text
+        if(message.type == messageType.MESSAGE):
+            self.core.event.notify("message",  message=message)
+            self.core.command.check(message)
+
+        # If incoming message is PRESSENCE update
+        elif(type == messageType.PRESSENCE):
+            self.core.event.notify("pressence", message=message)
 
     def keepAlive(self):
         self.logger.debug("Spawning keepAlive thread at interval: " + str(self.heartbeatInterval))
