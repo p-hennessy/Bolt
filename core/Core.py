@@ -24,6 +24,7 @@ import sys
 from core.Command import CommandManager
 from core.Event import EventManager
 from core.PluginManager import PluginManager
+from core.ThreadPool import ThreadPool
 
 import threading
 from imp import load_module, find_module
@@ -43,11 +44,13 @@ class Bot():
         self.plugin = PluginManager(self)
         self.event = EventManager()
         self.command = CommandManager(self)
+        self.threadPool = ThreadPool(self.config.threadPoolQueueSize, self.config.threadedWorkers)
 
         # Setup connection
         self.connection = self.loadConnector(self)
 
         # Load plugins
+        self.logger.info("Loading Plugins")
         self.loadPlugins()
 
     def login(self):
@@ -55,6 +58,20 @@ class Bot():
 
     def logout(self):
         self.connection.disconnect()
+
+    def cleanup(self):
+        """
+            Summary:
+                Does any nessessary clean up (like killing threads) before the bot exits
+
+            Args:
+                None
+
+            Returns:
+                None
+        """
+
+        self.threadPool.joinThreads()
 
     def setupLogger(self):
         """

@@ -45,3 +45,10 @@ class Config():
         "member": 100,
         "guest": 10,
     }
+
+    # Thread Pool Execution
+    #   threadedWorkers - number of worker threads to be spawned that will carry out tasks for the bot
+    #   threadPoolQueueSize - size of queue for thread workers to consume from. Big size = more tasks can be queued; but more RAM used
+
+    threadedWorkers = 3
+    threadPoolQueueSize = 25

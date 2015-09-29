@@ -67,8 +67,8 @@ class PluginManager():
         """
 
         try:
-            pluginCanadiate = imp.find_module(moduleName)
-            pluginModule = imp.load_module(moduleName, *pluginCanadiate)
+            pluginCandidate = imp.find_module(moduleName)
+            pluginModule = imp.load_module(moduleName, *pluginCandidate)
         except ImportError as e:
             self.logger.error(e)
             return
