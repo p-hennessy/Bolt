@@ -1,4 +1,21 @@
-#! /usr/bin/python
+"""
+    Class Name : Discord Connector
+
+    Description:
+        Provides functionality for connecting to Discord chat server
+        This class is a subclass of core/Connector.py and implements the
+            required methods so the rest of the bot can talk to Discord
+
+    Contributors:
+        - Patrick Hennessy
+        - Aleksandr Tihomirov
+
+    License:
+        Arcbot is free software: you can redistribute it and/or modify it
+        under the terms of the GNU General Public License v3; as published
+        by the Free Software Foundation
+"""
+
 from __future__ import print_function
 
 import requests

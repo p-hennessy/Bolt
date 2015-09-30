@@ -79,7 +79,7 @@ class ThreadPool():
                 None
         """
         newWorker = Worker(self, len(self.workers) + 1)
-        self.workers.append(newThread)
+        self.workers.append(newWorker)
         newWorker.start()
 
     def joinThreads(self):
@@ -93,7 +93,7 @@ class ThreadPool():
             Returns:
                 None
         """
-        for thread in self.threads:
+        for thread in self.workers:
             thread.signalStop()
             thread.join()
 
