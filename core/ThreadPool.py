@@ -3,6 +3,7 @@
 
     Description:
         Class that will spawn threads to do work seperate to the main logic
+        Objects need call this the *addTask* method to request a worker to do something
 
     Contributors:
         - Patrick Hennessy
@@ -26,19 +27,21 @@ class ThreadPool():
     def __init__(self, taskQueueSize, numThreads):
         self.logger = logging.getLogger(__name__)
 
-        self.threads = []
+        # Init worker list and queue
+        self.workers = []
         self.tasks = Queue.Queue(taskQueueSize)
 
-        self.taskQueueSize = taskQueueSize
-
         self.logger.info("Spawning " + str(numThreads) + " worker threads.")
+
+        # Create worker threads
         for i in range(0, numThreads):
             self.addWorker()
 
     def queueTask(self, callable, *args, **kwargs):
         """
             Summary:
-                Puts task on the task queue
+                Puts task on the task queue for workers to pull from.
+                If task queue is full; will block until space opens up
 
             Args:
                 callable (func): Function object to be invoked by a Worker
@@ -54,12 +57,10 @@ class ThreadPool():
     def dequeueTask(self):
         """
             Summary:
-                Removes a task from the queue
+                Removes a task from the queue. Will block for half a second, and raise Queue.Empty exception when nothing is in queue
 
             Args:
-                callable (func): Function object to be invoked by a Worker
-                *args (list): Positional arguments passed to callable
-                **kwargs (dict): Keyword arguments passed to callable
+                None
 
             Returns:
                 None
@@ -67,28 +68,73 @@ class ThreadPool():
         return self.tasks.get(block=True, timeout=0.5)
 
     def addWorker(self):
-        newThread = Worker(self, len(self.threads) + 1)
-        self.threads.append(newThread)
-        newThread.start()
+        """
+            Summary:
+                Creates and starts a new worker thread
+
+            Args:
+                None
+
+            Returns:
+                None
+        """
+        newWorker = Worker(self, len(self.workers) + 1)
+        self.workers.append(newThread)
+        newWorker.start()
 
     def joinThreads(self):
+        """
+            Summary:
+                Will ask threads to halt their execution, and syncronize back with the main thread
+
+            Args:
+                None
+
+            Returns:
+                None
+        """
         for thread in self.threads:
             thread.signalStop()
             thread.join()
 
 class Worker(threading.Thread):
     def __init__(self, pool, num):
+
+        # Call super constructor for thread to name it; Also Python 2.7 requires it
         super(Worker, self).__init__(name="WorkerThread" + str(num))
         self.name = "WorkerThread" + str(num)
-        self.busy = False
+
+        # Sentinal value used to kill our thread
         self.running = True
 
+        # Reference to parent object to get tasks from
         self.pool = pool
 
     def signalStop(self):
+        """
+            Summary:
+                Tells the thread that it should stop running
+
+            Args:
+                None
+
+            Returns:
+                None
+        """
         self.running = False
 
     def run(self):
+        """
+            Summary:
+                Part of the Thread superclass; this method is where the logic for our thread resides.
+                Loops continously while trying to pull a task from the ThreadPool's task queue and execute that task
+
+            Args:
+                None
+
+            Returns:
+                None
+        """
         while(self.running):
             # Dequeue task will block and thread will wait for a task
             try:
