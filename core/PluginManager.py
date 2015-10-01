@@ -32,6 +32,17 @@ class PluginManager():
         sys.path.append("plugins")
 
     def findPlugins(self):
+        """
+            Summary:
+                Scans through plugin directory looking for potential plugins.
+                Appends any plugin it finds to class-level dict
+
+            Args:
+                None
+
+            Returns:
+                None
+        """
         for file in os.listdir("plugins"):
             if not file.startswith('__'):
                 if file.endswith(".py"):
@@ -43,18 +54,58 @@ class PluginManager():
                         self.plugins[file] = {"instance": None, "status": "Disabled"}
 
     def getPluginNames(self):
+        """
+            Summary:
+                Gets a list of plugin names
+
+            Args:
+                None
+
+            Returns:
+                (list): List of plugin names
+        """
         return self.plugins.keys()
 
     def getPlugin(self, pluginName):
-        if(pluginName in self.plugins):
+        """
+            Summary:
+                Gets a plugin instance if it exists
+
+            Args:
+                pluginName (str): Name used internally for the plugin. Should be the same name as the plugin's class
+
+            Returns:
+                (dict): Dict containing data about a pariticular plugin, including the plugin class
+        """
+        if(self.exists(pluginName)):
             return self.plugins[pluginName]
         else:
             return None
 
     def exists(self, pluginName):
+        """
+            Summary:
+                Checks to see if a plugin exists in our bot
+
+            Args:
+                pluginName (str): Name used internally for the plugin. Should be the same name as the plugin's class
+
+            Returns:
+                (bool): Whether or not a plugin exists
+        """
         return pluginName in self.plugins
 
     def status(self, pluginName):
+        """
+            Summary:
+                Gets the status of a plugin
+
+            Args:
+                pluginName (str): Name used internally for the plugin. Should be the same name as the plugin's class
+
+            Returns:
+                (str): String object indicating the status of the plugin; Enabled, Crashed, or Disabled
+        """
         return self.getPlugin(pluginName)["status"]
 
     def load(self, moduleName):
