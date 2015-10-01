@@ -93,6 +93,8 @@ class Discord(Connector):
         self.writeSocket(initData)
         self.loginData = self.readSocket()
 
+        self.uid = self.loginData["d"]["user"]["id"]
+
         # Set websocket to nonblocking
         self.socket.sock.setblocking(1)
         self.connected = True
@@ -241,6 +243,9 @@ class Discord(Connector):
             with open('unhandled_messages.txt', "w+") as file:
                 file.write(json.dumps(message))
 
+            return None
+
+        if(sender == self.uid):
             return None
 
         return Message(type, sender, channel, content, timestamp=time.time())
