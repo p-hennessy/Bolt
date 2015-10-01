@@ -33,7 +33,12 @@ class Message():
         self.content = content
 
     def asArgs(self):
-        return shlex.split(self.content)
+        try:
+            split = shlex.split(self.content)
+        except ValueError:
+            split = self.content.split(" ")
+
+        return split
 
     def __call__(self):
         return Envelope(self.sender, self.channel)
