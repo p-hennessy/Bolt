@@ -26,7 +26,7 @@ Currently, Arcbot only supports the unoffical Discord API connector. A full API 
 More connector support is coming soon: (Slack, Hipchat, Gitter)
 
 ### Plugin System
-Using the power of Python, Arcbot gets all of it's functionality from plugins. The plugin system takes care of all the annoying code behind the scenes, so the code in for plugin is minimal. This is why this bot is so simple to extend. A sample plugin can be found at `plugins/Sample.py`
+Using the power of Python, Arcbot gets all of it's functionality from plugins. The plugin system takes care of all the annoying code behind the scenes, so the code in for plugin is minimal. This is why this bot is so simple to extend. A sample plugin can be found at `plugins/Sample.py`, a plugin can be either a single python file or a large module folder with many files (in this case the main class should be in __init__.py file).
 
 ### ACL's
 **Access control lists** are a way to enforce security policies for users of the bot. You may not want everyone in the channel to be able to disable plugins, or have the bot start Jenkins builds, so this is a way to assign user access and restrict what commands they can use.
