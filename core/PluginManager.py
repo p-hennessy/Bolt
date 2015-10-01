@@ -145,7 +145,7 @@ class PluginManager():
         # Register plugin commands and events
         for name, callback in inspect.getmembers(plugin, inspect.ismethod):
             if( hasattr(callback, "is_command") ):
-                self.core.command.register(getattr(callback, "trigger"), callback)
+                self.core.command.register(getattr(callback, "trigger"), callback, useDefaultTrigger=getattr(callback, "useDefaultTrigger"), access=getattr(callback, "access"))
 
             if( hasattr(callback, "is_subscriber") ):
                 self.core.event.subscribe(getattr(callback, "event"), callback)

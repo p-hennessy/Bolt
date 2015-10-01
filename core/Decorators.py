@@ -1,5 +1,5 @@
 # Adds attributes to decorated methods that will be picked up when plugin is loaded
-def command(trigger):
+def command(trigger, access=0, useDefaultTrigger=True):
     def decorate(callback):
         def wrapper(self, msg):
             return callback(self, msg)
@@ -9,6 +9,8 @@ def command(trigger):
             wrapper.__doc__ = callback.__doc__
             setattr(wrapper, 'is_command', True)
             setattr(wrapper, 'trigger', trigger)
+            setattr(wrapper, 'access', access)
+            setattr(wrapper, 'useDefaultTrigger', useDefaultTrigger)
 
         return wrapper
     return decorate
