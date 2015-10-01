@@ -93,6 +93,8 @@ class Discord(Connector):
         self.writeSocket(initData)
         self.loginData = self.readSocket()
 
+        self.uid = self.loginData["d"]["user"]["id"]
+
         # Set websocket to nonblocking
         self.socket.sock.setblocking(1)
         self.connected = True
@@ -116,7 +118,7 @@ class Discord(Connector):
         self.messageConsumerThread.join()
 
         self.socket.close()
-        self.logger.info("Succesful logout from Discord")
+        self.logger.info("Disconnected from Discord")
 
     def send(self, channel, message, mentions=[]):
         self.logger.debug("Sending message to channel " + channel)
@@ -165,13 +167,27 @@ class Discord(Connector):
     def keepAlive(self):
         self.logger.debug("Spawning keepAlive thread at interval: " + str(self.heartbeatInterval))
 
+        startTime = time.time()
+
         while self.connected:
-            time.sleep((self.heartbeatInterval / 1000) - 1)
-            self.writeSocket({"op":1,"d": time.time()})
-            self.logger.debug("KeepAlive")
+            now = time.time()
+
+            if((now - startTime) >= (self.heartbeatInterval/1000) - 1):
+                self.writeSocket({"op":1,"d": time.time()})
+                self.logger.debug("KeepAlive")
+
+                startTime = time.time()
+
+            time.sleep(0.5)
 
     def writeSocket(self, data):
-        self.socket.send(json.dumps(data))
+        try:
+            self.socket.send(json.dumps(data))
+        except socket_error as e:
+            if e.errno == 104:
+                self.logger.warning("Connection reset by peer")
+                self.core.threadPool.queueTask(self.handleInteruption)
+                self.connected = False
 
     def readSocket(self):
         data = ""
@@ -192,10 +208,22 @@ class Discord(Connector):
                     return None
                 raise
             except socket_error as e:
+                # Raised when connection reset by peer
+                if e.errno == 104:
+                    self.logger.warning("Connection reset by peer")
+                    self.core.threadPool.queueTask(self.handleInteruption)
+                    self.connected = False
+
+                    return None
+
                 # Raised when send buffer is full; we must try again
                 if e.errno == 11:
                     return None
                 raise
+
+    def handleInteruption(self):
+        self.disconnect()
+        self.connect()
 
     def parseMessageData(self, message):
         type = content = sender = channel = content = timestamp = None
@@ -215,6 +243,9 @@ class Discord(Connector):
             with open('unhandled_messages.txt', "w+") as file:
                 file.write(json.dumps(message))
 
+            return None
+
+        if(sender == self.uid):
             return None
 
         return Message(type, sender, channel, content, timestamp=time.time())

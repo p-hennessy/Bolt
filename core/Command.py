@@ -21,10 +21,11 @@ import six
 logger = logging.getLogger(__name__)
 
 class Command():
-    def __init__(self, invocation, callback, access=0):
+    def __init__(self, invocation, callback, useDefaultTrigger=True, access=0):
         self.invocation = invocation
         self.access = access
         self.callback = callback
+        self.useDefaultTrigger = useDefaultTrigger
 
     def __str__(self):
         return self.invocation
@@ -49,9 +50,14 @@ class CommandManager():
         self.core = core
 
     def check(self, message):
-        if(message.content.startswith(self.core.config.trigger)):
-            for key, command in six.iteritems(self.commands):
-                if(re.search(command.invocation, message.content[1:])):
+        for key, command in six.iteritems(self.commands):
+            if(command.useDefaultTrigger):
+                if(message.content.startswith(self.core.config.trigger)):
+                    if(re.search(command.invocation, message.content[len(self.core.config.trigger):])):
+                        command.invoke(message)
+                        return
+            else:
+                if(re.search(command.invocation, message.content)):
                     command.invoke(message)
                     return
 
@@ -84,7 +90,7 @@ class CommandManager():
         else:
             return None
 
-    def register(self, invocation, callback, access=0):
+    def register(self, invocation, callback, useDefaultTrigger=True, access=0):
         """
             Summary:
                 Registers a command
@@ -113,6 +119,7 @@ class CommandManager():
             self.commands[name] = Command(
                 invocation,
                 callback,
+                useDefaultTrigger,
                 access
             )
 
