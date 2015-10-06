@@ -87,7 +87,7 @@ class Discord(Connector):
                     "$referring_domain":""
                 },
             },
-            "v": 2
+            "v": 3
         }
 
         self.writeSocket(initData)
@@ -240,7 +240,7 @@ class Discord(Connector):
             channel = message['d']['channel_id']
 
         else:
-            with open('unhandled_messages.txt', "w+") as file:
+            with open('unhandled_messages.txt', "a+") as file:
                 file.write(json.dumps(message))
 
             return None
@@ -281,7 +281,7 @@ class _api():
     def request(self, method, request="?", token=None, postData={}, domain="discordapp.com"):
         headers={"authorization": token}
 
-        url = 'http://{}/api/{}'.format(domain, request)
+        url = 'https://{}/api/{}'.format(domain, request)
 
         if(method.lower() in ["post", "get", "delete", "head", "options", "put"]):
             response = requests.request(method.lower(), url, json=postData, headers=headers)

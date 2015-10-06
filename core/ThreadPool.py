@@ -15,13 +15,14 @@
 """
 
 import threading
-import six
-if six.PY2:
-    import Queue
-else:
-    import queue as Queue
 import time
 import logging
+
+try:
+    import queue
+except ImportError:
+    import Queue as queue
+
 
 class ThreadPool():
     def __init__(self, taskQueueSize, numThreads):
@@ -29,7 +30,7 @@ class ThreadPool():
 
         # Init worker list and queue
         self.workers = []
-        self.tasks = Queue.Queue(taskQueueSize)
+        self.tasks = queue.Queue(taskQueueSize)
 
         self.logger.info("Spawning " + str(numThreads) + " worker threads.")
 
@@ -139,7 +140,7 @@ class Worker(threading.Thread):
             # Dequeue task will block and thread will wait for a task
             try:
                 task = self.pool.dequeueTask()
-            except Queue.Empty as e:
+            except queue.Empty as e:
                 continue
 
             # Get task data
