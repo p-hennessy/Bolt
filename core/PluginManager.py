@@ -44,9 +44,14 @@ class PluginManager():
                 None
         """
         for file in os.listdir("plugins"):
-            if(file.endswith(".py") and not file.startswith('__')):
-                name = os.path.splitext(file)[0]
-                self.plugins[name] = {"instance": None, "status": "Disabled"}
+            if not file.startswith('__'):
+                if file.endswith(".py"):
+                    name = os.path.splitext(file)[0]
+                    self.plugins[name] = {"instance": None, "status": "Disabled"}
+                else:
+                    name = os.path.join('plugins', file, '__init__.py')
+                    if os.path.exists(name):
+                        self.plugins[file] = {"instance": None, "status": "Disabled"}
 
     def getPluginNames(self):
         """

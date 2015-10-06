@@ -140,7 +140,10 @@ class CommandManager():
             command = self.commands[commandName]
 
             name = command.callback.__name__
-            clazz = command.callback.im_class.__name__
+            try:
+                clazz = command.im_class.__name__
+            except:
+                clazz = type(command.__self__).__name__
 
             del self.commands[commandName]
             logger.debug("Unregistered command \"" + clazz + "." + name + "\"")
