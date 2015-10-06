@@ -103,8 +103,8 @@ class CommandManager():
             Returns:
                 None
         """
-        import pprint
         name = callback.__name__
+
         try:
             clazz = callback.im_class.__name__
         except:
@@ -140,10 +140,16 @@ class CommandManager():
             command = self.commands[commandName]
 
             name = command.callback.__name__
+
+            print(dir(command.callback))
+            print(type(command.callback.__self__))
+
+            return
+
             try:
-                clazz = command.im_class.__name__
+                clazz = command.callback.im_class.__name__
             except:
-                clazz = type(command.__self__).__name__
+                clazz = type(command.callback.__self__).__name__
 
             del self.commands[commandName]
             logger.debug("Unregistered command \"" + clazz + "." + name + "\"")
