@@ -188,6 +188,10 @@ class Discord(Connector):
                 self.logger.warning("Connection reset by peer")
                 self.core.threadPool.queueTask(self.handleInteruption)
                 self.connected = False
+        except websocket.WebSocketConnectionClosedException:
+            self.logger.warning("Websocket unexpectedly closed; attempting reconnection.")
+            self.core.threadPool.queueTask(self.handleInteruption)
+            self.connected = False
 
     def readSocket(self):
         data = ""
