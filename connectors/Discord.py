@@ -124,11 +124,17 @@ class Discord(Connector):
 
     def send(self, channel, message, mentions=[]):
         self.logger.debug("Sending message to channel " + channel)
-        self.api.channels.send(self.token, channel, "{}".format(message))
+        try:
+            self.api.channels.send(self.token, channel, "{}".format(message))
+        except:
+            self.logger.warning('Send message to {} failed'.format(channel))
 
     def reply(self, envelope, message):
         self.logger.debug("Sending reply to " + envelope.sender)
-        self.api.channels.send(self.token, envelope.channel, "<@{}> {}".format(envelope.sender, message), mentions=[envelope.sender])
+        try:
+            self.api.channels.send(self.token, envelope.channel, "<@{}> {}".format(envelope.sender, message), mentions=[envelope.sender])
+        except:
+            self.logger.warning('Reply to {} failed'.format(envelope.sender))
 
     def whisper(self, sender, message):
         self.logger.debug("Whisper to " + message.sender)
@@ -190,6 +196,8 @@ class Discord(Connector):
                 self.logger.warning("Connection reset by peer")
                 self.core.threadPool.queueTask(self.handleInteruption)
                 self.connected = False
+            else:
+                raise
         except websocket.WebSocketConnectionClosedException:
             self.logger.warning("Websocket unexpectedly closed; attempting reconnection.")
             self.core.threadPool.queueTask(self.handleInteruption)
@@ -295,7 +303,7 @@ class _api():
             raise Exception("Invalid HTTP request method")
 
         if(response.status_code not in range(200, 206)):
-            raise Exception("API responded with HTTP code  " + str(response.status_code) )
+            raise Exception("API responded with HTTP code  " + str(response.status_code) + "\n\n" + response.text)
         else:
             if(response.text):
                 returnData = json.loads(response.text)
