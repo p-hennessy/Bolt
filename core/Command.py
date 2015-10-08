@@ -143,11 +143,6 @@ class CommandManager():
 
             name = command.callback.__name__
 
-            print(dir(command.callback))
-            print(type(command.callback.__self__))
-
-            return
-
             try:
                 clazz = command.callback.im_class.__name__
             except:
