@@ -49,13 +49,15 @@ class CommandManager():
         self.commands = {}
         self.core = core
 
-    def check(self, message):
+    def checkMessage(self, message):
         for key, command in six.iteritems(self.commands):
+            # Checks to see if message is a command and uses default trigger defined in conf/settings.py
             if(command.useDefaultTrigger):
                 if(message.content.startswith(self.core.config.trigger)):
                     if(re.search(command.invocation, message.content[len(self.core.config.trigger):])):
                         command.invoke(message)
                         return
+            # Will invoke command if it matches command invocation and doesn't use trigger
             else:
                 if(re.search(command.invocation, message.content)):
                     command.invoke(message)

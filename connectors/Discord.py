@@ -96,7 +96,7 @@ class Discord(Connector):
         self.uid = self.loginData["d"]["user"]["id"]
 
         # Set websocket to nonblocking
-        self.socket.sock.setblocking(1)
+        self.socket.sock.setblocking(0)
         self.connected = True
 
         self.logger.info("Succesful login to Discord")
@@ -116,6 +116,8 @@ class Discord(Connector):
 
         self.keepAliveThread.join()
         self.messageConsumerThread.join()
+
+        self.logger.debug('Joined MessageConsumer and KeepAlive threads')
 
         self.socket.close()
         self.logger.info("Disconnected from Discord")
@@ -158,7 +160,7 @@ class Discord(Connector):
         # If incoming message is a MESSAGE text
         if(message.type == messageType.MESSAGE):
             self.core.event.notify("message",  message=message)
-            self.core.command.check(message)
+            self.core.command.checkMessage(message)
 
         # If incoming message is PRESSENCE update
         elif(type == messageType.PRESSENCE):

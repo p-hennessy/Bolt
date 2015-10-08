@@ -70,7 +70,7 @@ class Bot():
             Returns:
                 None
         """
-
+        self.logout()
         self.threadPool.joinThreads()
 
     def setupLogger(self):
