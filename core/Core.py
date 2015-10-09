@@ -25,6 +25,8 @@ from core.Command import CommandManager
 from core.Event import EventManager
 from core.PluginManager import PluginManager
 from core.ThreadPool import ThreadPool
+from core.Database import Database
+from core.User import User
 
 import threading
 from imp import load_module, find_module
@@ -45,6 +47,10 @@ class Bot():
         self.event = EventManager()
         self.command = CommandManager(self)
         self.threadPool = ThreadPool(self.config.threadPoolQueueSize, self.config.threadedWorkers)
+
+        # Setup database
+        self.database = Database()
+        self.database.addTable(User)
 
         # Setup connection
         self.connection = self.loadConnector(self)
@@ -87,6 +93,7 @@ class Bot():
         """
         from colorlog import ColoredFormatter
         logging.getLogger("requests").setLevel(logging.WARNING)
+        logging.getLogger('peewee').setLevel(logging.WARNING)
 
         log = logging.getLogger('')
 

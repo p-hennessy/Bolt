@@ -12,14 +12,14 @@
         by the Free Software Foundation
 """
 
-import sqlalchemy import create_engine, MetaData
-from sqlalchemy.ext.declarative import declarative_base
+from peewee import *
 import threading
 
 class Database():
     def __init__(self):
         self.connection = SqliteDatabase('bot.db')
         self.connection.connect()
+        self.lock = threading.Lock()
 
     def __del__(self):
         self.connection.close()
