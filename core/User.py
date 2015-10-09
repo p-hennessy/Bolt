@@ -13,25 +13,11 @@
         by the Free Software Foundation
 """
 
-class User():
-    def __init__(self, id, username, isAdmin=False, email=None):
-        self.id = id
-        self.username = username
-        self.email = email
-        self.isAdmin = False
-        self._access = 0
+from peewee import *
 
-    def __call__(self):
-        return self.id
+class User(Model):
+    id       = IntegerField(primary_key=True)
+    username = CharField(max_length=25, default='None')
+    access   = IntegerField()
 
-    def __str__(self):
-        return self.getName()
-
-    def setAccess(self, access):
-        self._access = access
-
-    def getAccess(self):
-        return self._access
-
-    def getName(self):
-        return self.username
+    
