@@ -143,7 +143,13 @@ class Discord(Connector):
         pass
 
     def getUser(self, userID):
-        pass
+        user = self.api.users.info(self.token, userID)
+
+        return {
+            'name': user['username'],
+            'id': user['id']
+        }
+
 
     def messageConsumer(self):
         self.logger.debug("Spawning messageConsumer thread")
