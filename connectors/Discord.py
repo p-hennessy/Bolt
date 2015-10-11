@@ -198,6 +198,9 @@ class Discord(Connector):
             self.socket.send(json.dumps(data))
         except socket_error as e:
             if e.errno == 104:
+                if not self.connected:
+                    return
+
                 self.logger.warning("Connection reset by peer")
                 self.core.threadPool.queueTask(self.__handleInteruption)
             else:
@@ -227,6 +230,9 @@ class Discord(Connector):
             except socket_error as e:
                 # Raised when connection reset by peer
                 if e.errno == 104:
+                    if not self.connected:
+                        return
+
                     self.logger.warning("Connection reset by peer")
                     self.core.threadPool.queueTask(self.__handleInteruption)
                     return None
