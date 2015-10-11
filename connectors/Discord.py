@@ -17,20 +17,15 @@
 """
 
 from __future__ import print_function
+from platform import system
+from ssl import *
 
-import requests
-import json
 import websocket
 import socket
-import time
-from ssl import *
-import sys
 import threading
-import random
+import time
 import logging
-import datetime
-
-from platform import system
+import json
 
 from core.Connector import Connector
 from core.Message import *
@@ -41,22 +36,23 @@ class Discord(Connector):
         self.core = core
         self.logger = logging.getLogger("connector." + __name__)
 
+        # Authentication / Connection Data
         self.email = email
         self.password = password
+        self.uid = None                 # UID of bot so that it doesnt respond to itself
 
-        self.token = None
-        self.api = DiscordAPI()
+        self.token = None               # Token used to authenticate api requests
+        self.socket = None              # Websocket connection handler to Discord
 
-        self.socketURL = None
-        self.socket = None
-        self.connected = False
+        self.connected = False          # Boolean for handling connection state
+        self.heartbeatInterval = 41250  # Time in ms between KeepAlive pings
 
-        self.heartbeatInterval = 41250
+        # Internal threads
         self.keepAliveThread = None
         self.messageConsumerThread = None
 
+        # Events that this connector publishes
         self.core.event.register("connect")
-        self.core.event.register("connectionInterupted")
         self.core.event.register("disconnect")
         self.core.event.register("message")
         self.core.event.register("pressence")
@@ -64,15 +60,13 @@ class Discord(Connector):
     def connect(self):
         # Connect to Discord, post login credentials
         self.logger.info("Attempting connection to Discord servers")
-        login = self.api.auth.login(self.email, self.password)
-        self.token = login["token"]
+        self.token = self.request("POST", "auth/login", postData={"email":self.email, "password":self.password})["token"]
 
         # Request a WebSocket URL
-        loginWS = self.api.gateway(self.token)
-        self.socketURL = loginWS["url"]
+        socketURL = self.request("GET", "gateway", self.token)["url"]
 
         # Create socket connection
-        self.socket = websocket.create_connection(self.socketURL)
+        self.socket = websocket.create_connection(socketURL)
 
         # Immediately pass message to server about your connection
         initData = {
@@ -90,23 +84,25 @@ class Discord(Connector):
             "v": 3
         }
 
-        self.writeSocket(initData)
-        self.loginData = self.readSocket()
+        self.__writeSocket(initData)
+        loginData = self.__readSocket()
 
-        self.uid = self.loginData["d"]["user"]["id"]
+        # Get self user id so to not respond to own messages
+        self.uid = loginData["d"]["user"]["id"]
 
-        # Set websocket to nonblocking
+        # Set websocket to nonblocking so we can exit a thread reading from the socket if we need to
         self.socket.sock.setblocking(0)
         self.connected = True
 
         self.logger.info("Succesful login to Discord")
         self.core.event.notify('connect')
 
-        self.keepAliveThread = threading.Thread(target=self.keepAlive, name="KeepAliveThread")
+        # Create and start threads
+        self.keepAliveThread = threading.Thread(target=self.__keepAlive, name="KeepAliveThread")
         self.keepAliveThread.daemon = True
         self.keepAliveThread.start()
 
-        self.messageConsumerThread = threading.Thread(target=self.messageConsumer, name="MessageConsumerThread")
+        self.messageConsumerThread = threading.Thread(target=self.__messageConsumer, name="MessageConsumerThread")
         self.messageConsumerThread.daemon = True
         self.messageConsumerThread.start()
 
@@ -125,14 +121,14 @@ class Discord(Connector):
     def send(self, channel, message, mentions=[]):
         self.logger.debug("Sending message to channel " + channel)
         try:
-            self.api.channels.send(self.token, channel, "{}".format(message))
+            self.request("POST", "channels/{}/messages".format(channel), postData={"content": "{}".format(message), "mentions":mentions}, token=self.token)
         except:
             self.logger.warning('Send message to {} failed'.format(channel))
 
     def reply(self, envelope, message):
         self.logger.debug("Sending reply to " + envelope.sender)
         try:
-            self.api.channels.send(self.token, envelope.channel, "<@{}> {}".format(envelope.sender, message), mentions=[envelope.sender])
+            self.request("POST", "channels/{}/messages".format(envelope.channel), postData={"content": "<@{}> {}".format(envelope.sender, message), "mentions":[envelope.sender]}, token=self.token)
         except:
             self.logger.warning('Reply to {} failed'.format(envelope.sender))
 
@@ -145,7 +141,24 @@ class Discord(Connector):
     def getUser(self, userID):
         pass
 
-    def messageConsumer(self):
+    # Thread Methods
+    def __keepAlive(self):
+        self.logger.debug("Spawning keepAlive thread at interval: " + str(self.heartbeatInterval))
+
+        startTime = time.time()
+
+        while self.connected:
+            now = time.time()
+
+            if((now - startTime) >= (self.heartbeatInterval/1000) - 1):
+                self.__writeSocket({"op":1,"d": time.time()})
+                self.logger.debug("KeepAlive")
+
+                startTime = time.time()
+
+            time.sleep(1)
+
+    def __messageConsumer(self):
         self.logger.debug("Spawning messageConsumer thread")
 
         while self.connected:
@@ -153,16 +166,18 @@ class Discord(Connector):
             time.sleep(0.5)
 
             # Read data off of socket
-            rawMessage = self.readSocket()
+            rawMessage = self.__readSocket()
             if not rawMessage: continue
 
             # Parse raw message
-            message = self.parseMessageData(rawMessage)
+            message = self.__parseMessageData(rawMessage)
             if not message: continue
 
-            self.core.threadPool.queueTask(self.handleMessage, message)
+            # Have worker thread take it from here
+            self.core.threadPool.queueTask(self.__handleMessage, message)
 
-    def handleMessage(self, message):
+    # Handler Methods
+    def __handleMessage(self, message):
         # If incoming message is a MESSAGE text
         if(message.type == messageType.MESSAGE):
             self.core.event.notify("message",  message=message)
@@ -172,38 +187,26 @@ class Discord(Connector):
         elif(type == messageType.PRESSENCE):
             self.core.event.notify("pressence", message=message)
 
-    def keepAlive(self):
-        self.logger.debug("Spawning keepAlive thread at interval: " + str(self.heartbeatInterval))
+    def __handleInteruption(self):
+        self.connected = False
+        self.disconnect()
+        self.connect()
 
-        startTime = time.time()
-
-        while self.connected:
-            now = time.time()
-
-            if((now - startTime) >= (self.heartbeatInterval/1000) - 1):
-                self.writeSocket({"op":1,"d": time.time()})
-                self.logger.debug("KeepAlive")
-
-                startTime = time.time()
-
-            time.sleep(0.5)
-
-    def writeSocket(self, data):
+    # Socket Methods
+    def __writeSocket(self, data):
         try:
             self.socket.send(json.dumps(data))
         except socket_error as e:
             if e.errno == 104:
                 self.logger.warning("Connection reset by peer")
-                self.core.threadPool.queueTask(self.handleInteruption)
-                self.connected = False
+                self.core.threadPool.queueTask(self.__handleInteruption)
             else:
                 raise
         except websocket.WebSocketConnectionClosedException:
             self.logger.warning("Websocket unexpectedly closed; attempting reconnection.")
-            self.core.threadPool.queueTask(self.handleInteruption)
-            self.connected = False
+            self.core.threadPool.queueTask(self.__handleInteruption)
 
-    def readSocket(self):
+    def __readSocket(self):
         data = ""
         while True:
             try:
@@ -225,9 +228,7 @@ class Discord(Connector):
                 # Raised when connection reset by peer
                 if e.errno == 104:
                     self.logger.warning("Connection reset by peer")
-                    self.core.threadPool.queueTask(self.handleInteruption)
-                    self.connected = False
-
+                    self.core.threadPool.queueTask(self.__handleInteruption)
                     return None
 
                 # Raised when send buffer is full; we must try again
@@ -235,11 +236,8 @@ class Discord(Connector):
                     return None
                 raise
 
-    def handleInteruption(self):
-        self.disconnect()
-        self.connect()
-
-    def parseMessageData(self, message):
+    # Parser Methods
+    def __parseMessageData(self, message):
         type = content = sender = channel = content = timestamp = None
 
         if(message["t"] == "MESSAGE_CREATE"):
@@ -263,105 +261,3 @@ class Discord(Connector):
             return None
 
         return Message(type, sender, channel, content, timestamp=time.time())
-
-    def parseLoginData(self, data):
-        self.users = {}
-        self.servers = {}
-        self.channels = {}
-        self.heartbeatInterval = data["d"]["heartbeat_interval"]
-
-        print(json.dumps(data))
-
-        for guild in data["d"]["guilds"]:
-            guildID = guild['id']
-
-            print(json.dumps(guild))
-
-            self.servers[guildID] = []
-
-            for channel in guild["channels"]:
-                print(channel)
-
-
-
-
-
-
-# Super class for all API calls
-class _api():
-    def __init__(self):
-        pass
-
-    def request(self, method, request="?", token=None, postData={}, domain="discordapp.com"):
-        headers={"authorization": token}
-
-        url = 'https://{}/api/{}'.format(domain, request)
-
-        if(method.lower() in ["post", "get", "delete", "head", "options", "put"]):
-            response = requests.request(method.lower(), url, json=postData, headers=headers)
-        else:
-            raise Exception("Invalid HTTP request method")
-
-        if(response.status_code not in range(200, 206)):
-            raise Exception("API responded with HTTP code  " + str(response.status_code) + "\n\n" + response.text)
-        else:
-            if(response.text):
-                returnData = json.loads(response.text)
-
-                return returnData
-            else:
-                return None
-
-class DiscordAPI():
-    def __init__(self):
-        self.users = users()
-        self.gateway = gateway()
-        self.channels = channels()
-        self.guilds = guilds()
-        self.auth = auth()
-        self.voice = voice()
-
-class auth(_api):
-    def login(self, email, password):
-        return self.request("POST", "auth/login", postData={"email":email, "password":password})
-
-    def logout(self, token):
-        return self.request("POST", "auth/logout", token)
-
-class users(_api):
-    def info(self, token, userID):
-        return self.request("GET", "users/" + userID, token)
-
-class gateway(_api):
-    def __call__(self, token):
-        return self.request("GET", "gateway", token)
-
-class channels(_api):
-    def info(self, token, channelID):
-        return self.request("GET", "channels/" + channelID, token)
-
-    def send(self, token, channelID, content, mentions=[]):
-        return self.request("POST", "channels/" + channelID + "/messages", postData={"content": content, "mentions":mentions}, token=token)
-
-    def directMessage(self, token):
-        pass
-
-    def typing(self, token, channelID):
-        return self.request("POST", "channels/" + channelID + "/typing", token)
-
-class guilds(_api):
-    def info(self, token, serverID):
-        return self.request("GET", "guilds/" + serverID, token)
-
-    def members(self, token, serverID):
-        return self.request("GET", "guilds/" + serverID + "/members", token)
-
-    def createChannel(self, token, serverID, channelName, type):
-        return self.request("POST", "guilds/" + serverID + "/channels", token, postData={"name":channelName, "type": type})
-
-    def channels(self, token, serverID):
-        return self.request("GET", "guilds/" + serverID + "/channels", token)
-
-class voice(_api):
-    def regions(self):
-        self.request("GET", "voice/regions", token)
