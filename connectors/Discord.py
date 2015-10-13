@@ -60,7 +60,11 @@ class Discord(Connector):
     def connect(self):
         # Connect to Discord, post login credentials
         self.logger.info("Attempting connection to Discord servers")
-        self.token = self.request("POST", "auth/login", postData={"email":self.email, "password":self.password})["token"]
+
+        try:
+            self.token = self.request("POST", "auth/login", postData={"email":self.email, "password":self.password})["token"]
+        except:
+            return
 
         # Request a WebSocket URL
         socketURL = self.request("GET", "gateway", self.token)["url"]
@@ -110,12 +114,19 @@ class Discord(Connector):
         self.core.event.notify('disconnect')
         self.connected = False
 
-        self.keepAliveThread.join()
-        self.messageConsumerThread.join()
+        # Join threads if they exist
+        if( isinstance(self.keepAliveThread, threading.Thread) ):
+            self.keepAliveThread.join()
+
+        if( isinstance(self.messageConsumerThread, threading.Thread) ):
+            self.messageConsumerThread.join()
 
         self.logger.debug('Joined MessageConsumer and KeepAlive threads')
 
-        self.socket.close()
+        # Close websocket if it is established
+        if( isinstance(self.socket, websocket.WebSocket)):
+            self.socket.close()
+
         self.logger.info("Disconnected from Discord")
 
     def send(self, channel, message, mentions=[]):
