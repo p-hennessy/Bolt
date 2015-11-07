@@ -51,13 +51,11 @@ class Connector():
     def getUser(self, userID):
         pass
 
-    def request(self, method, request="?", token=None, postData={}, domain="discordapp.com"):
-        headers={"authorization": token}
-
+    def request(self, method, request="?", headers=None, postData={}, domain="discordapp.com"):
         url = 'https://{}/api/{}'.format(domain, request)
 
         if(method.lower() in ["post", "get", "delete", "head", "options", "put"]):
-            response = requests.request(method.lower(), url, json=postData, headers=headers)
+            response = requests.request(method.lower(), url, data=postData, headers=headers)
         else:
             raise Exception("Invalid HTTP request method")
 

@@ -105,11 +105,13 @@ class Slack(Connector):
     def reply(self, envelope, message):
         self.logger.debug("Sending reply to " + envelope.sender)
 
+        username = self.getUser(envelope.sender)['name']
+
         self.__writeSocket({
             "id": 1,
             "type": "message",
             "channel": envelope.channel,
-            "text": message
+            "text": "<@{}|{}> ".format(envelope.sender, username) + message
         })
 
     def whisper(self, user, message):

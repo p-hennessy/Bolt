@@ -67,7 +67,7 @@ class Discord(Connector):
             return
 
         # Request a WebSocket URL
-        socketURL = self.request("GET", "gateway", self.token)["url"]
+        socketURL = self.request("GET", "gateway", headers={"authorization": self.token})["url"]
 
         # Create socket connection
         self.socket = websocket.create_connection(socketURL)
@@ -132,14 +132,14 @@ class Discord(Connector):
     def send(self, channel, message, mentions=[]):
         self.logger.debug("Sending message to channel " + channel)
         try:
-            self.request("POST", "channels/{}/messages".format(channel), postData={"content": "{}".format(message), "mentions":mentions}, token=self.token)
+            self.request("POST", "channels/{}/messages".format(channel), postData={"content": "{}".format(message), "mentions":mentions}, headers={"authorization": self.token})
         except:
             self.logger.warning('Send message to {} failed'.format(channel))
 
     def reply(self, envelope, message):
         self.logger.debug("Sending reply to " + envelope.sender)
         try:
-            self.request("POST", "channels/{}/messages".format(envelope.channel), postData={"content": "<@{}> {}".format(envelope.sender, message), "mentions":[envelope.sender]}, token=self.token)
+            self.request("POST", "channels/{}/messages".format(envelope.channel), postData={"content": "<@{}> {}".format(envelope.sender, message), "mentions":[envelope.sender]}, headers={"authorization": self.token})
         except:
             self.logger.warning('Reply to {} failed'.format(envelope.sender))
 
