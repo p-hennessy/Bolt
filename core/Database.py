@@ -13,13 +13,16 @@
 """
 
 from peewee import *
+from playhouse.kv import JSONKeyStore
+
 import threading
 
 class Database():
-    def __init__(self):
-        self.connection = SqliteDatabase('bot.db')
+    def __init__(self, databaseName="bot.db"):
+        self.connection = SqliteDatabase(databaseName)
         self.connection.connect()
         self.lock = threading.Lock()
+        self.keyStore = JSONKeyStore(database=self.connection)
 
     def __del__(self):
         self.connection.close()

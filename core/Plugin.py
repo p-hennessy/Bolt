@@ -22,7 +22,7 @@ class Plugin(object):
         self.core = core
         self.name = name
         self.database = self.core.database
-
+        
         # Expose logger for subclasses
         self.logger = logging.getLogger("plugins." + self.name)
 
