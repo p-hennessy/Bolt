@@ -150,7 +150,13 @@ class Discord(Connector):
         pass
 
     def getUser(self, userID):
-        pass
+        user = self.api.users.info(self.token, userID)
+
+        return {
+            'name': user['username'],
+            'id': user['id']
+        }
+
 
     # Thread Methods
     def __keepAlive(self):

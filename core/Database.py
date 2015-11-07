@@ -12,35 +12,23 @@
         by the Free Software Foundation
 """
 
-import shelve
-import os.path
+from peewee import *
+from playhouse.kv import JSONKeyStore
+
+import threading
 
 class Database():
-    def __init__(self, name):
-        self.fileName = "databases/" + name + ".db"
+    def __init__(self, databaseName="bot.db"):
+        self.connection = SqliteDatabase(databaseName)
+        self.connection.connect()
+        self.lock = threading.Lock()
+        self.keyStore = JSONKeyStore(database=self.connection)
 
-    def hasKey(self, key):
-        shelf = shelve.open(self.fileName)
-        value = shelf.has_key(key)
+    def __del__(self):
+        self.connection.close()
 
-        shelf.close()
-        return value
+    def addTable(self, tableClass):
+        setattr(tableClass._meta, 'database', self.connection)
+        setattr(self, tableClass.__name__, tableClass)
 
-    def delete(self, key):
-        shelf = shelve.open(self.fileName)
-        del shelf[key]
-
-        shelf.close()
-
-    def get(self, key):
-        shelf = shelve.open(self.fileName)
-        value = shelf[key]
-
-        shelf.close()
-        return value
-
-    def set(self, key, value):
-        shelf = shelve.open(self.fileName)
-        shelf[key] = value
-
-        shelf.close()
+        self.connection.create_table(tableClass, safe=True)

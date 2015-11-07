@@ -139,9 +139,10 @@ class PluginManager():
             if(issubclass(clazz, Plugin)):
                 plugin = clazz(self.core, name)
                 break
-            else:
-                self.logger.error("Could not find plugin subclass in module: " + moduleName)
-                return
+
+        if not plugin:
+            self.logger.error("Could not find plugin subclass in module: " + moduleName)
+            return
 
         # Call activate() if it exists
         if( hasattr(plugin, "activate") ):

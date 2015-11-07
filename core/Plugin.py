@@ -21,7 +21,8 @@ class Plugin(object):
         # Expose core and plugin name for subclasses
         self.core = core
         self.name = name
-
+        self.database = self.core.database
+        
         # Expose logger for subclasses
         self.logger = logging.getLogger("plugins." + self.name)
 
