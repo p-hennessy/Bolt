@@ -15,403 +15,222 @@
         by the Free Software Foundation
 """
 
-from core.Connector import Connector
-from core.User import User
-from core.Message import Message
-from core.Channel import Channel
-
-from urllib import urlencode
-from urllib2 import urlopen
-import json
-import websocket
-import threading
-import time
+from __future__ import print_function
+from platform import system
 from ssl import *
 
-class SlackConnection(Connector):
+import websocket
+import socket
+import threading
+import time
+import logging
+import json
 
-    def __init__(self, **kwargs):
-        self.api = SlackAPI()
-        self.token = kwargs["token"]
+import requests
 
-        self.socket = None
-        self.socketLock = threading.Lock()
+from core.Connector import Connector
+from core.Message import *
+
+class Slack(Connector):
+    def __init__(self, core, token):
+        super(Slack, self).__init__()
+        self.core = core
+        self.logger = logging.getLogger("connector." + __name__)
+
+        # Authentication / Connection Data
+        self.uid = None                 # UID of bot so that it doesnt respond to itself
+        self.token = token              # Token used to authenticate api requests
+        self.socket = None              # Websocket connection handler to Slack RTM
+
+        self.connected = False          # Boolean for handling connection state
+
+        # Internal threads
+        self.messageConsumerThread = None
+
+        # Events that this connector publishes
+        self.core.event.register("connect")
+        self.core.event.register("disconnect")
+        self.core.event.register("message")
+        self.core.event.register("pressence")
 
     def connect(self):
-        if not self.token:
-            raise Exception("No token was provided. Add the auth token to the bot config file")
+        # Connect to Discord, post login credentials
+        self.logger.info("Attempting connection to Slack")
 
-        # Initialize Slack websocket by polling the rtm.start() API method with authentication token
-        reply = self.api.rtm.start(self.token)
+        #rtmStart = requests.request("post", "https://slack.com/api/rtm.start", json={"token": self.token})
+        rtmStart = self.request("POST", "rtm.start", postData={"token": self.token}, domain="slack.com")
 
-        # Slack will send back an "ok": True message from the API call
-        #   https://api.slack.com/methods/rtm.start
-        if(reply["ok"]):
-            self.socketURL = reply["url"]
-
-            try:
-                self.socket = websocket.create_connection(self.socketURL)
-                self.socket.sock.setblocking(0)
-            except:
-                raise Exception("Could not establish a websocket to " + self.socketURL) # Could not establish a connection
+        if(rtmStart["ok"]):
+            self.socket = websocket.create_connection(rtmStart["url"])
+            self.socket.sock.setblocking(0)
 
             self.connected = True
 
+            self.logger.info("Succesful login to Slack")
+            self.core.event.notify('connect')
+
+            self.send("C06B11LBE", "Hello @pattycakes")
         else:
-            raise Exception("Authentication to Slack failed.")
+            self.logger.critical("Unable to login to Slack server")
+            return
+
+        # Create and start threads
+        self.messageConsumerThread = threading.Thread(target=self.__messageConsumer, name="MessageConsumerThread")
+        self.messageConsumerThread.daemon = True
+        self.messageConsumerThread.start()
 
     def disconnect(self):
-        if(self.connected):
-            self.connected = False
+        self.core.event.notify('disconnect')
+        self.connected = False
+
+        # Join threads if they exist
+        if( isinstance(self.messageConsumerThread, threading.Thread) ):
+            self.messageConsumerThread.join()
+
+        self.logger.debug('Joined MessageConsumer thread')
+
+        # Close websocket if it is established
+        if( isinstance(self.socket, websocket.WebSocket)):
             self.socket.close()
 
-    def ping(self):
-        # https://api.slack.com/rtm
-        return self.socket.send(json.dumps({"type":"ping"}))
+    def send(self, channel, message, mentions=[]):
+        self.logger.debug("Sending message to channel " + channel)
 
-    def send(self, message, channels):
-        with self.socketLock:
-            if(channels is not list and isinstance(channels, Channel)):
-                channels = [channels]
+        self.__writeSocket({
+            "id": 1,
+            "type": "message",
+            "channel": channel,
+            "text": message
+        })
 
-            for channel in channels:
-                self.socket.send(json.dumps({"type": "message", "channel": channel.id, "text": message}))
+    def reply(self, envelope, message):
+        self.logger.debug("Sending message to channel " + channel)
 
-    def whisper(self, userID, message):
+        self.__writeSocket({
+            "id": 1,
+            "type": "message",
+            "channel": envelope.channel,
+            "text": message
+        })
+
+    def whisper(self, envelope, message):
         pass
-
-    def recieve(self):
-        try:
-            with self.socketLock:
-                messages = self.socket.recv()
-
-            if(messages):
-                message = json.loads(messages.rstrip())
-
-                if("type" in message.keys() and message["type"] == "message"):
-
-                    return Message(
-                        message["user"],
-                        message["channel"],
-                        message["ts"],
-                        message["text"]
-                    )
-            else:
-                return None
-
-        # Catch exception where socket has not been fully read
-        except SSLError:
-            pass
 
     def getUsers(self):
-        reply = self.api.users.list(self.token)
-
-        if(reply["ok"]):
-            return [self._parseUserData(user) for user in reply["members"]]
+        pass
 
     def getUser(self, userID):
-        reply = self.api.users.info(self.token, userID)
+        user = self.request("POST", "users.info", postData={"token": self.token, "user": userID}, domain="slack.com")
 
-        if(reply["ok"]):
-            return self._parseUserData(reply["user"])
+        return {
+            'name': user['user']['name'],
+            'id': user['user']['id']
+        }
 
-    def _parseUserData(self, userData):
-        user = User(
-            userData["id"],
-            userData["name"],
-            realName=userData["profile"].get("real_name"),
-            email=userData["profile"].get("email"),
-            isAdmin=userData.get("is_admin")
-        )
+    def __messageConsumer(self):
+        self.logger.debug("Spawning messageConsumer thread")
 
-        return user
+        while self.connected:
+            # Sleep is good for the body; also so we don't hog the CPU polling the socket
+            time.sleep(0.01)
 
-    def getChannels(self):
-        reply = self.api.channels.list(self.token)
+            # Read data off of socket
+            rawMessage = self.__readSocket()
+            if not rawMessage: continue
 
-        if(reply["ok"]):
-            return [self._parseChannelData(channel) for channel in reply["channels"]]
+            # Parse raw message
+            message = self.__parseMessageData(rawMessage)
+            if not message: continue
 
-    def getChannel(self, channelID):
-        reply = self.api.channels.info(self.token, channelID)
+            # Have worker thread take it from here
+            self.core.threadPool.queueTask(self.__handleMessage, message)
 
-        if(reply["ok"]):
-            return self._parseChannelData(reply["channel"])
+    # Handler Methods
+    def __handleMessage(self, message):
+        # If incoming message is a MESSAGE text
+        if(message.type == messageType.MESSAGE):
+            self.core.event.notify("message",  message=message)
+            self.core.command.checkMessage(message)
 
-    def _parseChannelData(self, channelData):
-        channel = Channel(
-            channelData["id"],
-            channelData["name"],
-            channelData.get("created"),
-            creator=channelData.get("creator"),
-            archived=channelData.get("is_archived")
-        )
+        # If incoming message is PRESSENCE update
+        elif(type == messageType.PRESSENCE):
+            self.core.event.notify("pressence", message=message)
 
-        return channel
+    def __handleInteruption(self):
+        self.connected = False
+        self.disconnect()
+        self.connect()
 
-"""
-    API class specific to the Slack Bot API: https://api.slack.com/bot-users
-"""
-class SlackAPI():
-    def __init__(self):
-        self.api = api()
-        self.auth = auth()
-        self.channels = channels()
-        self.chat = chat()
-        self.emoji = emoji()
-        self.groups = groups()
-        self.im = im()
-        self.rtm = rtm()
-        self.users = users()
+    # Socket Methods
+    def __writeSocket(self, data):
+        try:
+            self.socket.send(json.dumps(data))
+        except socket_error as e:
+            if e.errno == 104:
+                if not self.connected:
+                    return
 
-# Super class for all API calls
-class _api():
-    def __init__(self):
-        pass
-
-    def request(self, token, request="?", postData={}, domain="slack.com"):
-        postData["token"] = token
-        postData = urlencode(postData)
-
-        url = 'https://{}/api/{}'.format(domain, request)
-
-        response = urlopen(url, postData.encode('utf-8'))
-
-        if(response.code != 200):
-            raise Exception
-        else:
-            returnData = json.loads(response.read().decode('utf-8'))
-
-            if not returnData["ok"]:
-                error = returnData["error"]
-
-                if(error == "invalid_auth"):
-                    raise SlackAPI_InvalidAuth()
-                elif(error == "not_authed"):
-                    raise SlackAPI_NotAuthed()
-                elif(error == "account_inactive"):
-                    raise SlackAPI_AccountInactive()
-                else:
-                    raise SlackAPI_Exception("Unknown error code: " + error)
-
+                self.logger.warning("Connection reset by peer")
+                self.core.threadPool.queueTask(self.__handleInteruption)
             else:
-                return returnData
-
-class api(_api):
-    def __init__(self):
-        pass
-
-    def test(self, token, error="", foo=""):
-        return self.request(token, "api.test", postData={"error": error, "foo": foo})
-
-class auth(_api):
-    def __init__(self):
-        pass
-
-    def test(self, token):
-        return self.request(token, "auth.test")
-
-class channels(_api):
-    def __init__(self):
-        pass
-
-    def history(self, token, channelID):
-        return self.request(token, "channels.history", postData={"channel":channelID})
-
-    def info(self, token, channelID):
-        return self.request(token, "channels.info", postData={"channel":channelID})
-
-    def list(self, token, excludeArchived=0):
-        return self.request(token, "channels.list", postData={"exclude_archived": excludeArchived})
-
-    def mark(self, token, channelID, timestamp):
-        return self.request(token, "channels.mark", postData={"channel": channelID, "ts": timestamp})
-
-    def setPurpose(self, token, channelID, purpose):
-        return self.request(token, "channels.list", postData={"channel": channelID, "purpose": purpose})
-
-    def setTopic(self, token, channelID, topic):
-        return self.request(token, "channels.list", postData={"channel": channelID, "topic": topic})
-
-class chat(_api):
-    def __init__(self):
-        pass
-
-    def delete(self, token, timestamp, channelID):
-        return self.request(token, "chat.delete", postData={"ts": timestamp, "channel":channelID})
-
-    def postMessage(self, token, channelID, message):
-        return self.request(token, "chat.postMessage", postData={"channel":channelID, "text": message})
-
-    def update(self, token, channelID, message, timestamp):
-        return self.request(token, "chat.update", postData={"channel":channelID, "text": message, "ts":timestamp})
-
-class emoji(_api):
-    def __init__(self):
-        pass
-
-    def list(self, token):
-        return self.request(token, "emoji.list")
-
-class groups(_api):
-    def __init__(self):
-        pass
-
-    def close(self, token, groupID):
-        return self.request(token, "groups.close", postData={"channel":groupID})
-
-    def history(self, token, groupID):
-        return self.request(token, "groups.history", postData={"channel":groupID})
-
-    def info(self, token, groupID):
-        return self.request(token, "groups.info", postData={"channel":groupID})
-
-    def list(self, token, excludeArchived=0):
-        return self.request(token, "groups.close", postData={"exclude_archived": excludeArchived})
-
-    def mark(self, token, groupID, timestamp):
-        return self.request(token, "groups.close", postData={"channel":groupID, "ts":timestamp})
-
-    def open(self, token, groupID):
-        return self.request(token, "groups.open", postData={"channel":groupID})
-
-    def setPurpose(self, token, groupID, purpose):
-        return self.request(token, "groups.setPurpose", postData={"channel":groupID, "purpose": purpose})
-
-    def setTopic(self, token, groupID, topic):
-        return self.request(token, "groups.setPurpose", postData={"channel":groupID, "topic": topic})
-
-class im(_api):
-    def __init__(self):
-        pass
-
-    def close(self, token, channelID):
-        return self.request(token, "im.close", postData={"channel":channelID})
-
-    def history(self, token):
-        pass
-
-    def list(self, token):
-        return self.request(token, "im.list")
-
-    def mark(self, token, channelID, timestamp):
-        return self.request(token, "im.mark", postData={"channel":channelID, "ts":timestamp})
-
-    def open(self, token, userID):
-        return self.request(token, "im.open", postData={"channel":channelID, "user": userID})
-
-class rtm(_api):
-    def __init__(self):
-        pass
-
-    def start(self, token):
-        return self.request(token, "rtm.start")
-
-class users(_api):
-    def __init__(self):
-        pass
-
-    def getPresence(self, userID):
-        return self.request(token, "users.getPresence", postData={"user":userID})
-
-    def info(self, token, userID):
-        return self.request(token, "users.info", postData={"user":userID})
-
-    def list(self, token):
-        return self.request(token, "users.list")
-
-    def setPresence(self, token, presence):
-        return self.request(token, "users.getPresence", postData={"presence": presence})
-
-
-class SlackAPI_Exception(Exception):
-    def __init__(self, value=""):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
-
-class SlackAPI_InvalidAuth(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Invalid authentication token."
-
-class SlackAPI_NotAuthed(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "No authentication token provided."
-
-class SlackAPI_AccountInactive(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Authentication token is for a deleted user or team."
-
-class SlackAPI_ChannelNotFound(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Value passed for channelID was invalid."
-
-class SlackAPI_NotInChannel(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Caller is not a member of the channel."
-
-class SlackAPI_UserRestricted(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "This method cannot be called by a restricted user or single channel guest."
-
-class SlackAPI_PurposeTooLong(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Value passed for purpose was longer than 250 characters."
-
-class SlackAPI_TopicTooLong(SlackAPI_Exception):
-     def __init__(self):
-        self.value = "Value passed for topic was longer than 250 characters."
-
-
-class SlackAPI_ChannelArchived(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Channel has been archived."
-
-class SlackAPI_MessageNotFound(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "No message exists with the requested timestamp."
-
-class SlackAPI_CannotDeleteMessage(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Authenticated user does not have permission to delete this message."
-
-class SlackAPI_MessageTooLong(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Message text is too long."
-
-class SlackAPI_NoTextProvided(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Message must contain text."
-
-class SlackAPI_UserNotInChannel(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Cannot post user messages to a channel they are not in."
-
-class SlackAPI_RateLimited(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Application has posted too many messages too quickly."
-
-class SlackAPI_EditWindowClosed(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "The message cannot be edited due to the team message edit settings"
-
-class SlackAPI_DoesNotOwnChannel(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Calling user does not own this DM channel."
-
-class SlackAPI_UserNotVisible(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "The calling user is restricted from seeing the requested user."
-
-class SlackAPI_MigrationInProgress(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Team is being migrated between servers."
-
-class SlackAPI_UserNotFound(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Value passed for user was invalid."
-
-class SlackAPI_InvalidPressence(SlackAPI_Exception):
-    def __init__(self):
-        self.value = "Value passed for presence was invalid. Must be 'auto' or 'away'"
+                raise
+        except websocket.WebSocketConnectionClosedException:
+            self.logger.warning("Websocket unexpectedly closed; attempting reconnection.")
+            self.core.threadPool.queueTask(self.__handleInteruption)
+
+    def __readSocket(self):
+        data = ""
+        while True:
+            try:
+                data += self.socket.recv()
+
+                if(data):
+                    return json.loads(data.rstrip())
+                else:
+                    return None
+
+            except ValueError as e:
+                continue
+            except SSLError as e:
+                # Raised when we can't read the entire buffer at once
+                if e.errno == 2:
+                    return None
+                raise
+            except socket_error as e:
+                # Raised when connection reset by peer
+                if e.errno == 104:
+                    if not self.connected:
+                        return
+
+                    self.logger.warning("Connection reset by peer")
+                    self.core.threadPool.queueTask(self.__handleInteruption)
+                    return None
+
+                # Raised when send buffer is full; we must try again
+                if e.errno == 11:
+                    return None
+                raise
+
+    # Parser Methods
+    def __parseMessageData(self, message):
+        type = content = sender = channel = content = timestamp = None
+
+        if not("type" in message):
+            return
+
+        if(message["type"] == "message"):
+            type = messageType.MESSAGE
+            sender = message["user"]
+            channel = message["channel"]
+            content = message["text"]
+
+        else:
+            with open('unhandled_messages.txt', "a+") as file:
+                file.write(json.dumps(message))
+
+            return None
+
+        if(sender == self.uid):
+            return None
+
+        return Message(type, sender, channel, content, timestamp=time.time())
