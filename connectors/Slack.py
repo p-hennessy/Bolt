@@ -69,7 +69,6 @@ class Slack(Connector):
             self.logger.info("Succesful login to Slack")
             self.core.event.notify('connect')
 
-            self.send("C06B11LBE", "Hello @pattycakes")
         else:
             self.logger.critical("Unable to login to Slack server")
             return
@@ -104,7 +103,7 @@ class Slack(Connector):
         })
 
     def reply(self, envelope, message):
-        self.logger.debug("Sending message to channel " + channel)
+        self.logger.debug("Sending reply to " + envelope.sender)
 
         self.__writeSocket({
             "id": 1,
@@ -113,8 +112,23 @@ class Slack(Connector):
             "text": message
         })
 
-    def whisper(self, envelope, message):
-        pass
+    def whisper(self, user, message):
+        self.logger.debug("Whisper to " + user)
+
+        response = self.request("POST", "im.open", postData={"token": self.token, "user": user}, domain="slack.com")
+
+        if not(response["ok"]):
+            self.logger.warning("Failed to send message to {}".format(user))
+            return
+
+        channel = response["channel"]["id"]
+
+        self.__writeSocket({
+            "id": 1,
+            "type": "message",
+            "channel": channel,
+            "text": message
+        })
 
     def getUsers(self):
         pass
