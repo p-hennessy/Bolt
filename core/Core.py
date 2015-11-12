@@ -93,6 +93,7 @@ class Bot():
         """
         from colorlog import ColoredFormatter
         logging.getLogger("requests").setLevel(logging.WARNING)
+        logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
         logging.getLogger('peewee').setLevel(logging.WARNING)
 
         log = logging.getLogger('')

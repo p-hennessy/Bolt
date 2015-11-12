@@ -149,4 +149,8 @@ class Worker(threading.Thread):
             kwargs = task[2]
 
             # Invoke task
-            callable(*args, **kwargs)
+            try:
+                callable(*args, **kwargs)
+            except:
+                raise
+                continue

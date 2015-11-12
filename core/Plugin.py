@@ -14,6 +14,7 @@
 """
 
 import logging
+from core.Database import *
 
 class Plugin(object):
     def __init__(self, core, name):
@@ -21,8 +22,8 @@ class Plugin(object):
         # Expose core and plugin name for subclasses
         self.core = core
         self.name = name
-        self.database = self.core.database
-        
+        self.database = Database(databaseName="databases/" + self.name + ".db")
+
         # Expose logger for subclasses
         self.logger = logging.getLogger("plugins." + self.name)
 

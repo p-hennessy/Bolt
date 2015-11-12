@@ -18,14 +18,17 @@ from playhouse.kv import JSONKeyStore
 import threading
 
 class Database():
-    def __init__(self, databaseName="bot.db"):
+    def __init__(self, databaseName="databases/bot.db"):
         self.connection = SqliteDatabase(databaseName)
         self.connection.connect()
         self.lock = threading.Lock()
         self.keyStore = JSONKeyStore(database=self.connection)
 
     def __del__(self):
-        self.connection.close()
+        try:
+            self.connection.close()
+        except:
+            pass
 
     def addTable(self, tableClass):
         setattr(tableClass._meta, 'database', self.connection)
