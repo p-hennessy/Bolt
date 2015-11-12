@@ -54,7 +54,8 @@ class CommandManager():
             # Checks to see if message is a command and uses default trigger defined in conf/settings.py
             if(command.useDefaultTrigger):
                 if(message.content.startswith(self.core.config.trigger)):
-                    if(re.search(command.invocation, message.content[len(self.core.config.trigger):])):
+                    if(re.search(command.invocation, message.content.replace(self.core.config.trigger, "", 1))):
+                        message.content = message.content.replace(self.core.config.trigger, "", 1)
                         command.invoke(message)
                         return
             # Will invoke command if it matches command invocation and doesn't use trigger
