@@ -14,6 +14,7 @@
 """
 import time
 import shlex
+import re
 
 class messageType:
     MESSAGE = 0
@@ -31,6 +32,7 @@ class Message():
         self.sender = senderID
         self.channel = channelID
         self.content = content
+        self.match = None
 
     def asArgs(self):
         try:
@@ -39,6 +41,10 @@ class Message():
             split = self.content.split(" ")
 
         return split
+
+    def getMatches(self):
+        if(self.match):
+            return self.match.groups()
 
     def __call__(self):
         return Envelope(self.sender, self.channel)
