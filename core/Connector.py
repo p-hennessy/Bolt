@@ -16,12 +16,13 @@
 from abc import *
 import requests
 import json
+import time
 
 class Connector():
     __metaclass__ = ABCMeta
 
     def __init__(self):
-        pass
+        self.lastRequest = time.time()
 
     @abstractmethod
     def connect(self):
@@ -52,10 +53,15 @@ class Connector():
         pass
 
     def request(self, method, request="?", headers=None, postData={}, domain="discordapp.com"):
+        while(time.time() - self.lastRequest < 1):
+            time.sleep(0.025)
+
         url = 'https://{}/api/{}'.format(domain, request)
+        response = None
 
         if(method.lower() in ["post", "get", "delete", "head", "options", "put"]):
-            response = requests.request(method.lower(), url, data=postData, headers=headers)
+            self.lastRequest = time.time()
+            response = requests.request(method.lower(), url, json=postData, headers=headers)
         else:
             raise Exception("Invalid HTTP request method")
 
