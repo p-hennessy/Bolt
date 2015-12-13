@@ -26,9 +26,12 @@ import threading
 import time
 import logging
 import json
+import random
 
 from core.Connector import Connector
 from core.Message import *
+
+import requests
 
 class Discord(Connector):
     def __init__(self, core, email, password):
@@ -40,6 +43,8 @@ class Discord(Connector):
         self.email = email
         self.password = password
         self.uid = None                 # UID of bot so that it doesnt respond to itself
+
+        self.userData = {}              # Caches data about users
 
         self.token = None               # Token used to authenticate api requests
         self.socket = None              # Websocket connection handler to Discord
@@ -150,13 +155,17 @@ class Discord(Connector):
         pass
 
     def getUser(self, userID):
-        user = self.api.users.info(self.token, userID)
+        if(userID in self.userData and self.userData[userID]['expires'] < time.time()):
+            return self.userData[userID]
+        else:
+            user = self.request("GET", "users/{}".format(userID), headers={"authorization": self.token})
+            self.userData[userID] = user
 
-        return {
-            'name': user['username'],
-            'id': user['id']
-        }
-
+            return {
+                'name': user['username'],
+                'id': user['id'],
+                'expires': time.time() + 600
+            }
 
     # Thread Methods
     def __keepAlive(self):
@@ -169,6 +178,8 @@ class Discord(Connector):
 
             if((now - startTime) >= (self.heartbeatInterval/1000) - 1):
                 self.__writeSocket({"op":1,"d": time.time()})
+                self.__writeSocket({"op":3,"d":{"idle_since":None, "game_id": random.randint(0,671)}})
+
                 self.logger.debug("KeepAlive")
 
                 startTime = time.time()
@@ -258,6 +269,9 @@ class Discord(Connector):
                 if e.errno == 11:
                     return None
                 raise
+            except websocket.WebSocketConnectionClosedException:
+                self.logger.warning("Websocket unexpectedly closed; attempting reconnection.")
+                self.core.threadPool.queueTask(self.__handleInteruption)
 
     # Parser Methods
     def __parseMessageData(self, message):
