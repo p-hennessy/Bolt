@@ -32,6 +32,7 @@ import threading
 from imp import load_module, find_module
 from sys import stdout, path, exit
 import logging
+import logging.handlers
 import time
 
 class Bot():
@@ -39,6 +40,7 @@ class Bot():
     def __init__(self):
         # Setup logger and load config
         self.setupLogger()
+        self.logger.info("Starting new bot session")
         self.logger.info("Loading bot configuration")
         self.config = self.loadConfig("settings")
 
@@ -98,8 +100,9 @@ class Bot():
 
         log = logging.getLogger('')
 
+        # Create console handler
         console_hdlr = logging.StreamHandler(stdout)
-        formatter = ColoredFormatter(
+        console_formatter = ColoredFormatter(
             "%(asctime)s %(log_color)s%(levelname)-8s%(reset)s %(blue)s%(name)-25.25s%(reset)s %(white)s%(message)s%(reset)s",
             datefmt="[%m/%d/%Y %H:%M:%S]",
             reset=True,
@@ -111,10 +114,19 @@ class Bot():
                 'CRITICAL': 'bg_red',
             }
         )
-
-        console_hdlr.setFormatter(formatter)
+        console_hdlr.setFormatter(console_formatter)
+        console_hdlr.setLevel(logging.INFO)
         log.addHandler(console_hdlr)
-        log.setLevel(logging.DEBUG)
+
+        # Create log file handler
+        file_hdlr = logging.handlers.TimedRotatingFileHandler("logs/botlog", when="midnight")
+        file_formatter = logging.Formatter(
+            "%(asctime)s %(levelname)-8s %(name)-25.25s %(message)s",
+            datefmt="[%m/%d/%Y %H:%M:%S]"
+        )
+        file_hdlr.setFormatter(file_formatter)
+        file_hdlr.setLevel(logging.DEBUG)
+        log.addHandler(file_hdlr)
 
         self.logger = logging.getLogger(__name__)
 

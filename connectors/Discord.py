@@ -38,6 +38,7 @@ class Discord(Connector):
         super(Discord, self).__init__()
         self.core = core
         self.logger = logging.getLogger("connector." + __name__)
+        self.name = "Discord"
 
         # Authentication / Connection Data
         self.email = email
@@ -274,19 +275,16 @@ class Discord(Connector):
 
     # Parser Methods
     def __parseMessageData(self, message):
-        type = content = sender = channel = content = timestamp = None
+        type = content = sender = senderNickname = channel = content = timestamp = None
 
         if(message["t"] == "MESSAGE_CREATE"):
             type = messageType.MESSAGE
             sender = message["d"]["author"]['id']
+            senderNickname = message["d"]['author']['username']
             channel = message['d']['channel_id']
             content = message["d"]["content"]
 
-        elif(message["t"] == "TYPING_START"):
-            type = messageType.PRESSENCE
-            sender = message["d"]["user_id"]
-            channel = message['d']['channel_id']
-
+            self.logger.info("Message Recieved: [Name:{}][UID:{}][CID:{}]: {}".format(senderNickname, sender, channel, content))
         else:
             with open('unhandled_messages.txt', "a+") as file:
                 file.write(json.dumps(message))
@@ -296,4 +294,4 @@ class Discord(Connector):
         if(sender == self.uid):
             return None
 
-        return Message(type, sender, channel, content, timestamp=time.time())
+        return Message(type, sender, channel, content, senderNickname=senderNickname, timestamp=time.time())

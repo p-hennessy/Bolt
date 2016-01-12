@@ -2,6 +2,7 @@
 def command(trigger, access=0, useDefaultTrigger=True):
     def decorate(callback):
         def wrapper(self, msg):
+            self.logger.info("Command [{}] invoked by [{}][UID:{}] Raw:{}".format(callback.__name__, msg.senderNickname, msg.sender))
             return callback(self, msg)
 
         if not hasattr(wrapper, 'is_command'):
