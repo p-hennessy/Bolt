@@ -215,11 +215,6 @@ class Discord(Connector):
         elif(type == messageType.PRESSENCE):
             self.core.event.notify("pressence", message=message)
 
-    def __handleInteruption(self):
-        self.connected = False
-        self.disconnect()
-        self.connect()
-
     # Socket Methods
     def __writeSocket(self, data):
         try:
@@ -229,13 +224,14 @@ class Discord(Connector):
                 if not self.connected:
                     return
 
-                self.logger.warning("Connection reset by peer")
-                self.core.threadPool.queueTask(self.__handleInteruption)
+                self.logger.warning("Connection reset by peer.")
+                self.connected = False
+
             else:
                 raise
         except websocket.WebSocketConnectionClosedException:
-            self.logger.warning("Websocket unexpectedly closed; attempting reconnection.")
-            self.core.threadPool.queueTask(self.__handleInteruption)
+            self.logger.warning("Websocket unexpectedly closed.")
+            self.connected = False
 
     def __readSocket(self):
         data = ""
@@ -261,8 +257,8 @@ class Discord(Connector):
                     if not self.connected:
                         return
 
-                    self.logger.warning("Connection reset by peer")
-                    self.core.threadPool.queueTask(self.__handleInteruption)
+                    self.logger.warning("Connection reset by peer.")
+                    self.connected = False
                     return None
 
                 # Raised when send buffer is full; we must try again
@@ -270,8 +266,8 @@ class Discord(Connector):
                     return None
                 raise
             except websocket.WebSocketConnectionClosedException:
-                self.logger.warning("Websocket unexpectedly closed; attempting reconnection.")
-                self.core.threadPool.queueTask(self.__handleInteruption)
+                self.logger.warning("Websocket unexpectedly closed.")
+                self.connected = False
 
     # Parser Methods
     def __parseMessageData(self, message):

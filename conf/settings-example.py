@@ -21,9 +21,9 @@ class Config():
     name = "Arcbot"
 
     # Default command trigger. Messages that being with this are considered commands
-    trigger = "."
+    trigger = "arcbot "
 
-    # Log level: https://docs.python.org/2/library/logging.html#logging-levels
+    # Log level: https://docs.python.org/3/library/logging.html#logging-levels
     loglevel = logging.INFO
 
     # Connector to use
@@ -35,20 +35,18 @@ class Config():
 
     # Names of plugins to be loaded. Will search the "plugin/" directory
     plugins = [
-        "Manage",
+        "ACL",
+        "Manage"
     ]
-
-    # ACL
-    ranks = {
-        "owner": 1000,
-        "admin": 999,
-        "member": 100,
-        "guest": 10,
-    }
 
     # Thread Pool Execution
     #   threadedWorkers - number of worker threads to be spawned that will carry out tasks for the bot
     #   threadPoolQueueSize - size of queue for thread workers to consume from. Big size = more tasks can be queued; but more RAM used
+    threadedWorkers = 12
+    threadPoolQueueSize = 100
 
-    threadedWorkers = 3
-    threadPoolQueueSize = 25
+    # Watch Dog settings
+    #   connectionRetry - number of times watchdog will try to reconnect the bot
+    #   connectionTimeout - time in seconds to wait before trying to connect again
+    connectionRetry = 3
+    connectionTimeout = 900
