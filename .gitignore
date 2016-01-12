@@ -2,4 +2,5 @@
 *.db
 unhandled_messages.txt
 conf/settings.py
+logs/
 .*
