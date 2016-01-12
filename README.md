@@ -39,8 +39,6 @@ Arcbot makes use of thread pools to do it's dirty work. The command and event sy
 ### More features coming soon
 Arcbot is still in active development, and not all design choices have been made. There is still a host of features I want to add before considering it stable; things like: 
 * Web hook listeners
-* Persistance for plugins
-* Command line shell integration
 * Web based UI to manage the bot
 * Connectors for other chat providers
 
