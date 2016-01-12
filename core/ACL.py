@@ -7,7 +7,6 @@
 
     Contributors:
         - Patrick Hennessy
-        - Aleksandr Tihomirov
 
     License:
         Arcbot is free software: you can redistribute it and/or modify it
