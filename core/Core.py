@@ -21,6 +21,7 @@
 from __future__ import print_function
 import sys
 
+from core.Watchdog import Watchdog
 from core.Command import CommandManager
 from core.Event import EventManager
 from core.PluginManager import PluginManager
@@ -45,6 +46,7 @@ class Bot():
         self.config = self.loadConfig("settings")
 
         # Setup managers
+        self.watchdog = Watchdog(self)
         self.plugin = PluginManager(self)
         self.event = EventManager()
         self.command = CommandManager(self)
@@ -75,6 +77,9 @@ class Bot():
             Returns:
                 None
         """
+        for pluginName in self.config.plugins:
+            self.plugin.unload(pluginName)
+
         self.logout()
         self.threadPool.joinThreads()
 
