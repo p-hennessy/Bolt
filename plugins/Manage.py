@@ -24,6 +24,7 @@ import traceback
 ACCESS = {
     "setStatus" :   1000,
     "whoami"    :   -1,
+    "whois"     :   1000,
     "channelid" :   1000,
     "trigger"   :   -1,
     "plugin"    :   1000,
@@ -53,6 +54,13 @@ class Manage(Plugin):
                 }
             }
         })
+
+    @command("^whois <@([0-9]+)>", access=ACCESS["whois"])
+    def whois(self, msg):
+        target = msg.getMatches()[0]
+        access = self.core.ACL.getAccess(target)
+
+        self.say(msg.channel, "User ID\t`{}`\nAccess:\t`{}`".format(msg.sender, access))
 
     @command("^whoami", access=ACCESS["whoami"])
     def whoami(self, msg):

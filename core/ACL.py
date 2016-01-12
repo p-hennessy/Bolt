@@ -29,6 +29,16 @@ class ACL():
         self.database.addTable(ACLUser)
 
     def getOwner(self):
+        """
+            Summary:
+                Returns the ID of the bot owner if there is one
+
+            Args:
+                None
+
+            Returns:
+                (String): ID of bot owner
+        """
         try:
             user = ACLUser.get(owner=True)
             return user.id
@@ -36,6 +46,16 @@ class ACL():
             return None
 
     def setOwner(self, uid):
+        """
+            Summary:
+                Sets the bot owner
+
+            Args:
+                uid (str): ID of the target user
+
+            Returns:
+                None
+        """
         user, created = self.database.ACLUser.get_or_create(id=uid)
 
         if(created):
@@ -48,6 +68,16 @@ class ACL():
             user.save()
 
     def setAccess(self, uid, access):
+        """
+            Summary:
+                Sets the database access for a specific user
+
+            Args:
+                uid (str): ID of the target user
+
+            Returns:
+                (Bool): Successful or Not
+        """
         # Check if trying to change owner
         if(self.getOwner == uid):
             return False
@@ -67,6 +97,16 @@ class ACL():
         return True
 
     def getAccess(self, uid):
+        """
+            Summary:
+                Gets the database access for the specified user
+
+            Args:
+                uid (str): ID of the target user
+
+            Returns:
+                (Int): Access level of the target user, or -1 if not found
+        """
         try:
             user = ACLUser.get(id=uid)
             return user.access
@@ -74,6 +114,16 @@ class ACL():
             return -1
 
     def deleteUser(self, uid):
+        """
+            Summary:
+                Deletes a user from the ACL database
+
+            Args:
+                uid (str): ID of the target user
+
+            Returns:
+                (Bool): Successful or Not
+        """
         try:
             user = self.database.ACLUser.get(id=uid)
             if(user):

@@ -41,7 +41,7 @@ class ACL(Plugin):
             self.core.ACL.setOwner(msg.sender)
             self.reply(msg, 'You are now my owner! Wooo')
 
-    @command("^access delete <@([0-9]+)>", access=ACCESS["deleteAccess"])
+    @command("^delete access <@([0-9]+)>", access=ACCESS["deleteAccess"])
     def deleteAccess(self, msg):
         requestor = msg.sender
         target = msg.getMatches()[0]
@@ -57,7 +57,7 @@ class ACL(Plugin):
         else:
             self.reply(msg, "You cannot modify access of a user with more access")
 
-    @command("^access set <@([0-9]+)> ([0-9]+)", access=ACCESS["setAccess"])
+    @command("^set access <@([0-9]+)> ([0-9]+)", access=ACCESS["setAccess"])
     def setAccess(self, msg):
         requestor = msg.sender
         target = msg.getMatches()[0]

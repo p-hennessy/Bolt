@@ -69,8 +69,11 @@ class CommandManager():
             else:
                 match = re.search(command.invocation, message.content)
                 if(match):
-                    message.match = match
-                    command.invoke(message)
+                    if(self.core.ACL.getAccess(message.sender) >= command.access):
+                        message.match = match
+                        command.invoke(message)
+                    else:
+                        self.core.connection.reply(message, "Sorry, you don't have enough access for that command.")
 
     def getCommands(self):
         """
