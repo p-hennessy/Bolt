@@ -3,7 +3,7 @@
     Plugin Version : 1.0
 
     Description:
-        Gives basic commands to the bot
+        Allows a chat interface to modifying user access
 
     Contributors:
         - Patrick Hennessy
@@ -12,13 +12,6 @@
         Arcbot is free software: you can redistribute it and/or modify it
         under the terms of the GNU General Public License v3; as published
         by the Free Software Foundation
-
-    .acl ranks                      List ranks available
-    .acl add [user] [rank|access]   Add user pat as admin user
-    .acl get [user]                 Get ACL data about pat
-    .acl set [user] [rank|access]   Set user pat rank or access
-    .acl grant [user] [command]     Add to command whitelist
-    .acl revoke [user] [command]    Remove from command whitelist
 """
 
 from core.Plugin import Plugin
@@ -28,46 +21,62 @@ from peewee import *
 import random
 import string
 
+ACCESS = {
+    "claim": -1,
+    "deleteAccess": -1,
+    "setAccess": -1
+}
+
 class ACL(Plugin):
 
     def activate(self):
-        self.ownerUser = self.checkOwner()
+        if not self.core.ACL.getOwner():
+            self.key = self.generateKey(32)
+            self.logger.warning("Claim this bot by typing 'arcbot claim {}'".format(self.key))
 
-    @command('^claim [A-Za-z0-9]')
+    @command('^claim [A-Za-z0-9]', access=ACCESS["claim"])
     def claim(self, msg):
         if(msg.content.split(' ')[1] == self.key):
-            self.logger.critical('Bot has been claimed by: {}'.format(msg.sender))
-
-            with self.database.lock:
-                ownerUser, created = self.database.User.create_or_get(id=msg.sender)
-                ownerUser.name = self.core.connection.getUser(msg.sender)['name']
-                ownerUser.access = 1000
-                ownerUser.owner = True
-                ownerUser.save()
-                self.ownerUser = ownerUser
-
+            self.logger.critical('Bot has been claimed by: {} UID:{}'.format(msg.senderNickname, msg.sender))
+            self.core.ACL.setOwner(msg.sender)
             self.reply(msg, 'You are now my owner! Wooo')
 
-    @command('^owner')
-    def owner(self, msg):
-        self.say(msg.channel, 'My owner is: *{}*'.format(self.ownerUser.name))
+    @command("^access delete <@([0-9]+)>", access=ACCESS["deleteAccess"])
+    def deleteAccess(self, msg):
+        requestor = msg.sender
+        target = msg.getMatches()[0]
 
-    @command('^acl (ranks|add|get|set|grant|revoke)')
-    def acl(self, msg):
-        pass
+        if(requestor == target):
+            self.reply(msg, "You cannot modify your own access")
+            return
 
-    def checkOwner(self):
-        # Check for owner
-        with self.database.lock:
-            ownerQuery = self.database.User.select().where( self.database.User.owner == True )
+        # Check if requestor is allowed to do this
+        if(self.core.ACL.getAccess(requestor) >= self.core.ACL.getAccess(target)):
+                print(self.core.ACL.deleteUser(target))
+                self.say(msg.channel, "Removed UID:`{}` from access list".format(target))
+        else:
+            self.reply(msg, "You cannot modify access of a user with more access")
 
-        for user in ownerQuery:
-            return user
+    @command("^access set <@([0-9]+)> ([0-9]+)", access=ACCESS["setAccess"])
+    def setAccess(self, msg):
+        requestor = msg.sender
+        target = msg.getMatches()[0]
 
-        # If we don't find an owner
-        self.key = self.generateKey(16)
-        self.logger.critical('Claim bot in chat using this command: .claim {}'.format(self.key))
-        return None
+        # Check if requestor is allowed to do this
+        if(requestor == target):
+            self.reply(msg, "You cannot modify your own access")
+            return
+
+        if(self.core.ACL.getAccess(requestor) >= self.core.ACL.getAccess(target)):
+            access = int(msg.getMatches()[1])
+            if(access >= 0 and access < 1000):
+                self.core.ACL.setAccess(target, access)
+                self.say(msg.channel, "Set UID:`{}` to access level: `{}`".format(target, access))
+            else:
+                self.reply(msg, "Access must be between 0 and 999")
+
+        else:
+            self.reply(msg, "You cannot modify access of a user with more access")
 
     def generateKey(self, length):
         return ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(length))

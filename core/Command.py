@@ -57,17 +57,20 @@ class CommandManager():
                     match = re.search(command.invocation, message.content.replace(self.core.config.trigger, "", 1))
 
                     if(match):
-                        message.content = message.content.replace(self.core.config.trigger, "", 1)
-                        message.match = match
-                        command.invoke(message)
-                        return
+                        # Check if user has access to invoke command
+                        if(self.core.ACL.getAccess(message.sender) >= command.access):
+                            message.content = message.content.replace(self.core.config.trigger, "", 1)
+                            message.match = match
+                            command.invoke(message)
+                        else:
+                            self.core.connection.reply(message, "Sorry, you don't have enough access for that command.")
+
             # Will invoke command if it matches command invocation and doesn't use trigger
             else:
                 match = re.search(command.invocation, message.content)
                 if(match):
                     message.match = match
                     command.invoke(message)
-                    return
 
     def getCommands(self):
         """

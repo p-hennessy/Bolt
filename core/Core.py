@@ -26,7 +26,7 @@ from core.Event import EventManager
 from core.PluginManager import PluginManager
 from core.ThreadPool import ThreadPool
 from core.Database import Database
-from core.User import User
+from core.ACL import ACL
 
 import threading
 from imp import load_module, find_module
@@ -48,11 +48,8 @@ class Bot():
         self.plugin = PluginManager(self)
         self.event = EventManager()
         self.command = CommandManager(self)
+        self.ACL = ACL()
         self.threadPool = ThreadPool(self.config.threadPoolQueueSize, self.config.threadedWorkers)
-
-        # Setup database
-        self.database = Database()
-        self.database.addTable(User)
 
         # Setup connection
         self.connection = self.loadConnector(self)
