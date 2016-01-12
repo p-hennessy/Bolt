@@ -61,7 +61,20 @@ class Connector():
 
         if(method.lower() in ["post", "get", "delete", "head", "options", "put"]):
             self.lastRequest = time.time()
-            response = requests.request(method.lower(), url, json=postData, headers=headers)
+            if(method == "POST"):
+                response = requests.post(url, json=postData, headers=headers)
+            elif(method == "GET"):
+                response = requests.get(url, postData, headers=headers)
+            elif(method == "PUT"):
+                response = requests.put(url, postData, headers=headers)
+            elif(method == "DELETE"):
+                response = requests.delete(url, postData, headers=headers)
+            elif(method == "OPTIONS"):
+                response = requests.options(url)
+            elif(method == "HEAD"):
+                response = requests.head(url)
+            elif(method == "UPDATE"):
+                response = requests.update(url, postData, headers=headers)
         else:
             raise Exception("Invalid HTTP request method")
 

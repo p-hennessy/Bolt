@@ -67,7 +67,8 @@ class Discord(Connector):
         self.logger.info("Attempting connection to Discord servers")
 
         try:
-            self.token = self.request("POST", "auth/login", postData={"email":self.email, "password":self.password})["token"]
+            tokenRequest = self.request("POST", "auth/login", postData={"email":self.email, "password":self.password})
+            self.token = tokenRequest['token']
         except:
             return
 
@@ -178,8 +179,6 @@ class Discord(Connector):
 
             if((now - startTime) >= (self.heartbeatInterval/1000) - 1):
                 self.__writeSocket({"op":1,"d": time.time()})
-                self.__writeSocket({"op":3,"d":{"idle_since":None, "game_id": random.randint(0,671)}})
-
                 self.logger.debug("KeepAlive")
 
                 startTime = time.time()
