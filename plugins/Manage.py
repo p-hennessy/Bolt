@@ -18,6 +18,19 @@ from core.Plugin import Plugin
 from core.Decorators import *
 
 import time
+import shlex
+import traceback
+
+ACCESS = {
+    "setStatus" :   1000,
+    "whoami"    :   -1,
+    "whois"     :   1000,
+    "channelid" :   1000,
+    "trigger"   :   -1,
+    "plugin"    :   1000,
+    "ping"      :   10,
+    "uptime"    :   1000
+}
 
 class Manage(Plugin):
 
@@ -28,33 +41,42 @@ class Manage(Plugin):
     def startTimer(self, *args, **kwargs):
         self.loginTime = time.time()
 
-    @command("^test")
-    def test(self, msg):
-        self.reply(msg, "Dude it worked!")
+    @command("^set status (.+)", access=ACCESS["setStatus"])
+    def setStatus(self, msg):
+        status = msg.getMatches()[0]
 
-    @command("^help")
-    def help(self, msg):
-        """
-        *Help* : Shows docs for commands. This help page is kinda meta...
-        """
+        self.core.connection._Discord__writeSocket({
+            "op":3,
+            "d":{
+                "idle_since":None,
+                "game": {
+                    "name": status
+                }
+            }
+        })
 
-        args = msg.asArgs()
-        commands = self.core.command.getCommands()
+    @command("^whois <@([0-9]+)>", access=ACCESS["whois"])
+    def whois(self, msg):
+        target = msg.getMatches()[0]
+        access = self.core.ACL.getAccess(target)
 
-        if(len(args) == 1):
-            self.say(msg.channel, "Type: help [command] to get help docs or help [list] to list commands")
-        elif( args[1] in commands ):
-            self.say(msg.channel, commands[args[1]].help())
-        elif( args[1] == "list"):
-            commandList = ""
-            for command in self.core.command.getCommands().keys():
-                commandList += "\n\t" + command
+        self.say(msg.channel, "User ID\t`{}`\nAccess:\t`{}`".format(msg.sender, access))
 
-            self.say(msg.channel, "Heres a list of my commands: " +  commandList)
-        else:
-            self.say(msg.channel, "I don't have that command!")
+    @command("^whoami", access=ACCESS["whoami"])
+    def whoami(self, msg):
+        access = self.core.ACL.getAccess(msg.sender)
 
-    @command("^plugin (list|[A-Za-z]+ (enable|disable|reload|status))")
+        self.reply(msg, "\nUser ID\t`{}`\nAccess:\t`{}`".format(msg.sender, access))
+
+    @command("^channelid", access=ACCESS["channelid"])
+    def channelid(self, msg):
+        self.say(msg.channel, "ID of current channel is: `{}`".format(msg.channel))
+
+    @command("^\?trigger$", useDefaultTrigger=False, access=ACCESS["trigger"])
+    def trigger(self, msg):
+        self.say(msg.channel, "My trigger is `" + self.core.config.trigger + "`")
+
+    @command("^plugin (list|[A-Za-z]+ (enable|disable|reload|status))", access=ACCESS["plugin"])
     def plugin(self, msg):
         """
         *Plugin* : Allows one to manage plugins
@@ -102,14 +124,14 @@ class Manage(Plugin):
                 else:
                     self.say(msg.channel, 'I don\'t have a plugin by that name')
 
-    @command("^ping")
+    @command("^ping$", access=ACCESS["ping"])
     def ping(self, msg):
         """
         *Ping* : Basic command to check if bot responds to messages
         """
         self.say(msg.channel, "Pong")
 
-    @command("^uptime")
+    @command("^uptime", access=ACCESS["uptime"])
     def uptime(self, msg):
         """
         *Uptime*: Will show a human-readable time duration since the bot logged in.
@@ -125,7 +147,7 @@ class Manage(Plugin):
             seconds = int(uptime % 60)
 
             if(days > 0):       readable += str(days) + " days "
-            if(hours > 0):      readable += str(hours) + "hours "
+            if(hours > 0):      readable += str(hours) + " hours "
             if(minutes > 0):    readable += str(minutes) + " minutes "
             if(seconds > 0):    readable += str(seconds) + " seconds "
 

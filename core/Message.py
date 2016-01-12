@@ -26,10 +26,11 @@ class Envelope():
         self.channel = channel
 
 class Message():
-    def __init__(self, type, senderID, channelID, content=None, timestamp=time.time()):
+    def __init__(self, type, senderID, channelID, content=None, senderNickname=None, timestamp=time.time()):
         self.type = type
         self.timestamp = timestamp
         self.sender = senderID
+        self.senderNickname = senderNickname
         self.channel = channelID
         self.content = content
         self.match = None
