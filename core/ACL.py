@@ -19,6 +19,7 @@ from core.Database import *
 
 class ACLUser(Model):
     id      = IntegerField(primary_key=True)
+    cname   = CharField(max_length=128, default="")
     access  = IntegerField(default=0, constraints=[Check('access >= 0'), Check('access <= 1000') ])
     owner   = BooleanField(default=False)
 
@@ -66,7 +67,7 @@ class ACL():
             user.owner = True
             user.save()
 
-    def setAccess(self, uid, access):
+    def setAccess(self, uid, access, cname=""):
         """
             Summary:
                 Sets the database access for a specific user
@@ -87,10 +88,11 @@ class ACL():
         if(created):
             user.id = uid
             user.access = access
-
+            user.cname = cname
             user.save()
         else:
             user.access = access
+            user.cname = cname
             user.save()
 
         return True

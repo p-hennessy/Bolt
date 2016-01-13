@@ -23,8 +23,8 @@ import string
 
 ACCESS = {
     "claim": -1,
-    "deleteAccess": -1,
-    "setAccess": -1
+    "deleteAccess": 0,
+    "setAccess": 150
 }
 
 class ACL(Plugin):
@@ -67,11 +67,13 @@ class ACL(Plugin):
             self.reply(msg, "You cannot modify your own access")
             return
 
-        if(self.core.ACL.getAccess(requestor) >= self.core.ACL.getAccess(target)):
+        if(self.core.ACL.getAccess(requestor) > self.core.ACL.getAccess(target)):
             access = int(msg.getMatches()[1])
             if(access >= 0 and access < 1000):
-                self.core.ACL.setAccess(target, access)
-                self.say(msg.channel, "Set UID:`{}` to access level: `{}`".format(target, access))
+                name = self.core.connection.getUser(target)["name"]
+
+                self.core.ACL.setAccess(target, access, cname=name)
+                self.say(msg.channel, "Set **{}** UID:`{}` to access level: `{}`".format(name, target, access))
             else:
                 self.reply(msg, "Access must be between 0 and 999")
 

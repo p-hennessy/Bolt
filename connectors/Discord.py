@@ -96,10 +96,10 @@ class Discord(Connector):
         }
 
         self.__writeSocket(initData)
-        loginData = self.__readSocket()
+        self.loginData = self.__readSocket()
 
         # Get self user id so to not respond to own messages
-        self.uid = loginData["d"]["user"]["id"]
+        self.uid = self.loginData["d"]["user"]["id"]
 
         # Set websocket to nonblocking so we can exit a thread reading from the socket if we need to
         self.socket.sock.setblocking(0)
@@ -157,7 +157,7 @@ class Discord(Connector):
         pass
 
     def getUser(self, userID):
-        if(userID in self.userData and self.userData[userID]['expires'] < time.time()):
+        if(userID in self.userData and 'expires' in self.userData[userID] and self.userData[userID]['expires'] < time.time()):
             return self.userData[userID]
         else:
             user = self.request("GET", "users/{}".format(userID), headers={"authorization": self.token})

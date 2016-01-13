@@ -23,13 +23,13 @@ import traceback
 
 ACCESS = {
     "setStatus" :   1000,
-    "whoami"    :   -1,
-    "whois"     :   1000,
-    "channelid" :   1000,
-    "trigger"   :   -1,
+    "whoami"    :   50,
+    "whois"     :   50,
+    "channelid" :   999,
+    "trigger"   :   50,
     "plugin"    :   1000,
-    "ping"      :   10,
-    "uptime"    :   1000
+    "ping"      :   50,
+    "uptime"    :   50
 }
 
 class Manage(Plugin):
