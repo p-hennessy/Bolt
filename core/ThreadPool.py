@@ -52,6 +52,9 @@ class ThreadPool():
             Returns:
                 None
         """
+        if(self.tasks.full()):
+            self.logger.warning("Task queue is full. Consider raising the task queue size.")
+
         task = (callable, args, kwargs)
         self.tasks.put(task, block=True)
 

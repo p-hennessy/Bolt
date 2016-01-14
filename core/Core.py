@@ -48,7 +48,7 @@ class Bot():
         # Setup managers
         self.watchdog = Watchdog(self)
         self.plugin = PluginManager(self)
-        self.event = EventManager()
+        self.event = EventManager(self)
         self.command = CommandManager(self)
         self.ACL = ACL()
         self.threadPool = ThreadPool(self.config.threadPoolQueueSize, self.config.threadedWorkers)

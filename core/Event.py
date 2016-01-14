@@ -14,39 +14,101 @@
 """
 
 class EventManager():
-    def __init__(self):
+    def __init__(self, core):
+        self.core = core
         self.eventSubscriptions = {}
 
     def getEvents(self):
+        """
+            Summary:
+                Returns the names of events the bot knows about
+
+            Args:
+                None
+
+            Returns:
+                (List): Names of events bot knows about
+        """
         return self.eventSubscriptions.keys()
 
     def register(self, event):
+        """
+            Summary:
+                Adds an event to so that the bot knows about it
+
+            Args:
+                event (str): Name of the event to register
+
+            Returns:
+                None
+        """
         if(event in self.eventSubscriptions):
             raise EventRegistrationError("Event already registered")
         else:
             self.eventSubscriptions[event] = []
 
     def unregister(self, event):
+        """
+            Summary:
+                Removes an event so that it can no longer be emmited.
+                This method exists for completion sake
+
+            Args:
+                event (str): Name of the event to register
+
+            Returns:
+                None
+        """
         if(event not in self.eventSubscriptions):
             raise EventRegistrationError("Event does not exist")
         else:
             self.eventSubscriptions.pop(event, None)
 
     def notify(self, event, **kwargs):
+        """
+            Summary:
+                Queues up each event notification to the threadPool
+
+            Args:
+                event (str): Name of the event to register
+
+            Returns:
+                None
+        """
         for callback in self.eventSubscriptions[event]:
-            callback(**kwargs)
+            self.core.threadPool.queueTask(callback, **kwargs)
 
     def subscribe(self, event, callback):
+        """
+            Summary:
+                Adds an callback to be invoked when an event occurs
+
+            Args:
+                event (str): Name of the event
+                callback (bound method): Reference to the method to be called when event occurs
+
+            Returns:
+                None
+        """
         if(callback not in self.eventSubscriptions[event]):
             self.eventSubscriptions[event].append(callback)
-            return True
         else:
             raise EventSubscriptionError("Callback \"" + str(callback.__name__) + "\" was already subscribed to \"" + event + "\"")
 
     def unsubscribe(self, event, callback):
+        """
+            Summary:
+                Removes a callback from an event
+
+            Args:
+                event (str): Name of the event
+                callback (bound method): Reference to the method to be called when event occurs
+
+            Returns:
+                None
+        """
         if(callback in self.eventSubscriptions[event]):
             self.eventSubscriptions[event].remove(callback)
-            return True
         else:
             raise EventSubscriptionError("Callback \"" + str(callback.__name__) + "\" was not subscribed to \"" + event + "\"")
 

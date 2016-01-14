@@ -195,6 +195,12 @@ class PluginManager():
                 commandName = clazz + "." + callback.__name__
                 self.core.command.unregister(commandName)
 
+            if( hasattr(callback, "is_subscriber") ):
+                self.core.event.unsubscribe(getattr(callback, "event"), callback)
+
+            if( hasattr(callback, "is_publisher") ):
+                self.core.event.unregister(getattr(callback, "event"))
+
         # Remove from our hashtable
         self.plugins[pluginName] = {"instance":None, "status": "Disabled"}
         self.logger.info("Unloaded plugin \"" + pluginName + "\"")
