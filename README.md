@@ -10,8 +10,8 @@ Everything about Arcbot is self contained, meaning that the entire bot is shippe
 ### Running
 1. Clone this repo
 2. Fill out the `conf/settings.conf` file with your config settings
-3. You must install the packages found in `REQUIREMENTS.txt`
-4. Run the entry point `bot.py` with Python 3.4
+3. You must install the packages found in `REQUIREMENTS.txt`. Try doing `pip -r REQUIREMENTS.txt`
+4. Run the entry point `bot.py` with Python 3
 5. You're good to go!
 
 # Bot Architecture
