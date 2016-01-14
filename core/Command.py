@@ -16,7 +16,6 @@
 import threading
 import re
 import logging
-import six
 
 logger = logging.getLogger(__name__)
 
@@ -50,20 +49,31 @@ class CommandManager():
         self.core = core
 
     def checkMessage(self, message):
-        for key, command in six.iteritems(self.commands):
-            # Checks to see if message is a command and uses default trigger defined in conf/settings.py
-            if(command.useDefaultTrigger):
-                if(message.content.startswith(self.core.config.trigger)):
-                    match = re.search(command.invocation, message.content.replace(self.core.config.trigger, "", 1))
+        """
+            Summary:
+                Checks if an incoming message is a command
+                Invokes any command that matches the criteria
 
-                    if(match):
-                        # Check if user has access to invoke command
-                        if(self.core.ACL.getAccess(message.sender) >= command.access):
-                            message.content = message.content.replace(self.core.config.trigger, "", 1)
-                            message.match = match
-                            command.invoke(message)
-                        else:
-                            self.core.connection.reply(message, "Sorry, you don't have enough access for that command.")
+            Args:
+                message (str): A message instance from core.Message
+
+            Returns:
+                None
+        """
+        for key, command in self.commands.items():
+            # Checks to see if message is a command and uses default trigger defined in conf/settings.py
+            if(command.useDefaultTrigger and message.content.startswith(self.core.config.trigger)):
+                # Looks at the message content and decide if it matches
+                match = re.search(command.invocation, message.content.replace(self.core.config.trigger, "", 1))
+
+                if(match):
+                    # Check if user has access to invoke command
+                    if(self.core.ACL.getAccess(message.sender) >= command.access):
+                        message.content = message.content.replace(self.core.config.trigger, "", 1)
+                        message.match = match
+                        command.invoke(message)
+                    else:
+                        self.core.connection.reply(message, "Sorry, you don't have enough access for that command.")
 
             # Will invoke command if it matches command invocation and doesn't use trigger
             else:
@@ -117,12 +127,13 @@ class CommandManager():
             Returns:
                 None
         """
-        name = callback.__name__
 
         try:
             clazz = callback.im_class.__name__
         except:
             clazz = type(callback.__self__).__name__
+
+            name = clazz + "." + callback.__name__
 
         if( name in self.commands ):
             logger.warning("Duplicate command \"" + clazz + "." + name + "\". Skipping registration.")
@@ -153,12 +164,12 @@ class CommandManager():
         if(commandName in self.commands):
             command = self.commands[commandName]
 
-            name = command.callback.__name__
-
             try:
                 clazz = command.callback.im_class.__name__
             except:
                 clazz = type(command.callback.__self__).__name__
+
+            name = clazz + "." + command.callback.__name__
 
             del self.commands[commandName]
             logger.debug("Unregistered command \"" + clazz + "." + name + "\"")

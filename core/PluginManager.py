@@ -184,6 +184,7 @@ class PluginManager():
 
         # Get plugin object from our hashtable
         plugin = self.plugins[pluginName]["instance"]
+        clazz = plugin.__class__.__name__
 
         if( hasattr(plugin, "deactivate") ):
             plugin.deactivate()
@@ -191,7 +192,8 @@ class PluginManager():
         # Unregister plugin commands and events
         for name, callback in inspect.getmembers(plugin, inspect.ismethod):
             if( hasattr(callback, "is_command") ):
-                self.core.command.unregister(callback.__name__)
+                commandName = clazz + "." + callback.__name__
+                self.core.command.unregister(commandName)
 
         # Remove from our hashtable
         self.plugins[pluginName] = {"instance":None, "status": "Disabled"}
