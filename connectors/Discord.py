@@ -282,9 +282,6 @@ class Discord(Connector):
 
             self.logger.info("Message Recieved: [Name:{}][UID:{}][CID:{}]: {}".format(senderNickname, sender, channel, content))
         else:
-            with open('unhandled_messages.txt', "a+") as file:
-                file.write(json.dumps(message))
-
             return None
 
         if(sender == self.uid):
