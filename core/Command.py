@@ -76,7 +76,7 @@ class CommandManager():
                         self.core.connection.reply(message, "Sorry, you don't have enough access for that command.")
 
             # Will invoke command if it matches command invocation and doesn't use trigger
-            else:
+            elif(command.useDefaultTrigger == False):
                 match = re.search(command.invocation, message.content)
                 if(match):
                     if(self.core.ACL.getAccess(message.sender) >= command.access):
