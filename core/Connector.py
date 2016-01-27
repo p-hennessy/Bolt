@@ -45,6 +45,10 @@ class Connector():
         pass
 
     @abstractmethod
+    def upload(self, channel, file):
+        pass
+
+    @abstractmethod
     def getUsers(self):
         pass
 
@@ -52,7 +56,7 @@ class Connector():
     def getUser(self, userID):
         pass
 
-    def request(self, method, request="?", headers=None, postData={}, domain="discordapp.com"):
+    def request(self, method, request="?", headers=None, postData={}, domain="discordapp.com", files={}):
         while(time.time() - self.lastRequest < 1):
             time.sleep(0.025)
 
@@ -62,7 +66,7 @@ class Connector():
         if(method.lower() in ["post", "get", "delete", "head", "options", "put"]):
             self.lastRequest = time.time()
             if(method == "POST"):
-                response = requests.post(url, json=postData, headers=headers)
+                response = requests.post(url, files=files, json=postData, headers=headers)
             elif(method == "GET"):
                 response = requests.get(url, postData, headers=headers)
             elif(method == "PUT"):

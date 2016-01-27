@@ -141,17 +141,27 @@ class Discord(Connector):
         try:
             self.request("POST", "channels/{}/messages".format(channel), postData={"content": "{}".format(message), "mentions":mentions}, headers={"authorization": self.token})
         except:
-            self.logger.warning('Send message to {} failed'.format(channel))
+            self.logger.warning('Send message to channel \'{}\' failed'.format(channel))
 
     def reply(self, envelope, message):
         self.logger.debug("Sending reply to " + envelope.sender)
         try:
             self.request("POST", "channels/{}/messages".format(envelope.channel), postData={"content": "<@{}> {}".format(envelope.sender, message), "mentions":[envelope.sender]}, headers={"authorization": self.token})
         except:
-            self.logger.warning('Reply to {} failed'.format(envelope.sender))
+            self.logger.warning('Reply to user \'{}\' in channel \'{}\' failed'.format(envelope.sender, envelope.channel))
 
     def whisper(self, sender, message):
         self.logger.debug("Whisper to " + message.sender)
+
+    def upload(self, channel, file):
+        self.logger.debug('Sending file to channel ' + channel)
+
+        files = {'file': open(file, 'rb')}
+
+        try:
+            self.request('POST', "channels/{}/messages".format(channel),  files=files, headers={"authorization": self.token})
+        except:
+            self.logger.warning('Upload file \'{}\' to channel {} failed'.format(file, channel))
 
     def getUsers(self):
         pass

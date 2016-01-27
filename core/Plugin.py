@@ -99,3 +99,18 @@ class Plugin(object):
                 None
         """
         pass
+
+    def upload(self, channel, file):
+        """
+            Summary:
+                Wrapper method calling the connection's upload method
+                Uploads a file to a channel
+
+            Args:
+                channel (str): Channel id to send message to
+                file (str): Path of file to upload
+
+            Returns:
+                None
+        """
+        self.core.connection.upload(channel, file)
