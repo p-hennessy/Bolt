@@ -107,6 +107,7 @@ class Worker(threading.Thread):
         # Call super constructor for thread to name it; Also Python 2.7 requires it
         super(Worker, self).__init__(name="WorkerThread" + str(num))
         self.name = "WorkerThread" + str(num)
+        self.logger = logging.getLogger(self.name)
 
         # Sentinal value used to kill our thread
         self.running = True
@@ -154,6 +155,6 @@ class Worker(threading.Thread):
             # Invoke task
             try:
                 callable(*args, **kwargs)
-            except:
-                raise
+            except BaseException as e:
+                self.logger.warning("Exception occured in {} : {}".format(self.name, str(e)))
                 continue
