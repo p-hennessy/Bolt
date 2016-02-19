@@ -72,8 +72,11 @@ class CommandManager():
                         message.content = message.content.replace(self.core.config.trigger, "", 1)
                         message.setMatch(match)
                         command.invoke(message)
+
                     else:
-                        self.core.connection.reply(message, "Sorry, you need {} access to use that command.".format(command.access))
+                        self.core.connection.reply(message, "Sorry, you need `{}` access to use that command.".format(command.access))
+
+                    return
 
             # Will invoke command if it matches command invocation and doesn't use trigger
             elif(command.useDefaultTrigger == False):
@@ -82,8 +85,8 @@ class CommandManager():
                     if(self.core.ACL.getAccess(message.sender) >= command.access):
                         message.setMatch(match)
                         command.invoke(message)
-                    else:
-                        self.core.connection.reply(message, "Sorry, you need {} access to use that command.".format(command.access))
+
+                    return
 
     def getCommands(self):
         """
