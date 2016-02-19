@@ -60,7 +60,7 @@ class CommandManager():
             Returns:
                 None
         """
-        for key, command in self.commands.items():
+        for key, command in list(self.commands.items()):
             # Checks to see if message is a command and uses default trigger defined in conf/settings.py
             if(command.useDefaultTrigger and message.content.startswith(self.core.config.trigger)):
                 # Looks at the message content and decide if it matches
@@ -70,20 +70,20 @@ class CommandManager():
                     # Check if user has access to invoke command
                     if(self.core.ACL.getAccess(message.sender) >= command.access):
                         message.content = message.content.replace(self.core.config.trigger, "", 1)
-                        message.match = match
+                        message.setMatch(match)
                         command.invoke(message)
                     else:
-                        self.core.connection.reply(message, "Sorry, you don't have enough access for that command.")
+                        self.core.connection.reply(message, "Sorry, you need {} access to use that command.".format(command.access))
 
             # Will invoke command if it matches command invocation and doesn't use trigger
             elif(command.useDefaultTrigger == False):
                 match = re.search(command.invocation, message.content)
                 if(match):
                     if(self.core.ACL.getAccess(message.sender) >= command.access):
-                        message.match = match
+                        message.setMatch(match)
                         command.invoke(message)
                     else:
-                        self.core.connection.reply(message, "Sorry, you don't have enough access for that command.")
+                        self.core.connection.reply(message, "Sorry, you need {} access to use that command.".format(command.access))
 
     def getCommands(self):
         """
