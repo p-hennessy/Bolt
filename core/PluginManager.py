@@ -133,10 +133,10 @@ class PluginManager():
 
         # Find plugin subclass and initialize it
         for name, clazz in inspect.getmembers(pluginModule, inspect.isclass):
-            if(name == "Plugin"):
+            if name == "Plugin":
                 continue
 
-            if(issubclass(clazz, Plugin)):
+            if issubclass(clazz, Plugin):
                 plugin = clazz(self.core, name)
                 break
 
@@ -145,22 +145,27 @@ class PluginManager():
             return
 
         # Call activate() if it exists
-        if( hasattr(plugin, "activate") ):
+        if hasattr(plugin, "activate"):
             plugin.activate()
 
         # Register plugin commands and events
         for name, callback in inspect.getmembers(plugin, inspect.ismethod):
-            if( hasattr(callback, "is_command") ):
+            if hasattr(callback, "connector"):
+                if not self.core.connection.name == getattr(callback, "connector"):
+                    logger.debug("Command \"" + clazz + "." + name + "\" does not meet connector requirements. Skipping registration.")
+                    continue
+
+            if hasattr(callback, "is_command"):
                 self.core.command.register(getattr(callback, "trigger"), callback, useDefaultTrigger=getattr(callback, "useDefaultTrigger"), access=getattr(callback, "access"))
 
-            if( hasattr(callback, "is_subscriber") ):
+            if hasattr(callback, "is_subscriber"):
                 self.core.event.subscribe(getattr(callback, "event"), callback)
 
-            if( hasattr(callback, "is_publisher") ):
+            if hasattr(callback, "is_publisher"):
                 self.core.event.register(getattr(callback, "event"))
 
         # Push plugin to our hashtable
-        self.plugins[plugin.name] = {"instance":plugin, "status": "Enabled"}
+        self.plugins[plugin.name] = {"instance":plugin, "module": pluginModule, "status": "Enabled"}
         self.logger.info("Loaded plugin \"" + plugin.name + "\"")
 
     def unload(self, pluginName):
@@ -202,7 +207,7 @@ class PluginManager():
                 self.core.event.unregister(getattr(callback, "event"))
 
         # Remove from our hashtable
-        self.plugins[pluginName] = {"instance":None, "status": "Disabled"}
+        self.plugins[pluginName] = {"instance":None, "module":None, "status": "Disabled"}
         self.logger.info("Unloaded plugin \"" + pluginName + "\"")
 
     def reload(self, pluginName):

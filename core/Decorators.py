@@ -16,6 +16,16 @@ def command(trigger, access=0, useDefaultTrigger=True):
         return wrapper
     return decorate
 
+def connector(requirement):
+    def decorate(callback):
+        def wrapper(self, *args, **kwargs):
+            return callback(self, *args, **kwargs)
+
+        setattr(wrapper, 'connector', requirement)
+
+        return wrapper
+    return decorate
+
 def subscriber(event):
     def decorate(callback):
         def wrapper(self, *args, **kwargs):
