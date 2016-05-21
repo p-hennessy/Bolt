@@ -151,7 +151,7 @@ class Bot():
         path.append("conf")
 
         try:
-            configCanadiate = find_module(configName)
+            configCanadiate = find_module(configName, path=['conf'])
             configModule = load_module(configName, *configCanadiate)
 
             config = configModule.Config()
@@ -182,7 +182,7 @@ class Bot():
         path.append("connectors")
 
         try:
-            connectorCandidate = find_module(self.config.connector)
+            connectorCandidate = find_module(self.config.connector, path=["connectors"])
             connectorModule = load_module(self.config.connector, *connectorCandidate)
             connector = getattr(connectorModule, self.config.connector)(core, **self.config.connectorOptions)
             self.logger.info("Loaded connector from: \"" +  connectorCandidate[1] + "\"")

@@ -123,7 +123,7 @@ class PluginManager():
         """
 
         try:
-            pluginCandidate = imp.find_module(moduleName)
+            pluginCandidate = imp.find_module(moduleName, path=['plugins'])
             pluginModule = imp.load_module(moduleName, *pluginCandidate)
         except ImportError as e:
             self.logger.error(e)
