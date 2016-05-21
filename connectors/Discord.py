@@ -16,38 +16,34 @@
         by the Free Software Foundation
 """
 
-from __future__ import print_function
 from platform import system
 from ssl import *
 
-import websocket
-import socket
-import threading
-import time
-import logging
 import json
+import logging
 import random
+import requests
+import socket
+import time
+import threading
+import websocket
 
 from core.Connector import Connector
 from core.Message import *
 
-import requests
-
 class Discord(Connector):
-    def __init__(self, core, email, password):
+    def __init__(self, core, token):
         super(Discord, self).__init__()
         self.core = core
         self.logger = logging.getLogger("connector." + __name__)
-        self.name = "Discord"
+        self.name = __name__
 
         # Authentication / Connection Data
-        self.email = email
-        self.password = password
         self.uid = None                 # UID of bot so that it doesnt respond to itself
 
         self.userData = {}              # Caches data about users
 
-        self.token = None               # Token used to authenticate api requests
+        self.token = token               # Token used to authenticate api requests
         self.socket = None              # Websocket connection handler to Discord
 
         self.connected = False          # Boolean for handling connection state
@@ -67,16 +63,9 @@ class Discord(Connector):
         # Connect to Discord, post login credentials
         self.logger.info("Attempting connection to Discord servers")
 
-        try:
-            tokenRequest = self.request("POST", "auth/login", postData={"email":self.email, "password":self.password})
-            self.token = tokenRequest['token']
-        except:
-            return
-
         # Request a WebSocket URL
         socketURL = self.request("GET", "gateway", headers={"authorization": self.token})["url"]
 
-        # Create socket connection
         self.socket = websocket.create_connection(socketURL)
 
         # Immediately pass message to server about your connection
@@ -92,7 +81,7 @@ class Discord(Connector):
                     "$referring_domain":""
                 },
             },
-            "v": 3
+            "v": 4
         }
 
         self.__writeSocket(initData)
@@ -178,6 +167,9 @@ class Discord(Connector):
                 'id': user['id'],
                 'expires': time.time() + 600
             }
+
+    # Discord Specific
+    
 
     # Thread Methods
     def __keepAlive(self):
