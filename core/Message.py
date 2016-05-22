@@ -33,6 +33,7 @@ class Message():
         self.senderNickname = senderNickname
         self.channel = channelID
         self.content = content
+        self.matchObj = None
         self.match = None
 
     def asArgs(self):
@@ -43,9 +44,13 @@ class Message():
 
         return split
 
+    def setMatch(self, match):
+        self.matchObj = match
+        self.match = match.groups()
+
     def getMatches(self):
-        if(self.match):
-            return self.match.groups()
+        if(self.matchObj):
+            return self.matchObj.groups()
 
     def __call__(self):
         return Envelope(self.sender, self.channel)
