@@ -98,7 +98,7 @@ class Plugin(object):
             Returns:
                 None
         """
-        pass
+        self.core.connection.whisper(user, message)
 
     def upload(self, channel, file):
         """
