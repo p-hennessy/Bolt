@@ -19,6 +19,7 @@
 from platform import system
 from ssl import *
 
+import base64
 import json
 import logging
 import random
@@ -39,15 +40,17 @@ class Discord(Connector):
         self.name = __name__
 
         # Authentication / Connection Data
-        self.uid = None                 # UID of bot so that it doesnt respond to itself
-
-        self.userData = {}              # Caches data about users
+        self.connectorCache = {
+            "heartbeat_interval": 41250,
+            "session_id":"",
+            "self":{},
+            "private_channels":[],
+            "guilds":[]
+        }
 
         self.token = token               # Token used to authenticate api requests
-        self.socket = None              # Websocket connection handler to Discord
-
-        self.connected = False          # Boolean for handling connection state
-        self.heartbeatInterval = 41250  # Time in ms between KeepAlive pings
+        self.socket = None               # Websocket connection handler to Discord
+        self.connected = False           # Boolean for handling connection state
 
         # Internal threads
         self.keepAliveThread = None
@@ -85,10 +88,7 @@ class Discord(Connector):
         }
 
         self.__writeSocket(initData)
-        self.loginData = self.__readSocket()
-
-        # Get self user id so to not respond to own messages
-        self.uid = self.loginData["d"]["user"]["id"]
+        self.__parseLoginData(self.__readSocket())
 
         # Set websocket to nonblocking so we can exit a thread reading from the socket if we need to
         self.socket.sock.setblocking(0)
@@ -139,8 +139,17 @@ class Discord(Connector):
         except:
             self.logger.warning('Reply to user \'{}\' in channel \'{}\' failed'.format(envelope.sender, envelope.channel))
 
-    def whisper(self, sender, message):
-        self.logger.debug("Whisper to " + message.sender)
+    def whisper(self, user, message):
+        for channel in self.connectorCache['private_channels']:
+            if channel['recipient']['id'] == user:
+                self.send(channel['id'], message)
+                break
+        else:
+            channel = self.request("POST", "users/@me/channels", postData={"recipient_id": "{}".format(user)}, headers={"authorization": self.token})
+            self.connectorCache['private_channels'].append(channel)
+            self.send(channel['id'], message)
+
+        self.logger.debug("Whisper to " + user)
 
     def upload(self, channel, file):
         self.logger.debug('Sending file to channel ' + channel)
@@ -156,31 +165,59 @@ class Discord(Connector):
         pass
 
     def getUser(self, userID):
-        if(userID in self.userData and 'expires' in self.userData[userID] and self.userData[userID]['expires'] < time.time()):
-            return self.userData[userID]
-        else:
-            user = self.request("GET", "users/{}".format(userID), headers={"authorization": self.token})
-            self.userData[userID] = user
+        user = self.request("GET", "users/{}".format(userID), headers={"authorization": self.token})
 
-            return {
-                'name': user['username'],
-                'id': user['id'],
-                'expires': time.time() + 600
-            }
+        return {
+            'name': user['username'],
+            'id': user['id'],
+            'expires': time.time() + 600
+        }
 
     # Discord Specific
-    
+    def leaveGuild(self, guild_id):
+        self.request("DELETE", "users/@me/guilds/{}".format(guild_id), headers={"authorization": self.token})
+
+    def getServers(self):
+        return self.request("GET", "users/@me/guilds", headers={"authorization": self.token})
+
+    # User Management
+        # Set roles
+        # Ban
+        # Sync Roles
+    # Channel Management
+        # Add / remove Channel
+        # Apply premissions to Channel
+
+    def gatherFacts(self):
+
+        self.connectorDict['self'] = self.request("GET", "users/@me", headers={"authorization": self.token})
+        self.connectorDict['direct_messages'] = self.request("GET", "users/@me/channels", headers={"authorization": self.token})
+        self.connectorDict['guilds'] = self.request("GET", "users/@me/guilds", headers={"authorization": self.token})
+
+        print(json.dumps(self.connectorDict))
+
+    def setAvatar(self):
+        with open("conf/avatar.png", "rb") as avatarImage:
+            rawImage = avatarImage.read()
+
+        raw = base64.b64encode(rawImage)
+        with open("test", "wb") as file:
+            file.write(raw)
+
+        return
+
+        self.request("PATCH", "users/@me", postData={"username": "Arcbot", "avatar": "data:image/png;base64," + base64.b64encode(rawImage).decode('ascii')}, headers={"authorization": self.token})
 
     # Thread Methods
     def __keepAlive(self):
-        self.logger.debug("Spawning keepAlive thread at interval: " + str(self.heartbeatInterval))
+        self.logger.debug("Spawning keepAlive thread at interval: " + str(self.connectorCache['heartbeat_interval']))
 
         startTime = time.time()
 
         while self.connected:
             now = time.time()
 
-            if((now - startTime) >= (self.heartbeatInterval/1000) - 1):
+            if((now - startTime) >= (self.connectorCache['heartbeat_interval']/1000) - 1):
                 self.__writeSocket({"op":1,"d": time.time()})
                 self.logger.debug("KeepAlive")
 
@@ -286,7 +323,14 @@ class Discord(Connector):
         else:
             return None
 
-        if(sender == self.uid):
+        if(sender == self.connectorCache['self']['id']):
             return None
 
         return Message(type, sender, channel, content, senderNickname=senderNickname, timestamp=time.time())
+
+    def __parseLoginData(self, data):
+        self.connectorCache['heartbeat_interval'] = data['d']['heartbeat_interval']
+        self.connectorCache['session_id'] = data['d']['session_id']
+        self.connectorCache['self'] = data['d']['user']
+        self.connectorCache['private_channels'] = data['d']['private_channels']
+        self.connectorCache['guilds'] = data['d']['guilds']
