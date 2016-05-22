@@ -21,6 +21,7 @@ def connector(requirement):
         def wrapper(self, *args, **kwargs):
             return callback(self, *args, **kwargs)
 
+        wrapper.__name__ = callback.__name__
         setattr(wrapper, 'connector', requirement)
 
         return wrapper
