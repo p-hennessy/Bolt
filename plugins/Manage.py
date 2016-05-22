@@ -23,11 +23,11 @@ import traceback
 
 ACCESS = {
     "setStatus" :   1000,
-    "whoami"    :   50,
-    "whois"     :   50,
+    "speak"     :   999,
     "channelid" :   999,
     "trigger"   :   50,
     "plugin"    :   1000,
+    "help"      :   1000,
     "ping"      :   50,
     "uptime"    :   50
 }
@@ -55,18 +55,9 @@ class Manage(Plugin):
             }
         })
 
-    @command("^whois <@([0-9]+)>", access=ACCESS["whois"])
-    def whois(self, msg):
-        target = msg.getMatches()[0]
-        access = self.core.ACL.getAccess(target)
-
-        self.say(msg.channel, "User ID\t`{}`\nAccess:\t`{}`".format(msg.sender, access))
-
-    @command("^whoami", access=ACCESS["whoami"])
-    def whoami(self, msg):
-        access = self.core.ACL.getAccess(msg.sender)
-
-        self.reply(msg, "\nUser ID\t`{}`\nAccess:\t`{}`".format(msg.sender, access))
+    @command("^say (.*)$", access=ACCESS['speak'])
+    def speak(self, msg):
+        self.say(msg.channel, msg.getMatches()[0])
 
     @command("^channelid", access=ACCESS["channelid"])
     def channelid(self, msg):
