@@ -114,6 +114,23 @@ class ACL():
         except:
             return -1
 
+    def getUsers(self, access, limit=0, offset=0):
+        """
+            Summary:
+                Gets all the users the bot knows about
+
+            Args:
+                None
+
+            Returns:
+                (List): User objects defined above
+        """
+        try:
+            users = ACLUser.select().where(ACLUser.access == access).order_by(ACLUser.access.desc()).limit(limit).offset(offset)
+            return users
+        except:
+            return -1
+
     def deleteUser(self, uid):
         """
             Summary:

@@ -17,13 +17,14 @@
 from core.Plugin import Plugin
 from core.Decorators import *
 from peewee import *
+from tabulate import tabulate
 
 import random
 import string
 
 ACCESS = {
     "claim": -1,
-    "deleteAccess": 0,
+    "deleteAccess": 150,
     "setAccess": 150
 }
 
@@ -40,6 +41,32 @@ class ACL(Plugin):
             self.logger.critical('Bot has been claimed by: {} UID:{}'.format(msg.senderNickname, msg.sender))
             self.core.ACL.setOwner(msg.sender)
             self.reply(msg, 'You are now my owner! Wooo')
+
+    @command("^whois <@([0-9]+)>", access=50)
+    def whois(self, msg):
+        target = msg.getMatches()[0]
+        access = self.core.ACL.getAccess(target)
+
+        self.say(msg.channel, "User ID\t`{}`\nAccess:\t`{}`".format(msg.sender, access))
+
+    @command("^whoami", access=50)
+    def whoami(self, msg):
+        access = self.core.ACL.getAccess(msg.sender)
+
+        self.reply(msg, "\nUser ID\t`{}`\nAccess:\t`{}`".format(msg.sender, access))
+
+    @command('^list users ([0-9]+)( [0-9]+)?( [0-9]+)?', access=100)
+    def getUsers(self, msg):
+        access, limit, offset = msg.getMatches()
+
+        table = []
+        for user in self.core.ACL.getUsers(access, limit, offset):
+            table.append([user.id, user.cname, user.access])
+
+        output = "**Users in my database: **\n\n"
+        output += "`{}`".format(tabulate(table, headers=["ID", "Name", "Access"], tablefmt="psql", numalign="left"))
+
+        self.say(msg.channel, output)
 
     @command("^delete access <@([0-9]+)>", access=ACCESS["deleteAccess"])
     def deleteAccess(self, msg):
