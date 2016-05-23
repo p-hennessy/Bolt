@@ -1,9 +1,8 @@
 """
-    Class Name : ThreadPool
+    Class Name : Workers
 
     Description:
         Class that will spawn threads to do work seperate to the main logic
-        Objects need call this the *addTask* method to request a worker to do something
 
     Contributors:
         - Patrick Hennessy
@@ -17,28 +16,27 @@
 import threading
 import time
 import logging
+import traceback
 
 try:
     import queue
 except ImportError:
     import Queue as queue
 
-
-class ThreadPool():
-    def __init__(self, taskQueueSize, numThreads):
+class Workers():
+    def __init__(self, queue_size, threads):
         self.logger = logging.getLogger(__name__)
 
         # Init worker list and queue
-        self.workers = []
-        self.tasks = queue.Queue(taskQueueSize)
+        self._threads = []
+        self.tasks = queue.Queue(queue_size)
 
-        self.logger.info("Spawning " + str(numThreads) + " worker threads.")
+        self.logger.info("Spawning " + str(threads) + " worker threads.")
 
         # Create worker threads
-        for i in range(0, numThreads):
-            self.addWorker()
+        self.threads = threads
 
-    def queueTask(self, callable, *args, **kwargs):
+    def queue(self, callable, *args, **kwargs):
         """
             Summary:
                 Puts task on the task queue for workers to pull from.
@@ -58,7 +56,7 @@ class ThreadPool():
         task = (callable, args, kwargs)
         self.tasks.put(task, block=True)
 
-    def dequeueTask(self):
+    def dequeue(self):
         """
             Summary:
                 Removes a task from the queue. Will block for half a second, and raise Queue.Empty exception when nothing is in queue
@@ -69,42 +67,28 @@ class ThreadPool():
             Returns:
                 None
         """
-        return self.tasks.get(block=True, timeout=0.5)
+        return self.tasks.get(block=True, timeout=0.1)
 
-    def addWorker(self):
-        """
-            Summary:
-                Creates and starts a new worker thread
+    @property
+    def threads(self):
+        return len(self._threads)
 
-            Args:
-                None
+    @threads.setter
+    def threads(self, number):
+        while len(self._threads) < number:
+            new_worker = Worker(self, len(self._threads) + 1)
+            self._threads.append(new_worker)
+            new_worker.start()
 
-            Returns:
-                None
-        """
-        newWorker = Worker(self, len(self.workers) + 1)
-        self.workers.append(newWorker)
-        newWorker.start()
-
-    def joinThreads(self):
-        """
-            Summary:
-                Will ask threads to halt their execution, and syncronize back with the main thread
-
-            Args:
-                None
-
-            Returns:
-                None
-        """
-        for thread in self.workers:
-            thread.signalStop()
-            thread.join()
+        while len(self._threads) > number:
+            worker = self._threads.pop()
+            worker.stop()
+            worker.join()
 
 class Worker(threading.Thread):
-    def __init__(self, pool, num):
+    def __init__(self, tasks, num):
 
-        # Call super constructor for thread to name it; Also Python 2.7 requires it
+        # Call super constructor for thread to name it
         super(Worker, self).__init__(name="WorkerThread" + str(num))
         self.name = "WorkerThread" + str(num)
         self.logger = logging.getLogger(self.name)
@@ -113,9 +97,9 @@ class Worker(threading.Thread):
         self.running = True
 
         # Reference to parent object to get tasks from
-        self.pool = pool
+        self.tasks = tasks
 
-    def signalStop(self):
+    def stop(self):
         """
             Summary:
                 Tells the thread that it should stop running
@@ -132,7 +116,7 @@ class Worker(threading.Thread):
         """
             Summary:
                 Part of the Thread superclass; this method is where the logic for our thread resides.
-                Loops continously while trying to pull a task from the ThreadPool's task queue and execute that task
+                Loops continously while trying to pull a task from the task queue and execute that task
 
             Args:
                 None
@@ -143,7 +127,7 @@ class Worker(threading.Thread):
         while(self.running):
             # Dequeue task will block and thread will wait for a task
             try:
-                task = self.pool.dequeueTask()
+                task = self.tasks.dequeue()
             except queue.Empty as e:
                 continue
 
@@ -156,5 +140,5 @@ class Worker(threading.Thread):
             try:
                 callable(*args, **kwargs)
             except BaseException as e:
-                self.logger.warning("Exception occured in {} : {}".format(self.name, str(e)))
+                self.logger.warning("Exception occured in {}:\n {}".format(self.name, traceback.format_exc()))
                 continue

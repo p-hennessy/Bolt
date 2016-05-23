@@ -27,21 +27,10 @@ class Command():
         self.useDefaultTrigger = useDefaultTrigger
 
     def __str__(self):
-        return self.invocation
-
-    def getAccess(self):
-        return self.access
+        return self.callback.__name__
 
     def invoke(self, message):
         self.callback(message)
-
-    def help(self):
-        docstring = self.callback.__doc__
-
-        if(docstring):
-            return docstring
-        else:
-            return "That command is currently undocumented"
 
 class CommandManager():
     def __init__(self, core):
@@ -70,7 +59,7 @@ class CommandManager():
                     # Check if user has access to invoke command
                     if(self.core.ACL.getAccess(message.sender) >= command.access):
                         message.content = message.content.replace(self.core.config.trigger, "", 1)
-                        message.setMatch(match)
+                        message.arguments = match
                         command.invoke(message)
 
                     else:
@@ -83,39 +72,10 @@ class CommandManager():
                 match = re.search(command.invocation, message.content)
                 if(match):
                     if(self.core.ACL.getAccess(message.sender) >= command.access):
-                        message.setMatch(match)
+                        message.arguments = match
                         command.invoke(message)
 
                     return
-
-    def getCommands(self):
-        """
-            Summary:
-                Returns command hashtable
-
-            Args:
-                None
-
-            Returns:
-                (dict): Hashtable containing Command instances
-        """
-        return self.commands
-
-    def getCommand(self, commandName):
-        """
-            Summary:
-                Returns a Command instance
-
-            Args:
-                commandName (str): Name of command to get
-
-            Returns:
-                (Command): Instance of Command
-        """
-        if(commandName in self.commands):
-            return self.commands[commandName]
-        else:
-            return None
 
     def register(self, invocation, callback, useDefaultTrigger=True, access=0):
         """

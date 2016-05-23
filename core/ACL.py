@@ -28,7 +28,8 @@ class ACL():
         self.database = Database(databaseName="databases/ACL.db")
         self.database.addTable(ACLUser)
 
-    def getOwner(self):
+    @property
+    def owner(self):
         """
             Summary:
                 Returns the ID of the bot owner if there is one
@@ -45,7 +46,8 @@ class ACL():
         except:
             return None
 
-    def setOwner(self, uid):
+    @owner.setter
+    def owner(self, uid):
         """
             Summary:
                 Sets the bot owner
@@ -114,7 +116,7 @@ class ACL():
         except:
             return -1
 
-    def getUsers(self, access, limit=0, offset=0):
+    def query_users(self, access, limit=0, offset=0):
         """
             Summary:
                 Gets all the users the bot knows about

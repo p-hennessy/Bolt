@@ -2,7 +2,7 @@
     Class Name : Main
 
     Description:
-        Entry point for loading CL4M-B0T
+        Entry point for loading Arcbot
 
     Contributors:
         - Patrick Hennessy
@@ -28,7 +28,7 @@ def main():
 
     except KeyboardInterrupt:
         logger.info("Caught SIGINT from keyboard. Exiting")
-        bot.cleanup()
+        bot.exit()
         sys.exit(0)
 
 if __name__ == '__main__':

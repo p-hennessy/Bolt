@@ -22,7 +22,7 @@ class Connector():
     __metaclass__ = ABCMeta
 
     def __init__(self):
-        self.lastRequest = time.time()
+        self.last_request = time.time()
 
     @abstractmethod
     def connect(self):
@@ -33,7 +33,7 @@ class Connector():
         pass
 
     @abstractmethod
-    def send(self, envelope, message, mentions=[]):
+    def send(self, channel, message, mentions=[]):
         pass
 
     @abstractmethod
@@ -41,7 +41,7 @@ class Connector():
         pass
 
     @abstractmethod
-    def whisper(self, envelope, message):
+    def whisper(self, user, message):
         pass
 
     @abstractmethod
@@ -56,8 +56,8 @@ class Connector():
     def getUser(self, userID):
         pass
 
-    def request(self, method, request="?", headers=None, postData={}, domain="discordapp.com", files={}):
-        while(time.time() - self.lastRequest < 1):
+    def request(self, method, request="?", headers=None, data={}, domain="discordapp.com", files={}):
+        while(time.time() - self.last_request < 1):
             time.sleep(0.025)
 
         url = 'https://{}/api/{}'.format(domain, request)
@@ -66,21 +66,21 @@ class Connector():
         if(method.lower() in ["post", "get", "delete", "head", "options", "put", "patch"]):
             self.lastRequest = time.time()
             if(method == "POST"):
-                response = requests.post(url, files=files, json=postData, headers=headers)
+                response = requests.post(url, files=files, json=data, headers=headers)
             elif(method == "GET"):
-                response = requests.get(url, postData, headers=headers)
+                response = requests.get(url, data, headers=headers)
             elif(method == "PUT"):
-                response = requests.put(url, postData, headers=headers)
+                response = requests.put(url, data, headers=headers)
             elif(method == "DELETE"):
                 response = requests.delete(url, headers=headers)
             elif(method == "OPTIONS"):
                 response = requests.options(url)
             elif(method == "PATCH"):
-                response = requests.patch(url, postData, headers=headers)
+                response = requests.patch(url, data, headers=headers)
             elif(method == "HEAD"):
                 response = requests.head(url)
             elif(method == "UPDATE"):
-                response = requests.update(url, postData, headers=headers)
+                response = requests.update(url, data, headers=headers)
         else:
             raise Exception("Invalid HTTP request method")
 

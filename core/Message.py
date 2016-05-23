@@ -26,31 +26,27 @@ class Envelope():
         self.channel = channel
 
 class Message():
-    def __init__(self, type, senderID, channelID, content=None, senderNickname=None, timestamp=time.time()):
+    def __init__(self, type, sender_id, channel_id, content=None, sender_name=None, timestamp=time.time()):
         self.type = type
         self.timestamp = timestamp
-        self.sender = senderID
-        self.senderNickname = senderNickname
-        self.channel = channelID
+        self.sender = sender_id
+        self.sender_name = sender_name
+        self.channel = channel_id
         self.content = content
-        self.matchObj = None
-        self.match = None
+        self.__match_obj = None
+        self.__match = None
 
-    def asArgs(self):
-        try:
-            split = shlex.split(self.content)
-        except ValueError:
-            split = self.content.split(" ")
+    @property
+    def arguments(self):
+        if(self.__match_obj):
+            return self.__match_obj.groups()
+        else:
+            return []
 
-        return split
-
-    def setMatch(self, match):
-        self.matchObj = match
-        self.match = match.groups()
-
-    def getMatches(self):
-        if(self.matchObj):
-            return self.matchObj.groups()
+    @arguments.setter
+    def arguments(self, match):
+        self.__match_obj = match
+        self.__match = match.groups()
 
     def __call__(self):
         return Envelope(self.sender, self.channel)

@@ -13,23 +13,13 @@
         by the Free Software Foundation
 """
 
+import logging
+logger = logging.getLogger(__name__)
+
 class EventManager():
     def __init__(self, core):
         self.core = core
-        self.eventSubscriptions = {}
-
-    def getEvents(self):
-        """
-            Summary:
-                Returns the names of events the bot knows about
-
-            Args:
-                None
-
-            Returns:
-                (List): Names of events bot knows about
-        """
-        return self.eventSubscriptions.keys()
+        self.events = {}
 
     def register(self, event):
         """
@@ -42,10 +32,10 @@ class EventManager():
             Returns:
                 None
         """
-        if(event in self.eventSubscriptions):
-            raise EventRegistrationError("Event already registered")
+        if event in self.events:
+            logger.warning("Event \"{}\" has already been registered".format(event))
         else:
-            self.eventSubscriptions[event] = []
+            self.events[event] = []
 
     def unregister(self, event):
         """
@@ -59,10 +49,10 @@ class EventManager():
             Returns:
                 None
         """
-        if(event not in self.eventSubscriptions):
-            raise EventRegistrationError("Event does not exist")
+        if event not in self.events:
+            logger.warning("Event \"{}\" does not exist.".format(event))
         else:
-            self.eventSubscriptions.pop(event, None)
+            self.events.pop(event, None)
 
     def notify(self, event, **kwargs):
         """
@@ -75,8 +65,8 @@ class EventManager():
             Returns:
                 None
         """
-        for callback in self.eventSubscriptions[event]:
-            self.core.threadPool.queueTask(callback, **kwargs)
+        for callback in self.events[event]:
+            self.core.workers.queue(callback, **kwargs)
 
     def subscribe(self, event, callback):
         """
@@ -90,10 +80,10 @@ class EventManager():
             Returns:
                 None
         """
-        if(callback not in self.eventSubscriptions[event]):
-            self.eventSubscriptions[event].append(callback)
+        if(callback not in self.events[event]):
+            self.events[event].append(callback)
         else:
-            raise EventSubscriptionError("Callback \"" + str(callback.__name__) + "\" was already subscribed to \"" + event + "\"")
+            logger.warning("Callback \"{}\" was already subscribed to {}.".format(callback, event))
 
     def unsubscribe(self, event, callback):
         """
@@ -107,24 +97,7 @@ class EventManager():
             Returns:
                 None
         """
-        if(callback in self.eventSubscriptions[event]):
-            self.eventSubscriptions[event].remove(callback)
+        if callback in self.events[event]:
+            self.events[event].remove(callback)
         else:
-            raise EventSubscriptionError("Callback \"" + str(callback.__name__) + "\" was not subscribed to \"" + event + "\"")
-
-
-class EventRegistrationError(Exception):
-    def __init__(self, msg):
-        super(CoreSubscriptionError, self).__init__(msg)
-        self.msg = msg
-
-    def __str__(self):
-        return self.msg
-
-class EventSubscriptionError(Exception):
-    def __init__(self, msg):
-        super(CoreSubscriptionError, self).__init__(msg)
-        self.msg = msg
-
-    def __str__(self):
-        return self.msg
+            logger.warning("Callback \"{}\" was not subscribed to any event.".format(callback))

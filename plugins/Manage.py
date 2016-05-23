@@ -1,6 +1,6 @@
 """
-    Plugin Name : Chat
-    Plugin Version : 1.0
+    Plugin Name : Manage
+    Plugin Version : 1.1
 
     Description:
         Gives basic commands to the bot
@@ -18,13 +18,10 @@ from core.Plugin import Plugin
 from core.Decorators import *
 
 import time
-import shlex
-import traceback
+from tabulate import tabulate
 
 ACCESS = {
-    "setStatus" :   1000,
     "speak"     :   999,
-    "channelid" :   999,
     "trigger"   :   50,
     "plugin"    :   1000,
     "help"      :   1000,
@@ -34,105 +31,72 @@ ACCESS = {
 
 class Manage(Plugin):
 
-    def activate(self):
-        pass
-
-    @subscriber("connect")
+    @subscribe("connect")
     def startTimer(self, *args, **kwargs):
-        self.loginTime = time.time()
-
-    @command("^set status (.+)", access=ACCESS["setStatus"])
-    def setStatus(self, msg):
-        status = msg.getMatches()[0]
-
-        self.core.connection._Discord__writeSocket({
-            "op":3,
-            "d":{
-                "idle_since":None,
-                "game": {
-                    "name": status
-                }
-            }
-        })
+        self.login_time = time.time()
 
     @command("^say (.*)$", access=ACCESS['speak'])
     def speak(self, msg):
-        self.say(msg.channel, msg.getMatches()[0])
-
-    @command("^channelid", access=ACCESS["channelid"])
-    def channelid(self, msg):
-        self.say(msg.channel, "ID of current channel is: `{}`".format(msg.channel))
+        self.say(msg.channel, msg.arguments[0])
 
     @command("^\?trigger$", useDefaultTrigger=False, access=ACCESS["trigger"])
     def trigger(self, msg):
         self.say(msg.channel, "My trigger is `" + self.core.config.trigger + "`")
 
-    @command("^plugin (list|[A-Za-z]+ (enable|disable|reload|status))", access=ACCESS["plugin"])
-    def plugin(self, msg):
-        """
-        *Plugin* : Allows one to manage plugins
-        Usage:
-        plugin list
-        plugin [name] [enable|disable|reload|status]
-        """
-        args = msg.asArgs()
+    @command("^list plugins", access=ACCESS["plugin"])
+    def plugin_list(self, msg):
+        plugins = self.core.plugin.list()
 
-        if(len(args) > 1):
+        table = []
+        for name, meta in sorted(plugins.items()):
+            table.append([name, meta['status']])
 
-            # List plugins / status
-            if(args[1] == 'list'):
-                pluginList = self.core.plugin.getPluginNames()
-                padding = len(max(pluginList)) + 1
+        output = "**My plugins: **\n\n"
+        output += "`{}`".format(tabulate(table, headers=["Name", "Status"], tablefmt="psql", numalign="left"))
 
-                returnMsg = ""
-                for pluginName in pluginList:
-                    returnMsg += "\n\t[" + self.core.plugin.status(pluginName) + "]\t" + pluginName
+        self.say(msg.channel, output)
 
-                self.say(msg.channel, "My plugins are: " + returnMsg)
-                return
+    @command("^(enable|disable|reload|status) plugin ([A-Za-z]+)", access=ACCESS["plugin"])
+    def plugin_do(self, msg):
+        args = msg.arguments
+        plugins = self.core.plugin.list()
+        plugin = args[1]
+        action = args[0]
 
-            else:
-                if(len(args) < 3):
-                    self.say(msg.channel, "Not enough arguments")
-                    return
-
-                # Get the plugin name
-                if(self.core.plugin.exists(args[1])):
-                    # Check operation
-                    if(args[2] == "status"):
-                        self.say(msg.channel, "Plugin " + args[1] + " [" + self.core.plugin.status(args[1]) + "]")
-                    elif(args[2] == "reload"):
-                        self.core.plugin.reload(args[1])
-                        self.say(msg.channel, "Reloading " + args[1] + " plugin")
-                    elif(args[2] == "disable"):
-                        self.core.plugin.unload(args[1])
-                        self.say(msg.channel, "Disabled " + args[1] + " plugin")
-                    elif(args[2] == "enable"):
-                        self.core.plugin.load(args[1])
-                        self.say(msg.channel, "Enabled " + args[1] + " plugin")
-                    else:
-                        self.say(msg.channel, "Operation doesnt exist")
+        if plugin in plugins:
+            if action == "enable":
+                if plugins[plugin]['status'] == "Disabled":
+                    self.core.plugin.load(plugin)
+                    self.say(msg.channel, "Enabled plugin: **{}**".format(plugin))
                 else:
-                    self.say(msg.channel, 'I don\'t have a plugin by that name')
+                    self.say(msg.channel, "{} is already enabled".format(plugin))
+
+            elif action == "disable":
+                if plugins[plugin]['status'] == "Enabled":
+                    self.core.plugin.unload(plugin)
+                    self.say(msg.channel, "Disabled plugin: **{}**".format(plugin))
+                else:
+                    self.say(msg.channel, "{} is already disabled".format(plugin))
+
+            elif action == "reload":
+                if plugins[plugin]['status'] == "Disabled":
+                    self.core.plugin.reload(plugin)
+                    self.say(msg.channel, "Reloaded plugin: **{}**".format(plugin))
+        else:
+            self.say(msg.channel, "I don't have a plugin by that name.")
 
     @command("^ping$", access=ACCESS["ping"])
     def ping(self, msg):
-        """
-        *Ping* : Basic command to check if bot responds to messages
-        """
         self.say(msg.channel, "Pong")
 
     @command("^uptime", access=ACCESS["uptime"])
     def uptime(self, msg):
-        """
-        *Uptime*: Will show a human-readable time duration since the bot logged in.
-        """
-        uptime = time.time() - self.loginTime
+        uptime = time.time() - self.login_time
 
-        def readableTime(elapsedTime):
+        def readable_time(elapsed):
             readable = ""
 
-            days = int(elapsedTime / (60 * 60 * 24))
+            days = int(elapsed / (60 * 60 * 24))
             hours = int((uptime / (60 * 60)) % 24)
             minutes = int((uptime % (60 * 60)) / 60)
             seconds = int(uptime % 60)
@@ -144,4 +108,4 @@ class Manage(Plugin):
 
             return readable
 
-        self.say(msg.channel, "I've been connected for: **" + readableTime(uptime) + "**")
+        self.say(msg.channel, "I've been connected for: **" + readable_time(uptime) + "**")

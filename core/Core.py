@@ -21,29 +21,29 @@
 from __future__ import print_function
 import sys
 
-from core.Watchdog import Watchdog
+from core.ACL import ACL
 from core.Command import CommandManager
+from core.Database import Database
 from core.Event import EventManager
 from core.PluginManager import PluginManager
-from core.ThreadPool import ThreadPool
-from core.Database import Database
-from core.ACL import ACL
+from core.Workers import Workers
+from core.Watchdog import Watchdog
 
-import threading
 from imp import load_module, find_module
 from sys import stdout, path, exit
 import logging
 import logging.handlers
+import threading
 import time
 
 class Bot():
 
     def __init__(self):
         # Setup logger and load config
-        self.setupLogger()
+        self.setup_logger()
         self.logger.info("Starting new bot session")
         self.logger.info("Loading bot configuration")
-        self.config = self.loadConfig("settings")
+        self.config = self.load_config("settings")
 
         # Setup managers
         self.watchdog = Watchdog(self)
@@ -51,14 +51,14 @@ class Bot():
         self.event = EventManager(self)
         self.command = CommandManager(self)
         self.ACL = ACL()
-        self.threadPool = ThreadPool(self.config.threadPoolQueueSize, self.config.threadedWorkers)
+        self.workers = Workers(self.config.worker_queue_size, self.config.worker_threads)
 
         # Setup connection
-        self.connection = self.loadConnector(self)
+        self.connection = self.load_connector(self)
 
         # Load plugins
         self.logger.info("Loading Plugins")
-        self.loadPlugins()
+        self.load_plugins()
 
     def login(self):
         self.connection.connect()
@@ -66,7 +66,7 @@ class Bot():
     def logout(self):
         self.connection.disconnect()
 
-    def cleanup(self):
+    def exit(self):
         """
             Summary:
                 Does any nessessary clean up (like killing threads) before the bot exits
@@ -77,13 +77,13 @@ class Bot():
             Returns:
                 None
         """
-        for pluginName in self.config.plugins:
-            self.plugin.unload(pluginName)
+        for plugin in self.config.plugins:
+            self.plugin.unload(plugin)
 
         self.logout()
-        self.threadPool.joinThreads()
+        self.workers.threads = 0
 
-    def setupLogger(self):
+    def setup_logger(self):
         """
             Summary:
                 Creates global settings for all logging
@@ -132,7 +132,7 @@ class Bot():
 
         self.logger = logging.getLogger(__name__)
 
-    def loadConfig(self, configName):
+    def load_config(self, name):
         """
             Summary:
                 Establishes a connection to the server
@@ -142,7 +142,7 @@ class Bot():
                 Exits if it cannot find or load the config
 
             Args:
-                configName (str): Name of the config module to be loaded
+                name (str): Name of the config module to be loaded
 
             Returns:
                 (Config): instance of Config class, storing all global config options
@@ -151,11 +151,11 @@ class Bot():
         path.append("conf")
 
         try:
-            configCanadiate = find_module(configName, path=['conf'])
-            configModule = load_module(configName, *configCanadiate)
+            config_canadiate = find_module(name, path=['conf'])
+            config_module = load_module(name, *config_canadiate)
 
-            config = configModule.Config()
-            self.logger.info("Loaded configuration from \"" + configCanadiate[1] + "\"")
+            config = config_module.Config()
+            self.logger.info("Loaded configuration from \"" + config_canadiate[1] + "\"")
             logging.getLogger('').setLevel(config.loglevel)
 
             return config
@@ -164,10 +164,10 @@ class Bot():
             self.logger.critical("ImportError: " + str(e))
             sys.exit(1)
         except AttributeError as e:
-            self.logger.critical("Config class not found in conf/" + configName)
+            self.logger.critical("Config class not found in conf/" + name)
             sys.exit(1)
 
-    def loadConnector(self, core):
+    def load_connector(self, core):
         """
             Summary:
                 Looks for and loads the connector defined in config
@@ -182,10 +182,10 @@ class Bot():
         path.append("connectors")
 
         try:
-            connectorCandidate = find_module(self.config.connector, path=["connectors"])
-            connectorModule = load_module(self.config.connector, *connectorCandidate)
-            connector = getattr(connectorModule, self.config.connector)(core, **self.config.connectorOptions)
-            self.logger.info("Loaded connector from: \"" +  connectorCandidate[1] + "\"")
+            connector_candidate = find_module(self.config.connector, path=["connectors"])
+            connector_module = load_module(self.config.connector, *connector_candidate)
+            connector = getattr(connector_module, self.config.connector)(core, **self.config.connector_options)
+            self.logger.info("Loaded connector from: \"" +  connector_candidate[1] + "\"")
 
             return connector
 
@@ -197,7 +197,7 @@ class Bot():
             self.logger.critical("Could not find connector class: " + self.config.connector)
             exit(1)
 
-    def loadPlugins(self):
+    def load_plugins(self):
         """
             Summary:
                 Looks in plugins list in config and attempts to load each
@@ -208,5 +208,5 @@ class Bot():
             Returns:
                 None
         """
-        for pluginName in self.config.plugins:
-            self.plugin.load(pluginName)
+        for plugin in self.config.plugins:
+            self.plugin.load(plugin)

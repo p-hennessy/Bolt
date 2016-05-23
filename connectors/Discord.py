@@ -22,11 +22,8 @@ from ssl import *
 import base64
 import json
 import logging
-import random
-import requests
-import socket
-import time
 import threading
+import time
 import websocket
 
 from core.Connector import Connector
@@ -35,9 +32,9 @@ from core.Message import *
 class Discord(Connector):
     def __init__(self, core, token):
         super(Discord, self).__init__()
-        self.core = core
+        self.core   = core
         self.logger = logging.getLogger("connector." + __name__)
-        self.name = __name__
+        self.name   = __name__
 
         # Authentication / Connection Data
         self.connectorCache = {
@@ -48,13 +45,15 @@ class Discord(Connector):
             "guilds":[]
         }
 
-        self.token = token               # Token used to authenticate api requests
-        self.socket = None               # Websocket connection handler to Discord
-        self.connected = False           # Boolean for handling connection state
+        self.connected = False              # Boolean for handling connection state
+        self.token     = token              # Token used to authenticate api requests
+        self.socket    = None               # Websocket connection handler to Discord
+
+        self.auth_headers = {"authorization": self.token}
 
         # Internal threads
-        self.keepAliveThread = None
-        self.messageConsumerThread = None
+        self.keep_alive_thread = None
+        self.message_consumer_thread = None
 
         # Events that this connector publishes
         self.core.event.register("connect")
@@ -67,9 +66,9 @@ class Discord(Connector):
         self.logger.info("Attempting connection to Discord servers")
 
         # Request a WebSocket URL
-        socketURL = self.request("GET", "gateway", headers={"authorization": self.token})["url"]
+        socket_url = self.request("GET", "gateway", headers=self.auth_headers)["url"]
 
-        self.socket = websocket.create_connection(socketURL)
+        self.socket = websocket.create_connection(socket_url)
 
         # Immediately pass message to server about your connection
         initData = {
@@ -86,9 +85,14 @@ class Discord(Connector):
             },
             "v": 4
         }
+        self.__write_socket(initData)
 
-        self.__writeSocket(initData)
-        self.__parseLoginData(self.__readSocket())
+        login_data = self.__read_socket()
+        self.connectorCache['heartbeat_interval'] = login_data['d']['heartbeat_interval']
+        self.connectorCache['session_id']         = login_data['d']['session_id']
+        self.connectorCache['self']               = login_data['d']['user']
+        self.connectorCache['private_channels']   = login_data['d']['private_channels']
+        self.connectorCache['guilds']             = login_data['d']['guilds']
 
         # Set websocket to nonblocking so we can exit a thread reading from the socket if we need to
         self.socket.sock.setblocking(0)
@@ -98,44 +102,52 @@ class Discord(Connector):
         self.core.event.notify('connect')
 
         # Create and start threads
-        self.keepAliveThread = threading.Thread(target=self.__keepAlive, name="KeepAliveThread")
-        self.keepAliveThread.daemon = True
-        self.keepAliveThread.start()
+        self.keep_alive_thread = threading.Thread(target=self.__keep_alive, name="keep_alive_thread")
+        self.keep_alive_thread.daemon = True
+        self.keep_alive_thread.start()
 
-        self.messageConsumerThread = threading.Thread(target=self.__messageConsumer, name="MessageConsumerThread")
-        self.messageConsumerThread.daemon = True
-        self.messageConsumerThread.start()
+        self.message_consumer_thread = threading.Thread(target=self.__message_consumer, name="message_consumer_thread")
+        self.message_consumer_thread.daemon = True
+        self.message_consumer_thread.start()
 
     def disconnect(self):
         self.core.event.notify('disconnect')
         self.connected = False
 
         # Join threads if they exist
-        if( isinstance(self.keepAliveThread, threading.Thread) ):
-            self.keepAliveThread.join()
+        if isinstance(self.keep_alive_thread, threading.Thread):
+            self.keep_alive_thread.join()
 
-        if( isinstance(self.messageConsumerThread, threading.Thread) ):
-            self.messageConsumerThread.join()
+        if isinstance(self.message_consumer_thread, threading.Thread):
+            self.message_consumer_thread.join()
 
-        self.logger.debug('Joined MessageConsumer and KeepAlive threads')
+        self.logger.debug('Joined message_consumer and keep_alive threads')
 
         # Close websocket if it is established
-        if( isinstance(self.socket, websocket.WebSocket)):
+        if isinstance(self.socket, websocket.WebSocket):
             self.socket.close()
 
         self.logger.info("Disconnected from Discord")
 
     def send(self, channel, message, mentions=[]):
         self.logger.debug("Sending message to channel " + channel)
+
+        endpoint = "channels/{}/messages".format(channel)
+        data     = {"content": "{}".format(message), "mentions":mentions}
+
         try:
-            self.request("POST", "channels/{}/messages".format(channel), postData={"content": "{}".format(message), "mentions":mentions}, headers={"authorization": self.token})
+            self.request("POST", endpoint, data=data, headers=self.auth_headers)
         except:
             self.logger.warning('Send message to channel \'{}\' failed'.format(channel))
 
     def reply(self, envelope, message):
         self.logger.debug("Sending reply to " + envelope.sender)
+
+        endpoint = "channels/{}/messages".format(envelope.channel)
+        data     = {"content": "<@{}> {}".format(envelope.sender, message), "mentions":[envelope.sender]}
+
         try:
-            self.request("POST", "channels/{}/messages".format(envelope.channel), postData={"content": "<@{}> {}".format(envelope.sender, message), "mentions":[envelope.sender]}, headers={"authorization": self.token})
+            self.request("POST", endpoint, data=data, headers=self.auth_headers)
         except:
             self.logger.warning('Reply to user \'{}\' in channel \'{}\' failed'.format(envelope.sender, envelope.channel))
 
@@ -145,7 +157,7 @@ class Discord(Connector):
                 self.send(channel['id'], message)
                 break
         else:
-            channel = self.request("POST", "users/@me/channels", postData={"recipient_id": "{}".format(user)}, headers={"authorization": self.token})
+            channel = self.request("POST", "users/@me/channels", data={"recipient_id": "{}".format(user)}, headers={"authorization": self.token})
             self.connectorCache['private_channels'].append(channel)
             self.send(channel['id'], message)
 
@@ -196,7 +208,7 @@ class Discord(Connector):
 
         print(json.dumps(self.connectorDict))
 
-    def setAvatar(self):
+    def avatar(self):
         with open("conf/avatar.png", "rb") as avatarImage:
             rawImage = avatarImage.read()
 
@@ -206,56 +218,57 @@ class Discord(Connector):
 
         return
 
-        self.request("PATCH", "users/@me", postData={"username": "Arcbot", "avatar": "data:image/png;base64," + base64.b64encode(rawImage).decode('ascii')}, headers={"authorization": self.token})
+        self.request("PATCH", "users/@me", data={"username": "Arcbot", "avatar": "data:image/png;base64," + base64.b64encode(rawImage).decode('ascii')}, headers={"authorization": self.token})
 
     # Thread Methods
-    def __keepAlive(self):
-        self.logger.debug("Spawning keepAlive thread at interval: " + str(self.connectorCache['heartbeat_interval']))
+    def __keep_alive(self):
+        self.logger.debug("Spawning keep_alive thread at interval: " + str(self.connectorCache['heartbeat_interval']))
 
-        startTime = time.time()
+        last_heartbeat = time.time()
+        heartbeat_interval = self.connectorCache['heartbeat_interval'] / 1000
 
         while self.connected:
             now = time.time()
 
-            if((now - startTime) >= (self.connectorCache['heartbeat_interval']/1000) - 1):
-                self.__writeSocket({"op":1,"d": time.time()})
-                self.logger.debug("KeepAlive")
+            if (now - last_heartbeat) >= heartbeat_interval - 1:
+                self.__write_socket({"op":1,"d": time.time()})
+                self.logger.debug("Keep Alive")
 
-                startTime = time.time()
+                last_heartbeat = time.time()
 
             time.sleep(1)
 
-    def __messageConsumer(self):
-        self.logger.debug("Spawning messageConsumer thread")
+    def __message_consumer(self):
+        self.logger.debug("Spawning message_consumer thread")
 
         while self.connected:
             # Sleep is good for the body; also so we don't hog the CPU polling the socket
             time.sleep(0.5)
 
             # Read data off of socket
-            rawMessage = self.__readSocket()
+            rawMessage = self.__read_socket()
             if not rawMessage: continue
 
             # Parse raw message
-            message = self.__parseMessageData(rawMessage)
+            message = self.__parse_message(rawMessage)
             if not message: continue
 
             # Have worker thread take it from here
-            self.core.threadPool.queueTask(self.__handleMessage, message)
+            self.core.workers.queue(self.__handleMessage, message)
 
     # Handler Methods
     def __handleMessage(self, message):
         # If incoming message is a MESSAGE text
-        if(message.type == messageType.MESSAGE):
+        if message.type == messageType.MESSAGE:
             self.core.event.notify("message",  message=message)
             self.core.command.checkMessage(message)
 
         # If incoming message is PRESSENCE update
-        elif(type == messageType.PRESSENCE):
+        elif type == messageType.PRESSENCE:
             self.core.event.notify("pressence", message=message)
 
     # Socket Methods
-    def __writeSocket(self, data):
+    def __write_socket(self, data):
         try:
             self.socket.send(json.dumps(data))
         except socket_error as e:
@@ -272,13 +285,13 @@ class Discord(Connector):
             self.logger.warning("Websocket unexpectedly closed.")
             self.connected = False
 
-    def __readSocket(self):
+    def __read_socket(self):
         data = ""
         while True:
             try:
                 data += self.socket.recv()
 
-                if(data):
+                if data:
                     return json.loads(data.rstrip())
                 else:
                     return None
@@ -309,28 +322,21 @@ class Discord(Connector):
                 self.connected = False
 
     # Parser Methods
-    def __parseMessageData(self, message):
-        type = content = sender = senderNickname = channel = content = timestamp = None
+    def __parse_message(self, message):
+        type = content = sender = sender_name = channel = content = timestamp = None
 
-        if(message["t"] == "MESSAGE_CREATE"):
+        if message["t"] == "MESSAGE_CREATE":
             type = messageType.MESSAGE
             sender = message["d"]["author"]['id']
-            senderNickname = message["d"]['author']['username']
+            sender_name = message["d"]['author']['username']
             channel = message['d']['channel_id']
             content = message["d"]["content"]
 
-            self.logger.info("Message Recieved: [Name:{}][UID:{}][CID:{}]: {}".format(senderNickname, sender, channel, content))
+            self.logger.info("Message Recieved: [Name:{}][UID:{}][CID:{}]: {}".format(sender_name, sender, channel, content))
         else:
             return None
 
-        if(sender == self.connectorCache['self']['id']):
+        if sender == self.connectorCache['self']['id']:
             return None
 
-        return Message(type, sender, channel, content, senderNickname=senderNickname, timestamp=time.time())
-
-    def __parseLoginData(self, data):
-        self.connectorCache['heartbeat_interval'] = data['d']['heartbeat_interval']
-        self.connectorCache['session_id'] = data['d']['session_id']
-        self.connectorCache['self'] = data['d']['user']
-        self.connectorCache['private_channels'] = data['d']['private_channels']
-        self.connectorCache['guilds'] = data['d']['guilds']
+        return Message(type, sender, channel, content, sender_name=sender_name, timestamp=time.time())

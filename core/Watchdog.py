@@ -22,25 +22,25 @@ class Watchdog():
         self.core = core
 
         # Reconnection settings
-        self.connectionRetry = self.core.config.connectionRetry
-        self.connectionTimeout = self.core.config.connectionTimeout
-        self.connectionDied = 0
+        self.connection_retry = self.core.config.connection_retry
+        self.connection_timeout = self.core.config.connection_timeout
+        self.connection_died = 0
 
     def start(self):
         while True:
             time.sleep(1)
 
             # Check if connector is connected
-            if(self.core.connection.connected == False and time.time() - self.connectionDied >= self.connectionTimeout):
+            if(self.core.connection.connected == False and time.time() - self.connection_died >= self.connection_timeout):
                 self.core.connection.disconnect()
                 self.logger.warning("Connection is closed, attempting reconnection.")
 
-                for connectionAttempt in range(0, self.connectionRetry):
+                for connectionAttempt in range(0, self.connection_retry):
                     self.core.login()
 
                     if(self.core.connection.connected):
                         break
 
                 if not self.core.connection.connected:
-                    self.connectionDied = time.time()
-                    self.logger.warning("Reconnection failed. Will retry in {} seconds.".format(self.connectionTimeout))
+                    self.connection_died = time.time()
+                    self.logger.warning("Reconnection failed. Will retry in {} seconds.".format(self.connection_timeout))
