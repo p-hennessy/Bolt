@@ -37,12 +37,10 @@ import threading
 import time
 
 class Bot():
-
     def __init__(self):
         # Setup logger and load config
         self.setup_logger()
-        self.logger.info("Starting new bot session")
-        self.logger.info("Loading bot configuration")
+        self.logger.info("Arcbot init")
         self.config = self.load_config("settings")
 
         # Setup managers
@@ -59,6 +57,7 @@ class Bot():
         # Load plugins
         self.logger.info("Loading Plugins")
         self.load_plugins()
+
 
     def login(self):
         self.connection.connect()
@@ -101,6 +100,7 @@ class Bot():
         logging.getLogger('peewee').setLevel(logging.WARNING)
 
         log = logging.getLogger('')
+        log.setLevel(logging.INFO)
 
         # Create console handler
         console_hdlr = logging.StreamHandler(stdout)
@@ -127,7 +127,7 @@ class Bot():
             datefmt="[%m/%d/%Y %H:%M:%S]"
         )
         file_hdlr.setFormatter(file_formatter)
-        file_hdlr.setLevel(logging.DEBUG)
+        file_hdlr.setLevel(logging.INFO)
         log.addHandler(file_hdlr)
 
         self.logger = logging.getLogger(__name__)
@@ -156,7 +156,7 @@ class Bot():
 
             config = config_module.Config()
             self.logger.info("Loaded configuration from \"" + config_canadiate[1] + "\"")
-            logging.getLogger('').setLevel(config.loglevel)
+            logging.getLogger('').setLevel(config.log_level)
 
             return config
 
