@@ -33,11 +33,11 @@ class Connector():
         pass
 
     @abstractmethod
-    def send(self, channel, message, mentions=[]):
+    def say(self, channel, message, mentions=[]):
         pass
 
     @abstractmethod
-    def reply(self, envelope, message):
+    def reply(self, user, channel, message):
         pass
 
     @abstractmethod
