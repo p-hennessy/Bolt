@@ -27,6 +27,7 @@ import time
 import websocket
 
 from core.Connector import Connector
+from core.Decorators import ttl_cache
 from core.Message import *
 
 class Discord(Connector):
@@ -85,9 +86,9 @@ class Discord(Connector):
             },
             "v": 4
         }
-        self.__write_socket(initData)
+        self._write_socket(initData)
 
-        login_data = self.__read_socket()
+        login_data = self._read_socket()
         self.connectorCache['heartbeat_interval'] = login_data['d']['heartbeat_interval']
         self.connectorCache['session_id']         = login_data['d']['session_id']
         self.connectorCache['self']               = login_data['d']['user']
@@ -102,11 +103,11 @@ class Discord(Connector):
         self.core.event.notify('connect')
 
         # Create and start threads
-        self.keep_alive_thread = threading.Thread(target=self.__keep_alive, name="keep_alive_thread")
+        self.keep_alive_thread = threading.Thread(target=self._keep_alive, name="keep_alive_thread")
         self.keep_alive_thread.daemon = True
         self.keep_alive_thread.start()
 
-        self.message_consumer_thread = threading.Thread(target=self.__message_consumer, name="message_consumer_thread")
+        self.message_consumer_thread = threading.Thread(target=self._message_consumer, name="message_consumer_thread")
         self.message_consumer_thread.daemon = True
         self.message_consumer_thread.start()
 
@@ -129,8 +130,11 @@ class Discord(Connector):
 
         self.logger.info("Disconnected from Discord")
 
-    def send(self, channel, message, mentions=[]):
+    def say(self, channel, message, mentions=[]):
         self.logger.debug("Sending message to channel " + channel)
+
+        for user in mentions:
+            message = "<@{}> ".format(user) + message
 
         endpoint = "channels/{}/messages".format(channel)
         data     = {"content": "{}".format(message), "mentions":mentions}
@@ -140,42 +144,44 @@ class Discord(Connector):
         except:
             self.logger.warning('Send message to channel \'{}\' failed'.format(channel))
 
-    def reply(self, envelope, message):
-        self.logger.debug("Sending reply to " + envelope.sender)
+    def reply(self, user, channel, message):
+        self.logger.debug("Sending reply to " + user)
 
-        endpoint = "channels/{}/messages".format(envelope.channel)
-        data     = {"content": "<@{}> {}".format(envelope.sender, message), "mentions":[envelope.sender]}
+        endpoint = "channels/{}/messages".format(channel)
+        data     = {"content": "<@{}> {}".format(user, message), "mentions":[user]}
 
         try:
             self.request("POST", endpoint, data=data, headers=self.auth_headers)
         except:
-            self.logger.warning('Reply to user \'{}\' in channel \'{}\' failed'.format(envelope.sender, envelope.channel))
+            self.logger.warning('Reply to user \'{}\' in channel \'{}\' failed'.format(user, channel))
 
     def whisper(self, user, message):
-        for channel in self.connectorCache['private_channels']:
-            if channel['recipient']['id'] == user:
-                self.send(channel['id'], message)
-                break
-        else:
-            channel = self.request("POST", "users/@me/channels", data={"recipient_id": "{}".format(user)}, headers={"authorization": self.token})
-            self.connectorCache['private_channels'].append(channel)
-            self.send(channel['id'], message)
+        self.logger.debug("Sending reply to " + user)
 
-        self.logger.debug("Whisper to " + user)
+        channel = self.get_private_channel(user)
+        endpoint = "channels/{}/messages".format(channel)
+        data     = {"content": "{}".format(message)}
+
+        try:
+            self.request("POST", endpoint, data=data, headers=self.auth_headers)
+        except:
+            self.logger.warning('Reply to user \'{}\' in channel \'{}\' failed'.format(user, channel))
 
     def upload(self, channel, file):
         self.logger.debug('Sending file to channel ' + channel)
 
-        files = {'file': open(file, 'rb')}
+        endpoint = "channels/{}/messages".format(channel)
+        files    = {'file': open(file, 'rb')}
 
         try:
-            self.request('POST', "channels/{}/messages".format(channel),  files=files, headers={"authorization": self.token})
+            self.request('POST', endpoint,  files=files, headers={"authorization": self.token})
         except:
             self.logger.warning('Upload file \'{}\' to channel {} failed'.format(file, channel))
 
     def getUsers(self):
         pass
 
+    @ttl_cache(300)
     def getUser(self, userID):
         user = self.request("GET", "users/{}".format(userID), headers={"authorization": self.token})
 
@@ -186,11 +192,20 @@ class Discord(Connector):
         }
 
     # Discord Specific
-    def leaveGuild(self, guild_id):
+    def leave_guild(self, guild_id):
         self.request("DELETE", "users/@me/guilds/{}".format(guild_id), headers={"authorization": self.token})
 
-    def getServers(self):
+    def get_servers(self):
         return self.request("GET", "users/@me/guilds", headers={"authorization": self.token})
+
+    def get_private_channel(self, user):
+        for channel in self.connectorCache['private_channels']:
+            if channel['recipient']['id'] == user:
+                return channel['id']
+        else:
+            channel = self.request("POST", "users/@me/channels", data={"recipient_id": "{}".format(user)}, headers={"authorization": self.token})
+            self.connectorCache['private_channels'].append(channel)
+            return channel['id']
 
     # User Management
         # Set roles
@@ -221,7 +236,7 @@ class Discord(Connector):
         self.request("PATCH", "users/@me", data={"username": "Arcbot", "avatar": "data:image/png;base64," + base64.b64encode(rawImage).decode('ascii')}, headers={"authorization": self.token})
 
     # Thread Methods
-    def __keep_alive(self):
+    def _keep_alive(self):
         self.logger.debug("Spawning keep_alive thread at interval: " + str(self.connectorCache['heartbeat_interval']))
 
         last_heartbeat = time.time()
@@ -231,14 +246,14 @@ class Discord(Connector):
             now = time.time()
 
             if (now - last_heartbeat) >= heartbeat_interval - 1:
-                self.__write_socket({"op":1,"d": time.time()})
+                self._write_socket({"op":1,"d": time.time()})
                 self.logger.debug("Keep Alive")
 
                 last_heartbeat = time.time()
 
             time.sleep(1)
 
-    def __message_consumer(self):
+    def _message_consumer(self):
         self.logger.debug("Spawning message_consumer thread")
 
         while self.connected:
@@ -246,29 +261,29 @@ class Discord(Connector):
             time.sleep(0.5)
 
             # Read data off of socket
-            rawMessage = self.__read_socket()
+            rawMessage = self._read_socket()
             if not rawMessage: continue
 
             # Parse raw message
-            message = self.__parse_message(rawMessage)
+            message = self._parse_message(rawMessage)
             if not message: continue
 
             # Have worker thread take it from here
-            self.core.workers.queue(self.__handleMessage, message)
+            self.core.workers.queue(self._handleMessage, message)
 
     # Handler Methods
-    def __handleMessage(self, message):
+    def _handleMessage(self, message):
         # If incoming message is a MESSAGE text
         if message.type == messageType.MESSAGE:
             self.core.event.notify("message",  message=message)
-            self.core.command.checkMessage(message)
+            self.core.command.check(message)
 
         # If incoming message is PRESSENCE update
         elif type == messageType.PRESSENCE:
             self.core.event.notify("pressence", message=message)
 
     # Socket Methods
-    def __write_socket(self, data):
+    def _write_socket(self, data):
         try:
             self.socket.send(json.dumps(data))
         except socket_error as e:
@@ -285,7 +300,7 @@ class Discord(Connector):
             self.logger.warning("Websocket unexpectedly closed.")
             self.connected = False
 
-    def __read_socket(self):
+    def _read_socket(self):
         data = ""
         while True:
             try:
@@ -322,7 +337,7 @@ class Discord(Connector):
                 self.connected = False
 
     # Parser Methods
-    def __parse_message(self, message):
+    def _parse_message(self, message):
         type = content = sender = sender_name = channel = content = timestamp = None
 
         if message["t"] == "MESSAGE_CREATE":
@@ -339,4 +354,4 @@ class Discord(Connector):
         if sender == self.connectorCache['self']['id']:
             return None
 
-        return Message(type, sender, channel, content, sender_name=sender_name, timestamp=time.time())
+        return Message(type, sender, channel, content=content, sender_name=sender_name, timestamp=time.time())
