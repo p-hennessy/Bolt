@@ -20,11 +20,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Command():
-    def __init__(self, invocation, callback, useDefaultTrigger=True, access=0):
-        self.invocation = invocation
+    def __init__(self, pattern, callback, trigger="", access=0, silent=False):
+        self.pattern = pattern
         self.access = access
         self.callback = callback
-        self.useDefaultTrigger = useDefaultTrigger
+        self.trigger = trigger
+        self.silent = silent
 
     def __str__(self):
         return self.callback.__name__
@@ -37,47 +38,34 @@ class CommandManager():
         self.commands = {}
         self.core = core
 
-    def checkMessage(self, message):
+    def check(self, message):
         """
             Summary:
                 Checks if an incoming message is a command
                 Invokes any command that matches the criteria
 
             Args:
-                message (str): A message instance from core.Message
+                message (Message): A message instance from core.Message
 
             Returns:
                 None
         """
-        for key, command in list(self.commands.items()):
-            # Checks to see if message is a command and uses default trigger defined in conf/settings.py
-            if(command.useDefaultTrigger and message.content.startswith(self.core.config.trigger)):
-                # Looks at the message content and decide if it matches
-                match = re.search(command.invocation, message.content.replace(self.core.config.trigger, "", 1))
+        for key, command in self.commands.items():
 
-                if(match):
-                    # Check if user has access to invoke command
-                    if(self.core.ACL.getAccess(message.sender) >= command.access):
-                        message.content = message.content.replace(self.core.config.trigger, "", 1)
+            if message.content.startswith(command.trigger):
+                content = message.content.replace(command.trigger, "", 1)
+                match   = re.search(command.pattern, content)
+
+                if match:
+                    if self.core.ACL.getAccess(message.sender) >= command.access:
+                        message.content = content
                         message.arguments = match
                         command.invoke(message)
-
                     else:
-                        self.core.connection.reply(message, "Sorry, you need `{}` access to use that command.".format(command.access))
+                        self.core.connection.reply(message.sender, message.channel, "Sorry, you need `{}` access to use that command.".format(command.access))
 
-                    return
 
-            # Will invoke command if it matches command invocation and doesn't use trigger
-            elif(command.useDefaultTrigger == False):
-                match = re.search(command.invocation, message.content)
-                if(match):
-                    if(self.core.ACL.getAccess(message.sender) >= command.access):
-                        message.arguments = match
-                        command.invoke(message)
-
-                    return
-
-    def register(self, invocation, callback, useDefaultTrigger=True, access=0):
+    def register(self, pattern, callback, trigger="", access=0, silent=False):
         """
             Summary:
                 Registers a command
@@ -98,17 +86,21 @@ class CommandManager():
 
             name = clazz + "." + callback.__name__
 
-        if( name in self.commands ):
+        if name in self.commands:
             logger.warning("Duplicate command \"" + clazz + "." + name + "\". Skipping registration.")
             return
         else:
             logger.debug("Registered command \"" +  clazz + "." + name + "\"")
 
+            if not trigger:
+                trigger = self.core.config.trigger
+
             self.commands[name] = Command(
-                invocation,
+                pattern,
                 callback,
-                useDefaultTrigger,
-                access
+                trigger=trigger,
+                access=access,
+                silent=silent
             )
 
     def unregister(self, commandName):
@@ -124,7 +116,7 @@ class CommandManager():
             Returns:
                 None
         """
-        if(commandName in self.commands):
+        if commandName in self.commands:
             command = self.commands[commandName]
 
             try:

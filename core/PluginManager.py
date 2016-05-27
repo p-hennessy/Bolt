@@ -140,7 +140,13 @@ class PluginManager():
                     continue
 
             if hasattr(callback, "is_command"):
-                self.core.command.register(getattr(callback, "trigger"), callback, useDefaultTrigger=getattr(callback, "useDefaultTrigger"), access=getattr(callback, "access"))
+                self.core.command.register(
+                    getattr(callback, "pattern"),
+                    callback,
+                    trigger=getattr(callback, "trigger"),
+                    access=getattr(callback, "access"),
+                    silent=getattr(callback, "silent")
+                )
 
             if hasattr(callback, "is_subscriber"):
                 self.core.event.subscribe(getattr(callback, "event"), callback)
