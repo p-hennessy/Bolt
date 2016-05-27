@@ -59,18 +59,18 @@ class Plugin(object):
         """
             Summary:
                 Wrapper method calling the connection's reply method
-                Will send a message in channel that is directed at the user
+                Will send a message in channel that is directed at the user who invoked the command
 
             Args:
-                envelope (Envelope): An object containing information about the sender and channel it came from
+                envelope (tuple): An object containing information about the sender and channel it came from
                 message (str): String form of message to send to channel
 
             Returns:
                 None
         """
-        self.core.connection.reply(envelope, message)
+        self.core.connection.reply(envelope.sender, envelope.channel, message)
 
-    def say(self, channel, message):
+    def say(self, channel, message, mentions=[]):
         """
             Summary:
                 Wrapper method calling the connection's send method
@@ -79,11 +79,12 @@ class Plugin(object):
             Args:
                 channel (str): Channel id to send message to
                 message (str): String form of message to send to channel
+                mentions (list): List of users to mention in a channel
 
             Returns:
                 None
         """
-        self.core.connection.send(channel, message)
+        self.core.connection.say(channel, message, mentions=mentions)
 
     def whisper(self, user, message):
         """
