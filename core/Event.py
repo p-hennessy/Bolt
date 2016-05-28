@@ -21,6 +21,19 @@ class EventManager():
         self.core = core
         self.events = {}
 
+    def list(self):
+        """
+            Summary:
+                Returns a list of events known to the bot
+
+            Args:
+                None
+
+            Returns:
+                None
+        """
+        return self.events
+
     def register(self, event):
         """
             Summary:
