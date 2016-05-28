@@ -1,6 +1,6 @@
 """
     Plugin Name : Manage
-    Plugin Version : 1.1
+    Plugin Version : 1.2
 
     Description:
         Gives basic commands to the bot
@@ -17,34 +17,31 @@
 from core.Plugin import Plugin
 from core.Decorators import *
 
+import conf.settings
+
 import time
 from tabulate import tabulate
+from collections import namedtuple
 
 ACCESS = {
-    "speak"     :   999,
-    "trigger"   :   50,
-    "plugin"    :   1000,
-    "help"      :   1000,
-    "ping"      :   50,
-    "uptime"    :   50
+    "ping"          : 50,
+    "trigger"       : 50,
+    "plugin_list"   : 50,
+    "plugin_manage" : 1000,
+    "uptime"        : 50
 }
 
 class Manage(Plugin):
+    @command("^ping", access=ACCESS["ping"])
+    def ping(self, msg):
+        self.say(msg.channel, "Pong")
 
-    @subscribe("connect")
-    def startTimer(self, *args, **kwargs):
-        self.login_time = time.time()
-
-    @command("^say (.*)$", access=ACCESS['speak'])
-    def speak(self, msg):
-        self.say(msg.channel, msg.arguments[0])
-
-    @command("^\?trigger$", useDefaultTrigger=False, access=ACCESS["trigger"])
+    @command("^trigger$", trigger="?", access=ACCESS['trigger'])
     def trigger(self, msg):
-        self.say(msg.channel, "My trigger is `" + self.core.config.trigger + "`")
+        self.say(msg.channel, "My default trigger is `" + config.trigger + "`")
 
-    @command("^list plugins", access=ACCESS["plugin"])
-    def plugin_list(self, msg):
+    @command("^list plugins$", access=ACCESS["plugin_list"])
+    def list_plugins(self, msg):
         plugins = self.core.plugin.list()
 
         table = []
@@ -56,12 +53,11 @@ class Manage(Plugin):
 
         self.say(msg.channel, output)
 
-    @command("^(enable|disable|reload|status) plugin ([A-Za-z]+)", access=ACCESS["plugin"])
-    def plugin_do(self, msg):
-        args = msg.arguments
+    @command("^(enable|disable|reload|status) plugin ([A-Za-z]+)$", access=ACCESS["plugin_manage"])
+    def manage_plugin(self, msg):
         plugins = self.core.plugin.list()
-        plugin = args[1]
-        action = args[0]
+        plugin = msg.arguments[1]
+        action = msg.arguments[0]
 
         if plugin in plugins:
             if action == "enable":
@@ -85,11 +81,11 @@ class Manage(Plugin):
         else:
             self.say(msg.channel, "I don't have a plugin by that name.")
 
-    @command("^ping$", access=ACCESS["ping"])
-    def ping(self, msg):
-        self.say(msg.channel, "Pong")
+    @subscribe("connect")
+    def on_connect(self, *args, **kwargs):
+        self.login_time = time.time()
 
-    @command("^uptime", access=ACCESS["uptime"])
+    @command("^uptime$", access=ACCESS['uptime'])
     def uptime(self, msg):
         uptime = time.time() - self.login_time
 

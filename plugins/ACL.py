@@ -50,7 +50,7 @@ class ACL(Plugin):
         target = msg.arguments[0]
         access = self.core.ACL.getAccess(target)
 
-        self.say(msg.channel, "User ID\t`{}`\nAccess:\t`{}`".format(msg.sender, access))
+        self.say(msg.channel, "User ID\t`{}`\nAccess:\t`{}`".format(target, access))
 
     @command("^whoami", access=50)
     def whoami(self, msg):
