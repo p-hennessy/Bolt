@@ -18,8 +18,7 @@
         by the Free Software Foundation
 """
 
-from __future__ import print_function
-import sys
+import conf.settings as config
 
 from core.ACL import ACL
 from core.Command import CommandManager
@@ -33,14 +32,12 @@ from imp import load_module, find_module
 from sys import stdout, path, exit
 import logging
 import logging.handlers
-import threading
 import time
 
 class Bot():
     def __init__(self):
         # Setup logger and load config
         self.setup_logger()
-        self.logger.info("Arcbot init")
         self.config = self.load_config("settings")
 
         # Setup managers
@@ -76,7 +73,7 @@ class Bot():
             Returns:
                 None
         """
-        for plugin in self.config.plugins:
+        for plugin in config.plugins:
             self.plugin.unload(plugin)
 
         self.logout()
@@ -154,18 +151,17 @@ class Bot():
             config_canadiate = find_module(name, path=['conf'])
             config_module = load_module(name, *config_canadiate)
 
-            config = config_module.Config()
             self.logger.info("Loaded configuration from \"" + config_canadiate[1] + "\"")
-            logging.getLogger('').setLevel(config.log_level)
+            logging.getLogger('').setLevel(config_module.log_level)
 
-            return config
+            return config_module
 
         except ImportError as e:
             self.logger.critical("ImportError: " + str(e))
-            sys.exit(1)
+            exit(1)
         except AttributeError as e:
             self.logger.critical("Config class not found in conf/" + name)
-            sys.exit(1)
+            exit(1)
 
     def load_connector(self, core):
         """
@@ -182,9 +178,9 @@ class Bot():
         path.append("connectors")
 
         try:
-            connector_candidate = find_module(self.config.connector, path=["connectors"])
-            connector_module = load_module(self.config.connector, *connector_candidate)
-            connector = getattr(connector_module, self.config.connector)(core, **self.config.connector_options)
+            connector_candidate = find_module(config.connector, path=["connectors"])
+            connector_module = load_module(config.connector, *connector_candidate)
+            connector = getattr(connector_module, config.connector)(core, **config.connector_options)
             self.logger.info("Loaded connector from: \"" +  connector_candidate[1] + "\"")
 
             return connector
@@ -194,7 +190,7 @@ class Bot():
             exit(1)
         except AttributeError as e:
             print(e)
-            self.logger.critical("Could not find connector class: " + self.config.connector)
+            self.logger.critical("Could not find connector class: " + config.connector)
             exit(1)
 
     def load_plugins(self):
@@ -208,5 +204,5 @@ class Bot():
             Returns:
                 None
         """
-        for plugin in self.config.plugins:
+        for plugin in config.plugins:
             self.plugin.load(plugin)
