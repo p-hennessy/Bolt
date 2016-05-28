@@ -48,10 +48,6 @@ class PluginManager():
                 if file.endswith(".py"):
                     name = os.path.splitext(file)[0]
                     self.plugins[name] = {"instance": None, "status": "Disabled"}
-                else:
-                    name = os.path.join('plugins', file, '__init__.py')
-                    if os.path.exists(name):
-                        self.plugins[file] = {"instance": None, "status": "Disabled"}
 
     def list(self):
         """
@@ -92,7 +88,7 @@ class PluginManager():
         """
         return self.plugins[name]["status"]
 
-    def load(self, moduleName):
+    def load(self, module_name):
         """
             Summary:
                 Loads a plugin,
@@ -100,15 +96,15 @@ class PluginManager():
                 pushes plugin instance to internal hashtable.
 
             Args:
-                moduleName (str): Name of the file that needs to be imported
+                module_name (str): Name of the file that needs to be imported
 
             Returns:
                 None
         """
 
         try:
-            pluginCandidate = imp.find_module(moduleName, path=['plugins'])
-            pluginModule = imp.load_module(moduleName, *pluginCandidate)
+            plugin_candidate = imp.find_module(module_name, path=['plugins'])
+            plugin_module = imp.load_module(module_name, *plugin_candidate)
         except ImportError as e:
             self.logger.error(e)
             return
@@ -116,7 +112,7 @@ class PluginManager():
         plugin = None
 
         # Find plugin subclass and initialize it
-        for name, clazz in inspect.getmembers(pluginModule, inspect.isclass):
+        for name, clazz in inspect.getmembers(plugin_module, inspect.isclass):
             if name == "Plugin":
                 continue
 
@@ -125,7 +121,7 @@ class PluginManager():
                 break
 
         if not plugin:
-            self.logger.error("Could not find plugin subclass in module: " + moduleName)
+            self.logger.error("Could not find plugin subclass in module: " + module_name)
             return
 
         # Call activate() if it exists
@@ -155,10 +151,10 @@ class PluginManager():
                 self.core.event.register(getattr(callback, "event"))
 
         # Push plugin to our hashtable
-        self.plugins[plugin.name] = {"instance":plugin, "module": pluginModule, "status": "Enabled"}
+        self.plugins[plugin.name] = {"instance":plugin, "module": plugin_module, "status": "Enabled"}
         self.logger.info("Loaded plugin \"" + plugin.name + "\"")
 
-    def unload(self, pluginName):
+    def unload(self, plugin_name):
         """
             Summary:
                 Unloads a plugin,
@@ -173,15 +169,15 @@ class PluginManager():
         """
 
         # Check if we are managing that plugin
-        if(pluginName not in self.plugins):
-            self.logger.warning("Unable to unload plugin " + pluginName + ", plugin not loaded")
+        if(plugin_name not in self.plugins):
+            self.logger.warning("Unable to unload plugin " + plugin_name + ", plugin not loaded")
             return
 
         # Get plugin object from our hashtable
-        plugin = self.plugins[pluginName]["instance"]
+        plugin = self.plugins[plugin_name]["instance"]
         clazz = plugin.__class__.__name__
 
-        if( hasattr(plugin, "deactivate") ):
+        if hasattr(plugin, "deactivate"):
             plugin.deactivate()
 
         # Unregister plugin commands and events
@@ -197,8 +193,8 @@ class PluginManager():
                 self.core.event.unregister(getattr(callback, "event"))
 
         # Remove from our hashtable
-        self.plugins[pluginName] = {"instance":None, "module":None, "status": "Disabled"}
-        self.logger.info("Unloaded plugin \"" + pluginName + "\"")
+        self.plugins[plugin_name] = {"instance":None, "module":None, "status": "Disabled"}
+        self.logger.info("Unloaded plugin \"" + plugin_name + "\"")
 
     def reload(self, name):
         """

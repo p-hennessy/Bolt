@@ -21,11 +21,11 @@ logger = logging.getLogger(__name__)
 
 class Command():
     def __init__(self, pattern, callback, trigger="", access=0, silent=False):
-        self.pattern = pattern
-        self.access = access
+        self.pattern  = pattern
+        self.access   = access
         self.callback = callback
-        self.trigger = trigger
-        self.silent = silent
+        self.trigger  = trigger
+        self.silent   = silent
 
     def __str__(self):
         return self.callback.__name__
@@ -51,7 +51,6 @@ class CommandManager():
                 None
         """
         for key, command in self.commands.items():
-
             if message.content.startswith(command.trigger):
                 content = message.content.replace(command.trigger, "", 1)
                 match   = re.search(command.pattern, content)
@@ -61,30 +60,26 @@ class CommandManager():
                         message.content = content
                         message.arguments = match
                         command.invoke(message)
-                    else:
+                    elif not command.silent:
                         self.core.connection.reply(message.sender, message.channel, "Sorry, you need `{}` access to use that command.".format(command.access))
-
 
     def register(self, pattern, callback, trigger="", access=0, silent=False):
         """
             Summary:
-                Registers a command
-                Pushes command instance to hashtable
+                Pushes command instance to command list
 
             Args:
-                invocation (str): Regex that the message parser will match with
+                pattern (str): Regex that the message parser will match with
                 callback (func): Function object that will be invoked when message parser finds a match
+                trigger (str): Beginning of the string to denote a command, default is in the config
+                access (int): Amount of access required to invoke a command
+                silent (bool): Squelch access error messages
 
             Returns:
                 None
         """
-
-        try:
-            clazz = callback.im_class.__name__
-        except:
-            clazz = type(callback.__self__).__name__
-
-            name = clazz + "." + callback.__name__
+        clazz = type(callback.__self__).__name__
+        name = clazz + "." + callback.__name__
 
         if name in self.commands:
             logger.warning("Duplicate command \"" + clazz + "." + name + "\". Skipping registration.")
@@ -103,31 +98,27 @@ class CommandManager():
                 silent=silent
             )
 
-    def unregister(self, commandName):
+    def unregister(self, command_name):
         """
             Summary:
                 Unregisters a command
-                Removes command instance to hashtable
+                Removes command instance from command list
                 Command will no longer run when message parser finds a match
 
             Args:
-                commandName (str): Name of the command to unregister
+                command_name (str): Name of the command to unregister
 
             Returns:
                 None
         """
-        if commandName in self.commands:
-            command = self.commands[commandName]
+        if command_name in self.commands:
+            command = self.commands[command_name]
 
-            try:
-                clazz = command.callback.im_class.__name__
-            except:
-                clazz = type(command.callback.__self__).__name__
-
+            clazz = type(command.callback.__self__).__name__
             name = clazz + "." + command.callback.__name__
 
-            del self.commands[commandName]
-            logger.debug("Unregistered command \"" + clazz + "." + name + "\"")
+            del self.commands[command_name]
+            logger.debug("Unregistered command \"" + name + "\"")
 
         else:
-            logger.warning("Cannot unregister \"" + commandName + "\", command not found.")
+            logger.warning("Cannot unregister \"" + command_name + "\", command not found.")
