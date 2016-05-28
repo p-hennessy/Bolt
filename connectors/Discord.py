@@ -207,6 +207,17 @@ class Discord(Connector):
             self.connectorCache['private_channels'].append(channel)
             return channel['id']
 
+    def set_status(self, status):
+        self._write_socket({
+            "op":3,
+            "d":{
+                "idle_since":None,
+                "game": {
+                    "name": status
+                }
+            }
+        })
+
     # User Management
         # Set roles
         # Ban
