@@ -344,6 +344,8 @@ class Discord(Connector):
                     return None
                 raise
             except websocket.WebSocketConnectionClosedException:
+                if not self.connected:
+                    return
                 self.logger.warning("Websocket unexpectedly closed.")
                 self.connected = False
 
