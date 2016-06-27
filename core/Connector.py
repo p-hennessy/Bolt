@@ -63,33 +63,35 @@ class Connector():
         url = 'https://{}/api/{}'.format(domain, request)
         response = None
 
-        if(method.lower() in ["post", "get", "delete", "head", "options", "put", "patch"]):
-            self.lastRequest = time.time()
-            if(method == "POST"):
-                response = requests.post(url, files=files, json=data, headers=headers)
-            elif(method == "GET"):
-                response = requests.get(url, data, headers=headers)
-            elif(method == "PUT"):
-                response = requests.put(url, data, headers=headers)
-            elif(method == "DELETE"):
-                response = requests.delete(url, headers=headers)
-            elif(method == "OPTIONS"):
-                response = requests.options(url)
-            elif(method == "PATCH"):
-                response = requests.patch(url, data, headers=headers)
-            elif(method == "HEAD"):
-                response = requests.head(url)
-            elif(method == "UPDATE"):
-                response = requests.update(url, data, headers=headers)
-        else:
-            raise Exception("Invalid HTTP request method")
-
-        if(response.status_code not in range(200, 206)):
-            raise Exception("API responded with HTTP code  " + str(response.status_code) + "\n\n" + response.text)
-        else:
-            if(response.text):
-                returnData = json.loads(response.text)
-
-                return returnData
+        try:
+            if(method.lower() in ["post", "get", "delete", "head", "options", "put", "patch"]):
+                self.lastRequest = time.time()
+                if(method == "POST"):
+                    response = requests.post(url, files=files, json=data, headers=headers)
+                elif(method == "GET"):
+                    response = requests.get(url, data, headers=headers)
+                elif(method == "PUT"):
+                    response = requests.put(url, data, headers=headers)
+                elif(method == "DELETE"):
+                    response = requests.delete(url, headers=headers)
+                elif(method == "OPTIONS"):
+                    response = requests.options(url)
+                elif(method == "PATCH"):
+                    response = requests.patch(url, data, headers=headers)
+                elif(method == "HEAD"):
+                    response = requests.head(url)
+                elif(method == "UPDATE"):
+                    response = requests.update(url, data, headers=headers)
             else:
-                return None
+                raise Exception("Invalid HTTP request method")
+
+            if response.status_code not in range(200, 206):
+                raise Exception("API responded with HTTP code  " + str(response.status_code) + "\n\n" + response.text)
+            else:
+                if response.text:
+                    returnData = json.loads(response.text)
+                    return returnData
+                else:
+                    return None
+        except:
+            pass

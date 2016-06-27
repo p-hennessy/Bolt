@@ -50,7 +50,8 @@ class CommandManager():
             Returns:
                 None
         """
-        for key, command in self.commands.items():
+        commands = list(self.commands.items())
+        for key, command in commands:
             if message.content.startswith(command.trigger):
                 content = message.content.replace(command.trigger, "", 1)
                 match   = re.search(command.pattern, content)
@@ -87,7 +88,9 @@ class CommandManager():
         else:
             logger.debug("Registered command \"" +  clazz + "." + name + "\"")
 
-            if not trigger:
+            if trigger is None:
+                trigger = ""
+            elif trigger == "":
                 trigger = self.core.config.trigger
 
             self.commands[name] = Command(
