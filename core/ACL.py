@@ -81,7 +81,7 @@ class ACL():
                 (Bool): Successful or Not
         """
         # Check if trying to change owner
-        if(self.getOwner == uid):
+        if(self.owner == uid):
             return False
 
         # Set user access

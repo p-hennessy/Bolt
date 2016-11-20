@@ -19,6 +19,7 @@
 from platform import system
 from ssl import *
 
+import requests
 import base64
 import json
 import logging
@@ -34,11 +35,13 @@ class Discord(Connector):
     def __init__(self, core, token):
         super(Discord, self).__init__()
         self.core   = core
-        self.logger = logging.getLogger("connector." + __name__)
+        self.logger = logging.getLogger(__name__)
         self.name   = __name__
 
+        self.logger.info(self.core.name)
+
         # Authentication / Connection Data
-        self.connectorCache = {
+        self.cache = {
             "heartbeat_interval": 41250,
             "session_id":"",
             "self":{},
@@ -50,50 +53,43 @@ class Discord(Connector):
         self.token     = token              # Token used to authenticate api requests
         self.socket    = None               # Websocket connection handler to Discord
 
-        self.auth_headers = {"authorization": self.token}
+        self.auth_headers = {"authorization": "Bot " + self.token, "Content-Type": 'application/json'}
+        self.api_url = "https://discordapp.com/api/"
 
         # Internal threads
         self.keep_alive_thread = None
         self.message_consumer_thread = None
 
         # Events that this connector publishes
-        self.core.event.register("connect")
-        self.core.event.register("disconnect")
-        self.core.event.register("message")
-        self.core.event.register("pressence")
 
     def connect(self):
         # Connect to Discord, post login credentials
         self.logger.info("Attempting connection to Discord servers")
 
         # Request a WebSocket URL
-        socket_url = self.request("GET", "gateway", headers=self.auth_headers)["url"]
-
+        socket_url = requests.get(self.api_url + "gateway", headers=self.auth_headers).json()["url"]
         self.socket = websocket.create_connection(socket_url)
 
         # Immediately pass message to server about your connection
-        initData = {
+        self._write_socket({
             "op": 2,
+            "v": 5,
             "d": {
                 "token": self.token,
                 "properties": {
                     "$os": system(),
-                    "$browser":"",
-                    "$device":"Python",
-                    "$referrer":"",
-                    "$referring_domain":""
+                    "$device":"Python"
                 },
-            },
-            "v": 4
-        }
-        self._write_socket(initData)
+                "compress": False
+            }
+        })
 
         login_data = self._read_socket()
-        self.connectorCache['heartbeat_interval'] = login_data['d']['heartbeat_interval']
-        self.connectorCache['session_id']         = login_data['d']['session_id']
-        self.connectorCache['self']               = login_data['d']['user']
-        self.connectorCache['private_channels']   = login_data['d']['private_channels']
-        self.connectorCache['guilds']             = login_data['d']['guilds']
+        self.cache['heartbeat_interval'] = login_data['d']['heartbeat_interval']
+        self.cache['session_id']         = login_data['d']['session_id']
+        self.cache['self']               = login_data['d']['user']
+        self.cache['private_channels']   = login_data['d']['private_channels']
+        self.cache['guilds']             = login_data['d']['guilds']
 
         # Set websocket to nonblocking so we can exit a thread reading from the socket if we need to
         self.socket.sock.setblocking(0)
@@ -130,81 +126,76 @@ class Discord(Connector):
 
         self.logger.info("Disconnected from Discord")
 
-    def say(self, channel, message, mentions=[]):
+    def say(self, channel, message, embed={}, mentions=[]):
         self.logger.debug("Sending message to channel " + channel)
 
         for user in mentions:
             message = "<@{}> ".format(user) + message
 
-        endpoint = "channels/{}/messages".format(channel)
-        data     = {"content": "{}".format(message), "mentions":mentions}
-
-        try:
-            self.request("POST", endpoint, data=data, headers=self.auth_headers)
-        except:
-            self.logger.warning('Send message to channel \'{}\' failed'.format(channel))
-
-    def reply(self, user, channel, message):
-        self.logger.debug("Sending reply to " + user)
-
-        endpoint = "channels/{}/messages".format(channel)
-        data     = {"content": "<@{}> {}".format(user, message), "mentions":[user]}
-
-        try:
-            self.request("POST", endpoint, data=data, headers=self.auth_headers)
-        except:
-            self.logger.warning('Reply to user \'{}\' in channel \'{}\' failed'.format(user, channel))
-
-    def whisper(self, user, message):
-        self.logger.debug("Sending reply to " + user)
-
-        channel = self.get_private_channel(user)
-        endpoint = "channels/{}/messages".format(channel)
-        data     = {"content": "{}".format(message)}
-
-        try:
-            self.request("POST", endpoint, data=data, headers=self.auth_headers)
-        except:
-            self.logger.warning('Reply to user \'{}\' in channel \'{}\' failed'.format(user, channel))
-
-    def upload(self, channel, file):
-        self.logger.debug('Sending file to channel ' + channel)
-
-        endpoint = "channels/{}/messages".format(channel)
-        files    = {'file': open(file, 'rb')}
-
-        try:
-            self.request('POST', endpoint,  files=files, headers={"authorization": self.token})
-        except:
-            self.logger.warning('Upload file \'{}\' to channel {} failed'.format(file, channel))
-
-    def getUsers(self):
-        pass
-
-    @ttl_cache(300)
-    def getUser(self, userID):
-        user = self.request("GET", "users/{}".format(userID), headers={"authorization": self.token})
-
-        return {
-            'name': user['username'],
-            'id': user['id'],
-            'expires': time.time() + 600
+        endpoint = self.api_url + "channels/{}/messages".format(channel)
+        data = {
+            "content": "{}".format(message),
+            "embed": embed,
+            "mentions": mentions
         }
 
+        try:
+            response = requests.post(endpoint, data=json.dumps(data), headers=self.auth_headers)
+            response.raise_for_status()
+        except Exception as e:
+            self.logger.warning('Send message to channel \'{}\' failed: {}'.format(channel, e))
+            print(response.text)
+
+    def reply(self, user, channel, message):
+        self.say(channel, message, mentions=[user])
+
+    def whisper(self, user, message):
+        channel = self.get_private_channel(user)
+        self.say(channel, message)
+
+    def upload(self, channel, file):
+        self.logger.debug('Uploading file to channel ' + channel)
+
+        endpoint = self.api_url + "channels/{}/messages".format(channel)
+        files = {'file': open(file, 'rb')}
+
+        try:
+            response = requests.post(endpoint,  files=files, headers=self.auth_headers)
+            response.raise_for_status()
+        except Exception as e:
+            self.logger.warning('Upload of {} to channel {} failed'.format(file, channel))
+
+    def embed(self, channel, embed):
+        self.say(channel, "", embed)
+
     # Discord Specific
+    def get_user(self, id):
+        user = requests.get(self.api_url + "users/{}".format(userID), headers=self.auth_headers).json()
+        return user
+
     def leave_guild(self, guild_id):
-        self.request("DELETE", "users/@me/guilds/{}".format(guild_id), headers={"authorization": self.token})
+        requests.delete(self.api_url + "users/@me/guilds/{}".format(guild_id), headers={"authorization": self.token})
 
     def get_servers(self):
-        return self.request("GET", "users/@me/guilds", headers={"authorization": self.token})
+        endpoint = self.api_url + "users/@me/guilds"
+
+        try:
+            response = requests.get(endpoint, headers=self.auth_headers)
+            response.raise_for_status()
+
+            return response.json()
+        except Exception as e:
+            self.logger.warning('{}'.format(e))
 
     def get_private_channel(self, user):
-        for channel in self.connectorCache['private_channels']:
+        for channel in self.cache['private_channels']:
             if channel['recipient']['id'] == user:
                 return channel['id']
         else:
-            channel = self.request("POST", "users/@me/channels", data={"recipient_id": "{}".format(user)}, headers={"authorization": self.token})
-            self.connectorCache['private_channels'].append(channel)
+            response = requests.post(self.api_url + "users/@me/channels", data={"recipient_id": "{}".format(user)}, headers=self.auth_headers)
+            channel = reponse.json()
+
+            self.cache['private_channels'].append(channel)
             return channel['id']
 
     def set_status(self, status):
@@ -218,40 +209,21 @@ class Discord(Connector):
             }
         })
 
-    # User Management
-        # Set roles
-        # Ban
-        # Sync Roles
-    # Channel Management
-        # Add / remove Channel
-        # Apply premissions to Channel
+    def set_avatar(self, image_path):
+        with open(image_path, "rb") as avatar_image:
+            raw_image = avatar_image.read()
 
-    def gatherFacts(self):
+        raw = base64.b64encode(raw_image)
+        image_data = "data:image/jpeg;base64," + raw.decode('ascii')
 
-        self.connectorDict['self'] = self.request("GET", "users/@me", headers={"authorization": self.token})
-        self.connectorDict['direct_messages'] = self.request("GET", "users/@me/channels", headers={"authorization": self.token})
-        self.connectorDict['guilds'] = self.request("GET", "users/@me/guilds", headers={"authorization": self.token})
-
-        print(json.dumps(self.connectorDict))
-
-    def avatar(self):
-        with open("conf/avatar.png", "rb") as avatarImage:
-            rawImage = avatarImage.read()
-
-        raw = base64.b64encode(rawImage)
-        with open("test", "wb") as file:
-            file.write(raw)
-
-        return
-
-        self.request("PATCH", "users/@me", data={"username": "Arcbot", "avatar": "data:image/png;base64," + base64.b64encode(rawImage).decode('ascii')}, headers={"authorization": self.token})
+        response = requests.patch(self.api_url + "users/@me", data={"avatar": image_data}, headers=self.auth_headers)
 
     # Thread Methods
     def _keep_alive(self):
-        self.logger.debug("Spawning keep_alive thread at interval: " + str(self.connectorCache['heartbeat_interval']))
+        self.logger.debug("Spawning keep_alive thread at interval: " + str(self.cache['heartbeat_interval']))
 
         last_heartbeat = time.time()
-        heartbeat_interval = self.connectorCache['heartbeat_interval'] / 1000
+        heartbeat_interval = self.cache['heartbeat_interval'] / 1000
 
         while self.connected:
             now = time.time()
@@ -269,14 +241,14 @@ class Discord(Connector):
 
         while self.connected:
             # Sleep is good for the body; also so we don't hog the CPU polling the socket
-            time.sleep(0.5)
+            time.sleep(0.1)
 
             # Read data off of socket
-            rawMessage = self._read_socket()
-            if not rawMessage: continue
+            raw_message = self._read_socket()
+            if not raw_message: continue
 
             # Parse raw message
-            message = self._parse_message(rawMessage)
+            message = self._parse_message(raw_message)
             if not message: continue
 
             # Have worker thread take it from here
@@ -361,12 +333,10 @@ class Discord(Connector):
             sender_name = message["d"]['author']['username']
             channel = message['d']['channel_id']
             content = message["d"]["content"]
-
-            self.logger.info("Message Recieved: [Name:{}][UID:{}][CID:{}]: {}".format(sender_name, sender, channel, content))
         else:
-            return None
+            pass
 
-        if sender == self.connectorCache['self']['id']:
+        if sender == self.cache['self']['id']:
             return None
 
         return Message(type, sender, channel, content=content, sender_name=sender_name, timestamp=time.time())

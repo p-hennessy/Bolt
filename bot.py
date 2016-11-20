@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 """
     Class Name : Main
 
@@ -12,24 +14,14 @@
         under the terms of the GNU General Public License v3; as published
         by the Free Software Foundation
 """
-
 from core.Core import Bot
-import logging
-import time
-import sys
+from connectors.Discord import Discord
 
-logger = logging.getLogger(__name__)
+arcbot = Bot()
+arcbot.trigger = 'arcbot '
+arcbot.connector = Discord(arcbot, token="")
 
-def main():
-    try:
-        bot = Bot()
-        bot.login()
-        bot.watchdog.start()
+for plugin in arcbot.discover_plugins('plugins'):
+    arcbot.plugin.load(plugin)
 
-    except KeyboardInterrupt:
-        logger.info("Caught SIGINT from keyboard. Exiting")
-        bot.exit()
-        sys.exit(0)
-
-if __name__ == '__main__':
-    main()
+arcbot.connect()

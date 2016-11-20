@@ -27,39 +27,57 @@ from core.Event import EventManager
 from core.PluginManager import PluginManager
 from core.Workers import Workers
 from core.Watchdog import Watchdog
+from core.Connector import Connector
 
-from imp import load_module, find_module
+import importlib
+import imp
+import os
+import inspect
+import logging
+
 from sys import stdout, path, exit
 import logging
 import logging.handlers
 import time
 
 class Bot():
+    name = "Arcbot"
+    trigger = "arcbot "
+    avatar = None
+    log_level = logging.DEBUG
+    connector = None
+    connector_options = {}
+
+    worker_threads = 12
+    worker_queue_size = 100
+    connection_retry = 3
+    connection_timeout = 300
+
     def __init__(self):
-        # Setup logger and load config
         self.setup_logger()
-        self.config = self.load_config("settings")
 
         # Setup managers
-        self.watchdog = Watchdog(self)
         self.plugin = PluginManager(self)
         self.event = EventManager(self)
         self.command = CommandManager(self)
         self.ACL = ACL()
-        self.workers = Workers(self.config.worker_queue_size, self.config.worker_threads)
+        self.workers = Workers(self.worker_queue_size, self.worker_threads)
 
-        # Setup connection
-        self.connection = self.load_connector(self)
+        self.connection = None
 
-        # Load plugins
-        self.logger.info("Loading Plugins")
-        self.load_plugins()
+        self.event.register("connect")
+        self.event.register("disconnect")
+        self.event.register("message")
+        self.event.register("pressence")
 
 
-    def login(self):
+    def connect(self):
+        if not self.connection:
+            self.connection = self.connector
+
         self.connection.connect()
 
-    def logout(self):
+    def disconnect(self):
         self.connection.disconnect()
 
     def exit(self):
@@ -99,7 +117,7 @@ class Bot():
         log = logging.getLogger('')
         log.setLevel(logging.INFO)
 
-        # Create console handler
+        #Create console handler
         console_hdlr = logging.StreamHandler(stdout)
         console_formatter = ColoredFormatter(
             "%(asctime)s %(log_color)s%(levelname)-8s%(reset)s %(blue)s%(name)-25.25s%(reset)s %(white)s%(message)s%(reset)s",
@@ -127,82 +145,24 @@ class Bot():
         file_hdlr.setLevel(logging.INFO)
         log.addHandler(file_hdlr)
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(self.name + __name__)
 
-    def load_config(self, name):
-        """
-            Summary:
-                Establishes a connection to the server
-                Emits login event
-                Starts message consumer thread
-                Expects to have already loaded connection module
-                Exits if it cannot find or load the config
+    @classmethod
+    def discover_plugins(self, path):
+          for file in os.listdir(path):
+            if not file.startswith('__'):
+                if file.endswith(".py"):
+                    fullname = os.path.splitext(os.path.basename(file))[0]
+                    module = importlib.machinery.SourceFileLoader(fullname, os.path.join(path, file)).load_module()
+                    yield module
 
-            Args:
-                name (str): Name of the config module to be loaded
 
-            Returns:
-                (Config): instance of Config class, storing all global config options
-        """
-
-        path.append("conf")
-
+    def load_module(self, path):
         try:
-            config_canadiate = find_module(name, path=['conf'])
-            config_module = load_module(name, *config_canadiate)
+            fullname = os.path.splitext(os.path.basename(path))[0]
+            module = importlib.machinery.SourceFileLoader(fullname, path).load_module()
 
-            self.logger.info("Loaded configuration from \"" + config_canadiate[1] + "\"")
-            logging.getLogger('').setLevel(config_module.log_level)
-
-            return config_module
-
+            return module
         except ImportError as e:
             self.logger.critical("ImportError: " + str(e))
             exit(1)
-        except AttributeError as e:
-            self.logger.critical("Config class not found in conf/" + name)
-            exit(1)
-
-    def load_connector(self, core):
-        """
-            Summary:
-                Looks for and loads the connector defined in config
-                Will exit if cannot find or load the connector module
-
-            Args:
-                None
-
-            Returns:
-                (Connector): The low level connection manager instance
-        """
-        path.append("connectors")
-
-        try:
-            connector_candidate = find_module(config.connector, path=["connectors"])
-            connector_module = load_module(config.connector, *connector_candidate)
-            connector = getattr(connector_module, config.connector)(core, **config.connector_options)
-            self.logger.info("Loaded connector from: \"" +  connector_candidate[1] + "\"")
-
-            return connector
-
-        except ImportError as e:
-            self.logger.critical("ImportError: " + str(e))
-            exit(1)
-        except AttributeError as e:
-            print(e)
-            self.logger.critical("Could not find connector class: " + config.connector)
-            exit(1)
-
-    def load_plugins(self):
-        """
-            Summary:
-                Looks in plugins list in config and attempts to load each
-
-            Args:
-                None
-
-            Returns:
-                None
-        """
-        for plugin in config.plugins:
-            self.plugin.load(plugin)

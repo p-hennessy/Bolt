@@ -1,5 +1,10 @@
 import time
 
+def Singleton(clazz):
+    instance = clazz()
+    instance.__call__ = lambda: instance
+    return instance
+
 class ttl_cache(object):
     def __init__(self, ttl):
         self.cache = {}

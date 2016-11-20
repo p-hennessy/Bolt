@@ -17,30 +17,25 @@
 from core.Plugin import Plugin
 from core.Decorators import *
 
-import conf.settings
+import conf.settings as config
 
 import time
 from tabulate import tabulate
-from collections import namedtuple
-
-ACCESS = {
-    "ping"          : 50,
-    "trigger"       : 50,
-    "plugin_list"   : 50,
-    "plugin_manage" : 1000,
-    "uptime"        : 50
-}
 
 class Manage(Plugin):
-    @command("^ping", access=ACCESS["ping"])
+    def activate(self):
+        self.login_time = None
+        self.session_time = None
+
+    @command("^ping", access=50)
     def ping(self, msg):
         self.say(msg.channel, "Pong")
 
-    @command("^trigger$", trigger="?", access=ACCESS['trigger'])
+    @command("^trigger$", trigger="?", access=50)
     def trigger(self, msg):
         self.say(msg.channel, "My default trigger is `" + config.trigger + "`")
 
-    @command("^list plugins$", access=ACCESS["plugin_list"])
+    @command("^list plugins$", access=50)
     def list_plugins(self, msg):
         plugins = self.core.plugin.list()
 
@@ -53,7 +48,7 @@ class Manage(Plugin):
 
         self.say(msg.channel, output)
 
-    @command("^(enable|disable|reload|status) plugin ([A-Za-z]+)$", access=ACCESS["plugin_manage"])
+    @command("^(enable|disable|reload|status) plugin ([A-Za-z]+)$", access=1000)
     def manage_plugin(self, msg):
         plugins = self.core.plugin.list()
         plugin = msg.arguments[1]
@@ -75,7 +70,7 @@ class Manage(Plugin):
                     self.say(msg.channel, "{} is already disabled".format(plugin))
 
             elif action == "reload":
-                if plugins[plugin]['status'] == "Disabled":
+                if not plugins[plugin]['status'] == "Disabled":
                     self.core.plugin.reload(plugin)
                     self.say(msg.channel, "Reloaded plugin: **{}**".format(plugin))
         else:
@@ -83,9 +78,12 @@ class Manage(Plugin):
 
     @subscribe("connect")
     def on_connect(self, *args, **kwargs):
-        self.login_time = time.time()
+        if self.login_time:
+            self.session_time = time.time()
+        else:
+            self.login_time = time.time()
 
-    @command("^uptime$", access=ACCESS['uptime'])
+    @command("^uptime$", access=50)
     def uptime(self, msg):
         uptime = time.time() - self.login_time
 

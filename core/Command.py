@@ -91,7 +91,7 @@ class CommandManager():
             if trigger is None:
                 trigger = ""
             elif trigger == "":
-                trigger = self.core.config.trigger
+                trigger = self.core.trigger
 
             self.commands[name] = Command(
                 pattern,

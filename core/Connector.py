@@ -48,50 +48,6 @@ class Connector():
     def upload(self, channel, file):
         pass
 
-    @abstractmethod
-    def getUsers(self):
+
+    def rate_limit_lock():
         pass
-
-    @abstractmethod
-    def getUser(self, userID):
-        pass
-
-    def request(self, method, request="?", headers=None, data={}, domain="discordapp.com", files={}):
-        while(time.time() - self.last_request < 1):
-            time.sleep(0.025)
-
-        url = 'https://{}/api/{}'.format(domain, request)
-        response = None
-
-        try:
-            if(method.lower() in ["post", "get", "delete", "head", "options", "put", "patch"]):
-                self.lastRequest = time.time()
-                if(method == "POST"):
-                    response = requests.post(url, files=files, json=data, headers=headers)
-                elif(method == "GET"):
-                    response = requests.get(url, data, headers=headers)
-                elif(method == "PUT"):
-                    response = requests.put(url, data, headers=headers)
-                elif(method == "DELETE"):
-                    response = requests.delete(url, headers=headers)
-                elif(method == "OPTIONS"):
-                    response = requests.options(url)
-                elif(method == "PATCH"):
-                    response = requests.patch(url, data, headers=headers)
-                elif(method == "HEAD"):
-                    response = requests.head(url)
-                elif(method == "UPDATE"):
-                    response = requests.update(url, data, headers=headers)
-            else:
-                raise Exception("Invalid HTTP request method")
-
-            if response.status_code not in range(200, 206):
-                raise Exception("API responded with HTTP code  " + str(response.status_code) + "\n\n" + response.text)
-            else:
-                if response.text:
-                    returnData = json.loads(response.text)
-                    return returnData
-                else:
-                    return None
-        except:
-            pass

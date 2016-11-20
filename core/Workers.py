@@ -28,7 +28,7 @@ class Workers():
         self.logger = logging.getLogger(__name__)
 
         # Init worker list and queue
-        self._threads = []
+        self.thread_pool = []
         self.tasks = queue.Queue(queue_size)
 
         self.logger.info("Spawning " + str(threads) + " worker threads.")
@@ -71,17 +71,17 @@ class Workers():
 
     @property
     def threads(self):
-        return len(self._threads)
+        return len(self.thread_pool)
 
     @threads.setter
     def threads(self, number):
-        while len(self._threads) < number:
-            new_worker = Worker(self, len(self._threads) + 1)
-            self._threads.append(new_worker)
+        while len(self.thread_pool) < number:
+            new_worker = Worker(self, len(self.thread_pool) + 1)
+            self.thread_pool.append(new_worker)
             new_worker.start()
 
-        while len(self._threads) > number:
-            worker = self._threads.pop()
+        while len(self.thread_pool) > number:
+            worker = self.thread_pool.pop()
             worker.stop()
             worker.join()
 

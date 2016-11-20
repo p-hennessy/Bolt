@@ -16,7 +16,6 @@
 
 import sys
 import os
-import imp
 import logging
 import inspect
 
@@ -26,28 +25,7 @@ class PluginManager():
     def __init__(self, core):
         self.core = core
         self.plugins = {}
-
         self.logger = logging.getLogger("core.PluginManager")
-        self.find_plugins()
-        sys.path.append("plugins")
-
-    def find_plugins(self):
-        """
-            Summary:
-                Scans through plugin directory looking for potential plugins.
-                Appends any plugin it finds to class-level dict
-
-            Args:
-                None
-
-            Returns:
-                None
-        """
-        for file in os.listdir("plugins"):
-            if not file.startswith('__'):
-                if file.endswith(".py"):
-                    name = os.path.splitext(file)[0]
-                    self.plugins[name] = {"instance": None, "status": "Disabled"}
 
     def list(self):
         """
@@ -62,19 +40,6 @@ class PluginManager():
         """
         return self.plugins
 
-    def exists(self, name):
-        """
-            Summary:
-                Checks to see if a plugin exists in our bot
-
-            Args:
-                name (str): Name used internally for the plugin. Should be the same name as the plugin's class
-
-            Returns:
-                (bool): Whether or not a plugin exists
-        """
-        return name in self.plugins
-
     def status(self, name):
         """
             Summary:
@@ -88,7 +53,7 @@ class PluginManager():
         """
         return self.plugins[name]["status"]
 
-    def load(self, module_name):
+    def load(self, plugin_module):
         """
             Summary:
                 Loads a plugin,
@@ -101,17 +66,9 @@ class PluginManager():
             Returns:
                 None
         """
-
-        try:
-            plugin_candidate = imp.find_module(module_name, path=['plugins'])
-            plugin_module = imp.load_module(module_name, *plugin_candidate)
-        except ImportError as e:
-            self.logger.error(e)
-            return
-
+        # Find plugin subclass and initialize it
         plugin = None
 
-        # Find plugin subclass and initialize it
         for name, clazz in inspect.getmembers(plugin_module, inspect.isclass):
             if name == "Plugin":
                 continue
@@ -121,7 +78,7 @@ class PluginManager():
                 break
 
         if not plugin:
-            self.logger.error("Could not find plugin subclass in module: " + module_name)
+            self.logger.error("Could not find plugin subclass in module: " + plugin_module)
             return
 
         # Call activate() if it exists
