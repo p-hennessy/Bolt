@@ -17,8 +17,6 @@
 from core.Plugin import Plugin
 from core.Decorators import *
 
-import conf.settings as config
-
 import time
 from tabulate import tabulate
 
@@ -33,7 +31,7 @@ class Manage(Plugin):
 
     @command("^trigger$", trigger="?", access=50)
     def trigger(self, msg):
-        self.say(msg.channel, "My default trigger is `" + config.trigger + "`")
+        self.say(msg.channel, "My default trigger is `" + self.core.trigger + "`")
 
     @command("^list plugins$", access=50)
     def list_plugins(self, msg):

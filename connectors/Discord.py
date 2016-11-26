@@ -61,6 +61,17 @@ class Discord(Connector):
         self.message_consumer_thread = None
 
         # Events that this connector publishes
+        core.event.register('connector.connect')
+        core.event.register('connector.member_add')
+        core.event.register('connector.member_update')
+        core.event.register('connector.member_remove')
+
+        core.event.register('connector.role_create')
+        core.event.register('connector.role_update')
+        core.event.register('connector.role_delete')
+
+        core.event.register('connector.pressence')
+        core.event.register('connector.message')
 
     def connect(self):
         # Connect to Discord, post login credentials
@@ -245,11 +256,13 @@ class Discord(Connector):
 
             # Read data off of socket
             raw_message = self._read_socket()
-            if not raw_message: continue
+            if not raw_message:
+                continue
 
             # Parse raw message
             message = self._parse_message(raw_message)
-            if not message: continue
+            if not message:
+                continue
 
             # Have worker thread take it from here
             self.core.workers.queue(self._handleMessage, message)

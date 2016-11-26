@@ -18,11 +18,8 @@
         by the Free Software Foundation
 """
 
-import conf.settings as config
-
 from core.ACL import ACL
 from core.Command import CommandManager
-from core.Database import Database
 from core.Event import EventManager
 from core.PluginManager import PluginManager
 from core.Workers import Workers
