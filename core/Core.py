@@ -59,13 +59,9 @@ class Bot():
         self.command = CommandManager(self)
         self.ACL = ACL()
         self.workers = Workers(self.worker_queue_size, self.worker_threads)
+        self.watchdog = Watchdog(self)
 
         self.connection = None
-
-        self.event.register("connect")
-        self.event.register("disconnect")
-        self.event.register("message")
-        self.event.register("pressence")
 
 
     def connect(self):
@@ -74,8 +70,10 @@ class Bot():
 
         self.connection.connect()
 
+
     def disconnect(self):
         self.connection.disconnect()
+
 
     def exit(self):
         """
@@ -144,14 +142,6 @@ class Bot():
 
         self.logger = logging.getLogger(self.name + __name__)
 
-    @classmethod
-    def discover_plugins(self, path):
-          for file in os.listdir(path):
-            if not file.startswith('__'):
-                if file.endswith(".py"):
-                    fullname = os.path.splitext(os.path.basename(file))[0]
-                    module = importlib.machinery.SourceFileLoader(fullname, os.path.join(path, file)).load_module()
-                    yield module
 
 
     def load_module(self, path):

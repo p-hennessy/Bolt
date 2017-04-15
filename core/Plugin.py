@@ -70,7 +70,7 @@ class Plugin(object):
         """
         self.core.connection.reply(envelope.sender, envelope.channel, message)
 
-    def say(self, channel, message, mentions=[]):
+    def say(self, channel, message, embed={}, mentions=[]):
         """
             Summary:
                 Wrapper method calling the connection's send method

@@ -74,7 +74,7 @@ class Manage(Plugin):
         else:
             self.say(msg.channel, "I don't have a plugin by that name.")
 
-    @subscribe("connect")
+    @subscribe("connector.connect")
     def on_connect(self, *args, **kwargs):
         if self.login_time:
             self.session_time = time.time()

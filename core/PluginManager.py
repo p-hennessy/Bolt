@@ -18,6 +18,7 @@ import sys
 import os
 import logging
 import inspect
+import importlib
 
 from core.Plugin import Plugin
 
@@ -175,3 +176,11 @@ class PluginManager():
         else:
             self.unload(name)
             self.load(name)
+
+    def discover(self, path):
+          for file in os.listdir(path):
+            if not file.startswith('__'):
+                if file.endswith(".py"):
+                    fullname = os.path.splitext(os.path.basename(file))[0]
+                    module = importlib.machinery.SourceFileLoader(fullname, os.path.join(path, file)).load_module()
+                    yield module

@@ -38,8 +38,6 @@ class Discord(Connector):
         self.logger = logging.getLogger(__name__)
         self.name   = __name__
 
-        self.logger.info(self.core.name)
-
         # Authentication / Connection Data
         self.cache = {
             "heartbeat_interval": 41250,
@@ -53,7 +51,10 @@ class Discord(Connector):
         self.token     = token              # Token used to authenticate api requests
         self.socket    = None               # Websocket connection handler to Discord
 
-        self.auth_headers = {"authorization": "Bot " + self.token, "Content-Type": 'application/json'}
+        self.auth_headers = {
+            "authorization": "Bot " + self.token,
+            "Content-Type": 'application/json'
+        }
         self.api_url = "https://discordapp.com/api/"
 
         # Internal threads
@@ -62,14 +63,13 @@ class Discord(Connector):
 
         # Events that this connector publishes
         core.event.register('connector.connect')
+        core.event.register('connector.disconnect')
         core.event.register('connector.member_add')
         core.event.register('connector.member_update')
         core.event.register('connector.member_remove')
-
         core.event.register('connector.role_create')
         core.event.register('connector.role_update')
         core.event.register('connector.role_delete')
-
         core.event.register('connector.pressence')
         core.event.register('connector.message')
 
@@ -107,7 +107,7 @@ class Discord(Connector):
         self.connected = True
 
         self.logger.info("Succesful login to Discord")
-        self.core.event.notify('connect')
+        self.core.event.notify('connector.connect')
 
         # Create and start threads
         self.keep_alive_thread = threading.Thread(target=self._keep_alive, name="keep_alive_thread")
@@ -119,7 +119,7 @@ class Discord(Connector):
         self.message_consumer_thread.start()
 
     def disconnect(self):
-        self.core.event.notify('disconnect')
+        self.core.event.notify('connector.disconnect')
         self.connected = False
 
         # Join threads if they exist
@@ -252,7 +252,7 @@ class Discord(Connector):
 
         while self.connected:
             # Sleep is good for the body; also so we don't hog the CPU polling the socket
-            time.sleep(0.1)
+            time.sleep(0.05)
 
             # Read data off of socket
             raw_message = self._read_socket()
@@ -271,12 +271,12 @@ class Discord(Connector):
     def _handleMessage(self, message):
         # If incoming message is a MESSAGE text
         if message.type == messageType.MESSAGE:
-            self.core.event.notify("message",  message=message)
+            self.core.event.notify("connector.message",  message=message)
             self.core.command.check(message)
 
         # If incoming message is PRESSENCE update
         elif type == messageType.PRESSENCE:
-            self.core.event.notify("pressence", message=message)
+            self.core.event.notify("connector.pressence", message=message)
 
     # Socket Methods
     def _write_socket(self, data):
@@ -287,15 +287,15 @@ class Discord(Connector):
                 if not self.connected:
                     return
 
-                self.logger.warning("Connection reset by peer.")
+                self.logger.warning("READ: Connection reset by peer.")
                 self.connected = False
-
             else:
                 raise
         except websocket.WebSocketConnectionClosedException:
             if not self.connected:
                 return
-            self.logger.warning("Websocket unexpectedly closed.")
+
+            self.logger.warning("WRTIE: Websocket unexpectedly closed.")
             self.connected = False
 
     def _read_socket(self):
@@ -322,7 +322,7 @@ class Discord(Connector):
                     if not self.connected:
                         return
 
-                    self.logger.warning("Connection reset by peer.")
+                    self.logger.warning("READ: Connection reset by peer.")
                     self.connected = False
                     return None
 
@@ -333,13 +333,14 @@ class Discord(Connector):
             except websocket.WebSocketConnectionClosedException:
                 if not self.connected:
                     return
-                self.logger.warning("Websocket unexpectedly closed.")
+
+                self.logger.warning("READ: Websocket unexpectedly closed.")
                 self.connected = False
 
     # Parser Methods
     def _parse_message(self, message):
         type = content = sender = sender_name = channel = content = timestamp = None
-
+        
         if message["t"] == "MESSAGE_CREATE":
             type = messageType.MESSAGE
             sender = message["d"]["author"]['id']

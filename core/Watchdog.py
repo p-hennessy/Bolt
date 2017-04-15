@@ -23,8 +23,8 @@ class Watchdog():
         self.core = core
 
         # Reconnection settings
-        self.connection_retry = self.core.config.connection_retry
-        self.connection_timeout = self.core.config.connection_timeout
+        self.connection_retry = self.core.connection_retry
+        self.connection_timeout = self.core.connection_timeout
 
     def start(self):
         while True:
@@ -37,8 +37,12 @@ class Watchdog():
                     if self.core.connection.connected:
                         break
 
-                    self.core.logout()
-                    self.core.login()
+                    try:
+                        self.core.disconnect()
+                        self.core.connect()
+                    except:
+                        time.sleep(10)
+                        continue
 
                 else:
                     self.logger.warning("Failed to reconnect after {} tries. Sleeping for {} seconds.".format(self.connection_retry, self.connection_timeout))
