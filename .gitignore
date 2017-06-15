@@ -1,6 +1,5 @@
 *.pyc
 *.db
-unhandled_messages.txt
 conf/settings.py
 resources/
 logs/
