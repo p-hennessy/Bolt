@@ -41,15 +41,15 @@ class Discord(Connector):
         # Authentication / Connection Data
         self.cache = {
             "heartbeat_interval": 41250,
-            "session_id":"",
-            "self":{},
-            "private_channels":[],
-            "guilds":[]
+            "session_id": "",
+            "self": {},
+            "private_channels": [],
+            "guilds": []
         }
 
         self.connected = False              # Boolean for handling connection state
-        self.token     = token              # Token used to authenticate api requests
-        self.socket    = None               # Websocket connection handler to Discord
+        self.token = token              # Token used to authenticate api requests
+        self.socket = None               # Websocket connection handler to Discord
 
         self.auth_headers = {
             "authorization": "Bot " + self.token,
@@ -84,7 +84,7 @@ class Discord(Connector):
         # Immediately pass message to server about your connection
         self._write_socket({
             "op": 2,
-            "v": 5,
+            "v": 6,
             "d": {
                 "token": self.token,
                 "properties": {
@@ -225,9 +225,9 @@ class Discord(Connector):
             raw_image = avatar_image.read()
 
         raw = base64.b64encode(raw_image)
-        image_data = "data:image/jpeg;base64," + raw.decode('ascii')
+        image_data = "data:image/png;base64," + raw.decode('ascii')
 
-        response = requests.patch(self.api_url + "users/@me", data={"avatar": image_data}, headers=self.auth_headers)
+        response = requests.patch(self.api_url + "users/@me", data={'username': 'Arcboot'}, headers=self.auth_headers)
 
     # Thread Methods
     def _keep_alive(self):
@@ -340,7 +340,7 @@ class Discord(Connector):
     # Parser Methods
     def _parse_message(self, message):
         type = content = sender = sender_name = channel = content = timestamp = None
-        
+
         if message["t"] == "MESSAGE_CREATE":
             type = messageType.MESSAGE
             sender = message["d"]["author"]['id']
