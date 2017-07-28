@@ -28,45 +28,14 @@ class PluginManager():
         self.plugins = {}
         self.logger = logging.getLogger("core.PluginManager")
 
-    def list(self):
-        """
-            Summary:
-                Gets a list of plugin names
-
-            Args:
-                None
-
-            Returns:
-                (dict): Plugin objects
-        """
+    def list(self) -> dict:
         return self.plugins
 
-    def status(self, name):
-        """
-            Summary:
-                Gets the status of a plugin
 
-            Args:
-                pluginName (str): Name used internally for the plugin. Should be the same name as the plugin's class
-
-            Returns:
-                (str): String object indicating the status of the plugin; Enabled, Crashed, or Disabled
-        """
+    def status(self, name: str) -> str:
         return self.plugins[name]["status"]
 
-    def load(self, plugin_module):
-        """
-            Summary:
-                Loads a plugin,
-                registers all commands and events,
-                pushes plugin instance to internal hashtable.
-
-            Args:
-                module_name (str): Name of the file that needs to be imported
-
-            Returns:
-                None
-        """
+    def load(self, plugin_module: str):
         # Find plugin subclass and initialize it
         plugin = None
 
@@ -112,20 +81,7 @@ class PluginManager():
         self.plugins[plugin.name] = {"instance":plugin, "module": plugin_module, "status": "Enabled"}
         self.logger.info("Loaded plugin \"" + plugin.name + "\"")
 
-    def unload(self, plugin_name):
-        """
-            Summary:
-                Unloads a plugin,
-                unregisters all commands and events,
-                removes plugin instance from internal hashtable.
-
-            Args:
-                pluginName (str): Name of the plugin class instance to be unloaded
-
-            Returns:
-                None
-        """
-
+    def unload(self, plugin_name: str):
         # Check if we are managing that plugin
         if(plugin_name not in self.plugins):
             self.logger.warning("Unable to unload plugin " + plugin_name + ", plugin not loaded")
@@ -154,18 +110,7 @@ class PluginManager():
         self.plugins[plugin_name] = {"instance":None, "module":None, "status": "Disabled"}
         self.logger.info("Unloaded plugin \"" + plugin_name + "\"")
 
-    def reload(self, name):
-        """
-            Summary:
-                Wrapper for unload + load
-
-            Args:
-                name (str): Name of the plugin class instance to be reloaded
-
-            Returns:
-                None
-        """
-
+    def reload(self, name: str):
         plugin = self.plugins[name]
 
         if not plugin:
@@ -177,10 +122,16 @@ class PluginManager():
             self.unload(name)
             self.load(name)
 
-    def discover(self, path):
+    def discover(self, path: str):
           for file in os.listdir(path):
             if not file.startswith('__'):
                 if file.endswith(".py"):
                     fullname = os.path.splitext(os.path.basename(file))[0]
-                    module = importlib.machinery.SourceFileLoader(fullname, os.path.join(path, file)).load_module()
+
+                    try:
+                        module = importlib.machinery.SourceFileLoader(fullname, os.path.join(path, file)).load_module()
+                    except ImportError as e:
+                        self.logger.error("{}/{}: {}".format(path, file, e))
+                        continue
+
                     yield module

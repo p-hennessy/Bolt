@@ -13,6 +13,8 @@
         by the Free Software Foundation
 """
 
+from typing import Callable
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -22,75 +24,34 @@ class EventManager():
         self.events = {}
 
 
-    def register(self, event):
-        """Adds an event to so that the bot knows about it
-
-            Args:
-                event (str): Name of the event to register
-
-            Returns:
-                None
-        """
+    def register(self, event: str):
         if event not in self.events:
             self.events[event] = []
         else:
-            logger.warning("Event \"{}\" has already been registered".format(event))
+            logger.warning(f"Event {event} has already been registered")
 
 
-    def unregister(self, event):
-        """Removes an event so that it can no longer be emmited
-
-            Args:
-                event (str): Name of the event to register
-
-            Returns:
-                None
-        """
+    def unregister(self, event: str):
         if event in self.events:
             self.events.pop(event, None)
         else:
-            logger.warning("Event \"{}\" does not exist.".format(event))
+            logger.warning(f"Event {event} does not exist.")
 
 
-    def notify(self, event, **kwargs):
-        """Queues up each event notification to the threadPool
-
-            Args:
-                event (str): Name of the event to register
-
-            Returns:
-                None
-        """
+    def notify(self, event: str, **kwargs):
         for callback in self.events[event]:
             self.core.workers.queue(callback, **kwargs)
 
 
-    def subscribe(self, event, callback):
-        """Adds an callback to be invoked when an event occurs
-
-            Args:
-                event (str): Name of the event
-                callback (bound method): Reference to the method to be called when event occurs
-
-            Returns:
-                None
-        """
+    def subscribe(self, event: str, callback: Callable):
         if callback not in self.events[event]:
             self.events[event].append(callback)
         else:
-            logger.warning("Callback \"{}\" was already subscribed to {}.".format(callback, event))
+            logger.warning(f"Callback {callback} was already subscribed to {event}.")
 
-    def unsubscribe(self, event, callback):
-        """Removes a callback from an event
 
-            Args:
-                event (str): Name of the event
-                callback (bound method): Reference to the method to be called when event occurs
-
-            Returns:
-                None
-        """
+    def unsubscribe(self, event: str, callback: Callable):
         if callback in self.events[event]:
             self.events[event].remove(callback)
         else:
-            logger.warning("Callback \"{}\" was not subscribed to any event.".format(callback))
+            logger.warning(f"Callback {callback} was not subscribed to any event.")

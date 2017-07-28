@@ -18,37 +18,30 @@ import time
 import logging
 import traceback
 
+from typing import Callable
+
 try:
     import queue
 except ImportError:
     import Queue as queue
 
 class Workers():
-    def __init__(self, queue_size, threads):
+    def __init__(self, queue_size: int, threads: int):
         self.logger = logging.getLogger(__name__)
 
         # Init worker list and queue
         self.thread_pool = []
         self.tasks = queue.Queue(queue_size)
 
-        self.logger.info("Spawning " + str(threads) + " worker threads.")
+        self.logger.info(f"Spawning {threads} worker threads.")
 
         # Create worker threads
         self.threads = threads
 
-    def queue(self, callable, *args, **kwargs):
+    def queue(self, callable: Callable, *args: list, **kwargs: dict) -> None:
         """
-            Summary:
-                Puts task on the task queue for workers to pull from.
-                If task queue is full; will block until space opens up
-
-            Args:
-                callable (func): Function object to be invoked by a Worker
-                *args (list): Positional arguments passed to callable
-                **kwargs (dict): Keyword arguments passed to callable
-
-            Returns:
-                None
+            Puts task on the task queue for workers to pull from.
+            If task queue is full; will block until space opens up
         """
         if(self.tasks.full()):
             self.logger.warning("Task queue is full. Consider raising the task queue size.")
@@ -56,25 +49,20 @@ class Workers():
         task = (callable, args, kwargs)
         self.tasks.put(task, block=True)
 
-    def dequeue(self):
+    def dequeue(self) -> None:
         """
-            Summary:
-                Removes a task from the queue. Will block for half a second, and raise Queue.Empty exception when nothing is in queue
-
-            Args:
-                None
-
-            Returns:
-                None
+            Removes a task from the queue.
+            Will block for half a second,
+            raises Queue.Empty exception when nothing is in queue
         """
         return self.tasks.get(block=True, timeout=0.1)
 
     @property
-    def threads(self):
+    def threads(self) -> int:
         return len(self.thread_pool)
 
     @threads.setter
-    def threads(self, number):
+    def threads(self, number: int) -> None:
         while len(self.thread_pool) < number:
             new_worker = Worker(self, len(self.thread_pool) + 1)
             self.thread_pool.append(new_worker)
@@ -87,7 +75,6 @@ class Workers():
 
 class Worker(threading.Thread):
     def __init__(self, tasks, num):
-
         # Call super constructor for thread to name it
         super(Worker, self).__init__(name="WorkerThread" + str(num))
         self.name = "WorkerThread" + str(num)
@@ -99,30 +86,16 @@ class Worker(threading.Thread):
         # Reference to parent object to get tasks from
         self.tasks = tasks
 
-    def stop(self):
+    def stop(self) -> None:
         """
-            Summary:
-                Tells the thread that it should stop running
-
-            Args:
-                None
-
-            Returns:
-                None
+            Tells the thread that it should stop running
         """
         self.running = False
 
-    def run(self):
+    def run(self) -> None:
         """
-            Summary:
-                Part of the Thread superclass; this method is where the logic for our thread resides.
-                Loops continously while trying to pull a task from the task queue and execute that task
-
-            Args:
-                None
-
-            Returns:
-                None
+            Part of the Thread superclass; this method is where the logic for our thread resides.
+            Loops continously while trying to pull a task from the task queue and execute that task
         """
         while(self.running):
             # Dequeue task will block and thread will wait for a task
@@ -140,5 +113,5 @@ class Worker(threading.Thread):
             try:
                 callable(*args, **kwargs)
             except BaseException as e:
-                self.logger.warning("Exception occured in {}:\n {}".format(self.name, traceback.format_exc()))
+                self.logger.warning(f"Exception occured in {self.name}:\n {traceback.format_exc()}")
                 continue

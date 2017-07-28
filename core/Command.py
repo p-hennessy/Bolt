@@ -17,20 +17,22 @@ import threading
 import re
 import logging
 
+from typing import Callable
+
 logger = logging.getLogger(__name__)
 
 class Command():
-    def __init__(self, pattern, callback, trigger="", access=0, silent=False):
+    def __init__(self, pattern: str, callback: Callable, trigger: str="", access: int=0, silent: bool=False):
         self.pattern  = pattern
         self.access   = access
         self.callback = callback
         self.trigger  = trigger
         self.silent   = silent
 
-    def __str__(self):
+    def __str__(self) -> None:
         return self.callback.__name__
 
-    def invoke(self, message):
+    def invoke(self, message: str) -> None:
         self.callback(message)
 
 class CommandManager():
@@ -38,17 +40,10 @@ class CommandManager():
         self.commands = {}
         self.core = core
 
-    def check(self, message):
+    def check(self, message: str) -> None:
         """
-            Summary:
-                Checks if an incoming message is a command
-                Invokes any command that matches the criteria
-
-            Args:
-                message (Message): A message instance from core.Message
-
-            Returns:
-                None
+            Checks if an incoming message is a command
+            Invokes any command that matches the criteria
         """
         commands = list(self.commands.items())
         for key, command in commands:
@@ -62,22 +57,11 @@ class CommandManager():
                         message.arguments = match
                         command.invoke(message)
                     elif not command.silent:
-                        self.core.connection.reply(message.sender, message.channel, "Sorry, you need `{}` access to use that command.".format(command.access))
+                        self.core.connection.reply(message.sender, message.channel, f"Sorry, you need `{command.access}` access to use that command.")
 
-    def register(self, pattern, callback, trigger="", access=0, silent=False):
+    def register(self, pattern: str, callback: Callable, trigger: str="", access: int=0, silent: bool=False) -> None:
         """
-            Summary:
-                Pushes command instance to command list
-
-            Args:
-                pattern (str): Regex that the message parser will match with
-                callback (func): Function object that will be invoked when message parser finds a match
-                trigger (str): Beginning of the string to denote a command, default is in the config
-                access (int): Amount of access required to invoke a command
-                silent (bool): Squelch access error messages
-
-            Returns:
-                None
+            Pushes command instance to command list
         """
         clazz = type(callback.__self__).__name__
         name = clazz + "." + callback.__name__
@@ -101,18 +85,11 @@ class CommandManager():
                 silent=silent
             )
 
-    def unregister(self, command_name):
+    def unregister(self, command_name: str) -> None:
         """
-            Summary:
-                Unregisters a command
-                Removes command instance from command list
-                Command will no longer run when message parser finds a match
-
-            Args:
-                command_name (str): Name of the command to unregister
-
-            Returns:
-                None
+            Unregisters a command
+            Removes command instance from command list
+            Command will no longer run when message parser finds a match
         """
         if command_name in self.commands:
             command = self.commands[command_name]

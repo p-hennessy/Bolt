@@ -27,21 +27,18 @@ from core.Watchdog import Watchdog
 from core.Connector import Connector
 
 import importlib
-import imp
 import os
-import inspect
-import logging
 
-from sys import stdout, path, exit
+from colorlog import ColoredFormatter
+from sys import stdout
 import logging
 import logging.handlers
-import time
 
 class Bot():
     name = "Arcbot"
     trigger = "arcbot "
     avatar = None
-    log_level = logging.DEBUG
+    log_level = logging.INFO
     connector = None
     connector_options = {}
 
@@ -64,53 +61,31 @@ class Bot():
         self.connection = None
 
 
-    def connect(self):
+    def connect(self) -> None:
         if not self.connection:
             self.connection = self.connector
 
         self.connection.connect()
 
-
-    def disconnect(self):
+    def disconnect(self) -> None:
         self.connection.disconnect()
 
 
-    def exit(self):
-        """
-            Summary:
-                Does any nessessary clean up (like killing threads) before the bot exits
-
-            Args:
-                None
-
-            Returns:
-                None
-        """
+    def exit(self) -> None:
         for plugin in config.plugins:
             self.plugin.unload(plugin)
 
         self.logout()
         self.workers.threads = 0
 
-    def setup_logger(self):
-        """
-            Summary:
-                Creates global settings for all logging
-                Pretty colors are pretty
 
-            Args:
-                None
-
-            Returns:
-                None
-        """
-        from colorlog import ColoredFormatter
+    def setup_logger(self) -> None:
         logging.getLogger("requests").setLevel(logging.WARNING)
         logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
         logging.getLogger('peewee').setLevel(logging.WARNING)
 
         log = logging.getLogger('')
-        log.setLevel(logging.INFO)
+        log.setLevel(self.log_level)
 
         #Create console handler
         console_hdlr = logging.StreamHandler(stdout)
@@ -127,7 +102,7 @@ class Bot():
             }
         )
         console_hdlr.setFormatter(console_formatter)
-        console_hdlr.setLevel(logging.INFO)
+        console_hdlr.setLevel(self.log_level)
         log.addHandler(console_hdlr)
 
         # Create log file handler
@@ -137,14 +112,13 @@ class Bot():
             datefmt="[%m/%d/%Y %H:%M:%S]"
         )
         file_hdlr.setFormatter(file_formatter)
-        file_hdlr.setLevel(logging.INFO)
+        file_hdlr.setLevel(self.log_level)
         log.addHandler(file_hdlr)
 
         self.logger = logging.getLogger(self.name + __name__)
 
 
-
-    def load_module(self, path):
+    def load_module(self, path: str) -> None:
         try:
             fullname = os.path.splitext(os.path.basename(path))[0]
             module = importlib.machinery.SourceFileLoader(fullname, path).load_module()
@@ -152,4 +126,3 @@ class Bot():
             return module
         except ImportError as e:
             self.logger.critical("ImportError: " + str(e))
-            exit(1)

@@ -48,6 +48,5 @@ class Connector():
     def upload(self, channel, file):
         pass
 
-
     def rate_limit_lock():
         pass
