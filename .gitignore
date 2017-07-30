@@ -2,5 +2,6 @@
 *.db
 conf/settings.py
 resources/
+databases/
 logs/
 .*
