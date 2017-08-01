@@ -3,17 +3,16 @@
 
     Description:
         Provides functionality for connecting to Discord chat server
-        This class is a subclass of core/Connector.py and implements the
-            required methods so the rest of the bot can talk to Discord
+        This class is a subclass of core/Connector.py and implements the required methods so the
+        rest of the bot can talk to Discord
 
     Contributors:
         - Patrick Hennessy
         - Aleksandr Tihomirov
 
     License:
-        Arcbot is free software: you can redistribute it and/or modify it
-        under the terms of the GNU General Public License v3; as published
-        by the Free Software Foundation
+        Arcbot is free software: you can redistribute it and/or modify it under the terms of the GNU
+        General Public License v3; as published by the Free Software Foundation
 """
 from platform import system
 from ssl import *
@@ -25,41 +24,44 @@ import logging
 import threading
 import time
 import websocket
+from datetime import timedelta
 
 class Discord():
     def __init__(self, core, token):
         super(Discord, self).__init__()
-        self.core   = core
+        self.core = core
         self.logger = logging.getLogger(__name__)
 
-        # Authentication / Connection Data
-        self.cache = {
-            "heartbeat_interval": 41250,
-            "session_id": "",
-            "self": {},
-            "private_channels": [],
-            "guilds": []
-        }
-
         self.connected = False          # Boolean for handling connection state
-        self.token = token              # Token used to authenticate api requests
-        self.socket = None              # Websocket connection handler to Discord
+        self.token = token              # Token used to authenticate
+        self.socket = None              # Websocket connection
+        self.ping = -1
+        self.sequence = 0
+
         self.api = api(self.token)
-        self.status = f"Hide the Salami ( ͡° ͜ʖ ͡°)"
+        self.socket_url = f"{self.api.get_gateway_bot()['url']}?v=6&encoding=json"
 
         # Internal threads
-        self.keep_alive_thread = None
+        self.heartbeat_thread = None
         self.message_consumer_thread = None
 
     def connect(self):
         # Connect to Discord, post login credentials
         self.logger.info("Attempting connection to Discord servers")
+        self.socket = websocket.create_connection(self.socket_url)
 
-        # Request a WebSocket URL
-        socket_url = self.api.get_gateway_bot()['url']
-        self.socket = websocket.create_connection(socket_url)
+        # OP 10 Hello Payload
+        hello_payload = self._read_socket()
+        self.heartbeat_interval = hello_payload['d']['heartbeat_interval']
 
-        # Immediately pass message to server about your connection
+        # Get ping
+        self.ping_start = time.monotonic()
+        self._write_socket({"op":1,"d": self.sequence})
+        ack = self._read_socket()
+        ping = timedelta(seconds=time.monotonic()-self.ping_start)
+        self.ping = round(ping.microseconds / 1000)
+
+        # Identify self
         self._write_socket({
             "op": 2,
             "v": 6,
@@ -75,13 +77,6 @@ class Discord():
             }
         })
 
-        login_data = self._read_socket()
-        self.cache['heartbeat_interval'] = login_data['d']['heartbeat_interval']
-        self.cache['session_id']         = login_data['d']['session_id']
-        self.cache['self']               = login_data['d']['user']
-        self.cache['private_channels']   = login_data['d']['private_channels']
-        self.cache['guilds']             = login_data['d']['guilds']
-
         # Set websocket to nonblocking so we can exit a thread reading from the socket if we need to
         self.socket.sock.setblocking(0)
         self.connected = True
@@ -89,27 +84,25 @@ class Discord():
         self.logger.info("Succesful login to Discord")
 
         # Create and start threads
-        self.keep_alive_thread = threading.Thread(target=self._keep_alive, name="keep_alive_thread")
-        self.keep_alive_thread.daemon = True
-        self.keep_alive_thread.start()
+        self.heartbeat_thread = threading.Thread(target=self._heartbeat, name="heartbeat_thread")
+        self.heartbeat_thread.daemon = True
+        self.heartbeat_thread.start()
 
         self.message_consumer_thread = threading.Thread(target=self._message_consumer, name="message_consumer_thread")
         self.message_consumer_thread.daemon = True
         self.message_consumer_thread.start()
 
-        self.set_status(self.status)
-
     def disconnect(self):
         self.connected = False
 
         # Join threads if they exist
-        if isinstance(self.keep_alive_thread, threading.Thread):
-            self.keep_alive_thread.join()
+        if isinstance(self.heartbeat_thread, threading.Thread):
+            self.heartbeat_thread.join()
 
         if isinstance(self.message_consumer_thread, threading.Thread):
             self.message_consumer_thread.join()
 
-        self.logger.debug('Joined message_consumer and keep_alive threads')
+        self.logger.debug('Joined message_consumer and heartbeat threads')
 
         # Close websocket if it is established
         if isinstance(self.socket, websocket.WebSocket):
@@ -165,43 +158,57 @@ class Discord():
         })
 
     # Thread Methods
-    def _keep_alive(self):
-        self.logger.debug("Spawning keep_alive thread at interval: " + str(self.cache['heartbeat_interval']))
+    def _heartbeat(self):
+        self.logger.debug(f"Spawning heartbeat thread at interval: {self.heartbeat_interval}")
 
         last_heartbeat = time.time()
-        heartbeat_interval = self.cache['heartbeat_interval'] / 1000
+        heartbeat_interval = self.heartbeat_interval / 1000
 
         while self.connected:
             now = time.time()
 
             if (now - last_heartbeat) >= heartbeat_interval - 1:
-                self._write_socket({"op":1,"d": time.time()})
-                self.logger.debug("Keep Alive")
+                self.ping_start = time.monotonic()
+                self._write_socket({"op":1,"d": self.sequence})
 
+                self.logger.debug("Heartbeat")
                 last_heartbeat = time.time()
+
+                self.set_status(f"Ping: {self.ping}ms")
 
             time.sleep(1)
 
     def _message_consumer(self):
         self.logger.debug("Spawning message_consumer thread")
 
-        def handle_event(event_data):
-            new_event = event.from_message(event_data)
+        def handle_gateway_message(gateway_message):
+            # New Event
+            if gateway_message['op'] == 0:
+                new_event = event.from_message(gateway_message)
+                self.sequence = new_event.sequence
 
-            self.logger.debug(f"{new_event.name}")
+                # Queue all callbacks independently to not block a single thread
+                for callback in new_event.subscriptions:
+                    self.core.workers.queue(callback, new_event)
 
-            # Queue all callbacks to run independently so they don't block on a single thread
-            for callback in new_event.subscriptions:
-                self.core.workers.queue(callback, new_event)
+            # Invalid session
+            elif gateway_message['op'] == 9:
+                self.connected = False
+                self.logger.warning("Connection terminated with Invalid Session ID")
+
+            # Heartbeak ACK
+            elif gateway_message['op'] == 11:
+                ping = timedelta(seconds=time.monotonic()-self.ping_start)
+                self.ping = round(ping.microseconds / 1000)
 
         while self.connected:
             time.sleep(0.05)
 
-            event_data = self._read_socket()
-            if not event_data:
+            gateway_message = self._read_socket()
+            if not gateway_message:
                 continue
 
-            self.core.workers.queue(handle_event, event_data)
+            self.core.workers.queue(handle_gateway_message, gateway_message)
 
     # Socket Methods
     def _write_socket(self, data):
@@ -230,6 +237,8 @@ class Discord():
                 data += self.socket.recv()
 
                 if data:
+                    #d = json.loads(data.rstrip())
+                    #print(f"SEQ: {d['s']} OP: {d['op']} NAME: {d['t']}")
                     return json.loads(data.rstrip())
                 else:
                     return None
@@ -407,7 +416,6 @@ class event():
 
     @classmethod
     def subscribe(cls, event_id, callback):
-        print(f"Registering {callback} to {event_id}")
         event_id = event_id
 
         if event_id not in cls.subscriptions.keys():
@@ -417,8 +425,24 @@ class event():
 
     @classmethod
     def from_message(cls, message):
-        new_event = type('Event', (object,), message['d'])()
+        new_event = cls.to_object(message["d"])
         new_event.name = getattr(events, message["t"])
+        new_event.sequence = message["s"]
         new_event.subscriptions = cls.subscriptions.get(new_event.name, [])
 
         return new_event
+
+    @classmethod
+    def to_object(cls, item):
+        def convert(item):
+            if isinstance(item, dict):
+                return type('Event', (), {k: convert(v) for k, v in item.items()})
+            if isinstance(item, list):
+                def yield_convert(item):
+                    for index, value in enumerate(item):
+                        yield convert(value)
+                return list(yield_convert(item))
+            else:
+                return item
+
+        return convert(item)
