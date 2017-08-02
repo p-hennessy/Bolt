@@ -1,9 +1,8 @@
 """
-    Class Name : PluginManager
+    Class Name : Plugin
 
     Description:
-        Manages loading and unload plugins
-            Will bootstrap plugin commands and events when they're loaded
+        Superclass for which all plugins are derived
 
     Contributors:
         - Patrick Hennessy
@@ -14,29 +13,45 @@
         by the Free Software Foundation
 """
 
+import logging
 import sys
 import os
 import logging
 import inspect
 import importlib
 
-from arcbot.Plugin import Plugin
-from arcbot.Discord import event
+class Plugin(object):
+    def __init__(self, bot, name):
+        self.bot = bot
+        self.name = name
+
+        self.api = self.bot.backend.api
+        self.say = self.bot.backend.say
+        self.whisper = self.bot.backend.whisper
+        self.upload = self.bot.backend.upload
+
+        self.logger = logging.getLogger(f"plugins.{self.name}")
+
+    def activate(self):
+        pass
+
+    def deactivate(self):
+        pass
 
 class PluginManager():
     def __init__(self, core):
         self.core = core
         self.plugins = {}
-        self.logger = logging.getLogger("core.PluginManager")
+        self.logger = logging.getLogger(__name__)
 
-    def list(self) -> dict:
+    def list(self):
         return self.plugins
 
 
-    def status(self, name: str) -> str:
+    def status(self, name):
         return self.plugins[name]["status"]
 
-    def load(self, plugin_module: str):
+    def load(self, plugin_module):
         # Find plugin subclass and initialize it
         plugin = None
 
@@ -59,7 +74,7 @@ class PluginManager():
         # Register plugin commands and events
         for name, callback in inspect.getmembers(plugin, inspect.ismethod):
             if hasattr(callback, "is_command"):
-                self.core.command.register(
+                self.core.commands.register(
                     getattr(callback, "pattern"),
                     callback,
                     trigger=getattr(callback, "trigger"),
@@ -68,13 +83,13 @@ class PluginManager():
                 )
 
             if hasattr(callback, "is_subscriber"):
-                self.core.event.subscribe(getattr(callback, "event"), callback)
+                self.core.events.subscribe(getattr(callback, "event"), callback)
 
         # Push plugin to our hashtable
         self.plugins[plugin.name] = {"instance":plugin, "module": plugin_module, "status": "Enabled"}
         self.logger.info("Loaded plugin \"" + plugin.name + "\"")
 
-    def unload(self, plugin_name: str):
+    def unload(self, plugin_name):
         # Check if we are managing that plugin
         if(plugin_name not in self.plugins):
             self.logger.warning("Unable to unload plugin " + plugin_name + ", plugin not loaded")
@@ -91,19 +106,19 @@ class PluginManager():
         for name, callback in inspect.getmembers(plugin, inspect.ismethod):
             if( hasattr(callback, "is_command") ):
                 commandName = clazz + "." + callback.__name__
-                self.core.command.unregister(commandName)
+                self.core.commands.unregister(commandName)
 
             if( hasattr(callback, "is_subscriber") ):
-                self.core.event.unsubscribe(getattr(callback, "event"), callback)
+                self.core.events.unsubscribe(getattr(callback, "event"), callback)
 
             if( hasattr(callback, "is_publisher") ):
-                self.core.event.unregister(getattr(callback, "event"))
+                self.core.events.unregister(getattr(callback, "event"))
 
         # Remove from our hashtable
         self.plugins[plugin_name] = {"instance":None, "module":None, "status": "Disabled"}
         self.logger.info("Unloaded plugin \"" + plugin_name + "\"")
 
-    def reload(self, name: str):
+    def reload(self, name):
         plugin = self.plugins[name]
 
         if not plugin:
@@ -114,17 +129,3 @@ class PluginManager():
         else:
             self.unload(name)
             self.load(name)
-
-    def discover(self, path: str):
-          for file in os.listdir(path):
-            if not file.startswith('__'):
-                if file.endswith("Manage.py"):
-                    fullname = os.path.splitext(os.path.basename(file))[0]
-
-                    try:
-                        module = importlib.machinery.SourceFileLoader(fullname, os.path.join(path, file)).load_module()
-                    except ImportError as e:
-                        self.logger.error("{}/{}: {}".format(path, file, e))
-                        continue
-
-                    yield module

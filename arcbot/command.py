@@ -13,28 +13,42 @@
         by the Free Software Foundation
 """
 
+from .event import Events
 import threading
 import re
 import logging
-
-from arcbot.Discord import events
-
-from typing import Callable
-
 logger = logging.getLogger(__name__)
 
+def command(pattern, access=0, trigger="", silent=False):
+    def decorate(callback):
+        def wrapper(self, msg):
+            return callback(self, msg)
+
+        if not hasattr(wrapper, 'is_command'):
+            wrapper.__name__ = callback.__name__
+            wrapper.__doc__ = callback.__doc__
+            setattr(wrapper, 'is_command', True)
+            setattr(wrapper, 'pattern', pattern)
+            setattr(wrapper, 'callback', callback)
+            setattr(wrapper, 'trigger', trigger)
+            setattr(wrapper, 'access', access)
+            setattr(wrapper, 'silent', silent)
+
+        return wrapper
+    return decorate
+
 class Command():
-    def __init__(self, pattern: str, callback: Callable, trigger: str="", access: int=0, silent: bool=False):
+    def __init__(self, pattern, callback, trigger="", access=0, silent=False):
         self.pattern  = pattern
         self.access   = access
         self.callback = callback
         self.trigger  = trigger
         self.silent   = silent
 
-    def __str__(self) -> None:
+    def __str__(self):
         return self.callback.__name__
 
-    def invoke(self, event) -> None:
+    def invoke(self, event):
         self.callback(event)
 
 class CommandManager():
@@ -42,13 +56,17 @@ class CommandManager():
         self.commands = {}
         self.core = core
 
-        self.core.event.subscribe(events.MESSAGE_CREATE, self.check)
+        self.core.events.subscribe(Events.MESSAGE_CREATE, self.check)
 
-    def check(self, event: dict):
+    def check(self, event):
         """
             Checks if an incoming message is a command
             Invokes any command that matches the criteria
         """
+        # Ignore our own messages
+        if event.author.id == self.core.backend.id:
+            return
+
         for _, command in self.commands.items():
             if event.content.startswith(command.trigger):
                 content = event.content.replace(command.trigger, "", 1)
@@ -56,10 +74,10 @@ class CommandManager():
 
                 if match:
                     setattr(event, "arguments", match)
-                    self.core.workers.queue(command.invoke, event)
+                    self.core.thread_pool.queue(command.invoke, event)
 
 
-    def register(self, pattern: str, callback: Callable, trigger: str="", access: int=0, silent: bool=False):
+    def register(self, pattern, callback, trigger="", access=0, silent=False):
         """
             Pushes command instance to command list
         """
@@ -75,7 +93,7 @@ class CommandManager():
             if trigger is None:
                 trigger = ""
             elif trigger == "":
-                trigger = self.core.trigger
+                trigger = self.core.config.trigger
 
             self.commands[name] = Command(
                 pattern,
@@ -85,7 +103,7 @@ class CommandManager():
                 silent=silent
             )
 
-    def unregister(self, command_name: str):
+    def unregister(self, command_name):
         """
             Unregisters a command
             Removes command instance from command list

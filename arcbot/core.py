@@ -18,78 +18,59 @@
         by the Free Software Foundation
 """
 
-from arcbot.ACL import ACL
-from arcbot.Command import CommandManager
-from arcbot.PluginManager import PluginManager
-from arcbot.ThreadPool import ThreadPool
-from arcbot.Discord import event
-import arcbot.Discord as discord
+from .discord import Discord
+from .config import Config
+from .plugin import Plugin
+from .plugin import PluginManager
+from .event import EventManager
+from .threadpool import ThreadPool
+from .command import CommandManager
 
 import importlib
 import os
 import time
+import sys
 
-from colorlog import ColoredFormatter
-from sys import stdout
 import logging
 import logging.handlers
 
 class Bot():
-    name = "Arcbot"
-    trigger = "arcbot "
-    avatar = None
-    log_level = logging.DEBUG
-
-    worker_threads = 12
-    worker_queue_size = 100
-
-    connection_retry = 3
-    connection_timeout = 300
-
     def __init__(self, token):
-        self.setup_logger()
+        self.config = Config()
+        self._setup_logger()
 
-        self.connection = discord.Discord(self, token)
-        self.event = event
-        self.workers = ThreadPool(self.worker_queue_size, self.worker_threads)
-        self.plugin = PluginManager(self)
-        self.command = CommandManager(self)
-        self.ACL = ACL()
+        self.thread_pool = ThreadPool(self.config.queue_size, self.config.threads)
 
+        self.events = EventManager()
+        self.plugins = PluginManager(self)
+        self.commands = CommandManager(self)
 
-    def connect(self) -> None:
-        self.connection.connect()
+        self.backend = Discord(self, token)
 
-    def disconnect(self) -> None:
-        self.connection.disconnect()
+    def connect(self):
+        self.backend.connect()
 
-    def exit(self) -> None:
-        self.workers.threads = 0
+    def disconnect(self):
+        self.backend.disconnect()
 
-    def setup_logger(self) -> None:
+    def exit(self):
+        self.thread_pool.threads = 0
+
+    def _setup_logger(self):
         logging.getLogger("requests").setLevel(logging.WARNING)
         logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
-        logging.getLogger('peewee').setLevel(logging.WARNING)
 
         log = logging.getLogger('')
-        log.setLevel(self.log_level)
+        log.setLevel(self.config.log_level)
 
         #Create console handler
-        console_handler = logging.StreamHandler(stdout)
-        console_formatter = ColoredFormatter(
-            "%(asctime)s %(log_color)s%(levelname)-8s%(reset)s %(blue)s%(name)-25.25s%(reset)s %(white)s%(message)s%(reset)s",
-            datefmt="[%m/%d/%Y %H:%M:%S]",
-            reset=True,
-            log_colors={
-                'DEBUG': 'cyan',
-                'INFO': 'green',
-                'WARNING': 'yellow',
-                'ERROR': 'red',
-                'CRITICAL': 'bg_red',
-            }
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_formatter = logging.Formatter(
+            "%(asctime)s %(levelname)-8s %(name)-25.25s %(message)s",
+            datefmt="[%m/%d/%Y %H:%M:%S]"
         )
         console_handler.setFormatter(console_formatter)
-        console_handler.setLevel(self.log_level)
+        console_handler.setLevel(self.config.log_level)
         log.addHandler(console_handler)
 
         # Create log file handler
@@ -100,29 +81,23 @@ class Bot():
             style="{"
         )
         file_handler.setFormatter(file_formatter)
-        file_handler.setLevel(self.log_level)
+        file_handler.setLevel(self.config.log_level)
         log.addHandler(file_handler)
 
         self.logger = logging.getLogger(__name__)
 
-    def load_module(self, path: str) -> None:
-        try:
-            fullname = os.path.splitext(os.path.basename(path))[0]
-            module = importlib.machinery.SourceFileLoader(fullname, path).load_module()
-
-            return module
-        except ImportError as e:
-            self.logger.critical("ImportError: " + str(e))
+    def load(self, module):
+        self.plugins.load(module)
 
     def run_forever(self):
         while True:
             time.sleep(1)
 
-            if not self.connection.connected:
+            if not self.backend.connected:
                 self.logger.warning("Connection is closed, attempting reconnection")
 
                 for retry in range(0, self.connection_retry):
-                    if self.connection.connected:
+                    if self.backend.connected:
                         break
 
                     try:

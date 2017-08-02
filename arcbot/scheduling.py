@@ -15,6 +15,21 @@
 import time
 import threading
 
+
+def subscribe(event):
+    def decorate(callback):
+        def wrapper(self, *args, **kwargs):
+            return callback(self, *args, **kwargs)
+
+        if not hasattr(wrapper, 'is_command'):
+            wrapper.__name__ = callback.__name__
+            setattr(wrapper, 'is_subscriber', True)
+            setattr(wrapper, 'event', event)
+
+        return wrapper
+    return decorate
+
+
 class Scheduler():
     def __init__(self):
         self.tasks = {

@@ -3,8 +3,6 @@
 
     Description:
         Provides functionality for connecting to Discord chat server
-        This class is a subclass of core/Connector.py and implements the required methods so the
-        rest of the bot can talk to Discord
 
     Contributors:
         - Patrick Hennessy
@@ -14,9 +12,13 @@
         Arcbot is free software: you can redistribute it and/or modify it under the terms of the GNU
         General Public License v3; as published by the Free Software Foundation
 """
+from datetime import timedelta
 from platform import system
 from ssl import *
-from enum import Enum, auto
+
+from .event import Event
+from .event import Events
+from .utils import Timer
 
 import requests
 import json
@@ -24,12 +26,10 @@ import logging
 import threading
 import time
 import websocket
-from datetime import timedelta
 
 class Discord():
-    def __init__(self, core, token):
-        super(Discord, self).__init__()
-        self.core = core
+    def __init__(self, bot, token):
+        self.bot = bot
         self.logger = logging.getLogger(__name__)
 
         self.connected = False          # Boolean for handling connection state
@@ -37,6 +37,7 @@ class Discord():
         self.socket = None              # Websocket connection
         self.ping = -1
         self.sequence = 0
+        self.id = None
 
         self.api = api(self.token)
         self.socket_url = f"{self.api.get_gateway_bot()['url']}?v=6&encoding=json"
@@ -44,6 +45,8 @@ class Discord():
         # Internal threads
         self.heartbeat_thread = None
         self.message_consumer_thread = None
+
+        self.bot.events.subscribe(Events.READY, self._on_connect)
 
     def connect(self):
         # Connect to Discord, post login credentials
@@ -55,11 +58,14 @@ class Discord():
         self.heartbeat_interval = hello_payload['d']['heartbeat_interval']
 
         # Get ping
-        self.ping_start = time.monotonic()
-        self._write_socket({"op":1,"d": self.sequence})
-        ack = self._read_socket()
-        ping = timedelta(seconds=time.monotonic()-self.ping_start)
-        self.ping = round(ping.microseconds / 1000)
+        with Timer() as timer:
+            self._write_socket({
+                "op":1,
+                "d": self.sequence
+            })
+            ack = self._read_socket()
+
+        self.ping = timer.delta
 
         # Identify self
         self._write_socket({
@@ -144,16 +150,25 @@ class Discord():
         except Exception as e:
             self.logger.warning('Upload of {} to channel {} failed'.format(file, channel))
 
-    def set_status(self, status):
-        self.status = status
+    @property
+    def status(self):
+        if not self._status:
+            self._status = None
+
+        return self._status
+
+    @status.setter
+    def status(self, status):
+        self._status = status
 
         self._write_socket({
             "op":3,
             "d":{
-                "idle_since":None,
+                "idle_since": None,
                 "game": {
-                    "name": self.status
-                }
+                    "name": status
+                },
+                "afk": False
             }
         })
 
@@ -174,8 +189,6 @@ class Discord():
                 self.logger.debug("Heartbeat")
                 last_heartbeat = time.time()
 
-                self.set_status(f"Ping: {self.ping}ms")
-
             time.sleep(1)
 
     def _message_consumer(self):
@@ -184,12 +197,12 @@ class Discord():
         def handle_gateway_message(gateway_message):
             # New Event
             if gateway_message['op'] == 0:
-                new_event = event.from_message(gateway_message)
-                self.sequence = new_event.sequence
+                event = Event.from_message(gateway_message)
+                self.sequence = event.sequence
 
                 # Queue all callbacks independently to not block a single thread
-                for callback in new_event.subscriptions:
-                    self.core.workers.queue(callback, new_event)
+                for callback in self.bot.events.subscriptions.get(event.name, []):
+                    self.bot.thread_pool.queue(callback, event)
 
             # Invalid session
             elif gateway_message['op'] == 9:
@@ -208,7 +221,7 @@ class Discord():
             if not gateway_message:
                 continue
 
-            self.core.workers.queue(handle_gateway_message, gateway_message)
+            self.bot.thread_pool.queue(handle_gateway_message, gateway_message)
 
     # Socket Methods
     def _write_socket(self, data):
@@ -219,7 +232,7 @@ class Discord():
                 if not self.connected:
                     return
 
-                self.logger.warning("READ: Connection reset by peer.")
+                self.logger.warning("Connection reset by peer.")
                 self.connected = False
             else:
                 raise
@@ -227,7 +240,7 @@ class Discord():
             if not self.connected:
                 return
 
-            self.logger.warning("WRTIE: Websocket unexpectedly closed.")
+            self.logger.warning("Websocket unexpectedly closed.")
             self.connected = False
 
     def _read_socket(self):
@@ -256,7 +269,7 @@ class Discord():
                     if not self.connected:
                         return
 
-                    self.logger.warning("READ: Connection reset by peer.")
+                    self.logger.warning("Connection reset by peer.")
                     self.connected = False
                     return None
 
@@ -268,8 +281,14 @@ class Discord():
                 if not self.connected:
                     return
 
-                self.logger.warning("READ: Websocket unexpectedly closed.")
+                self.logger.warning("Websocket unexpectedly closed.")
                 self.connected = False
+
+    # Event handlers
+    def _on_connect(self, event):
+        self.id = event.user.id
+        self.status = "Hide the Salami"
+        self.login_time = time.time()
 
 class api():
     def __init__(self, token):
@@ -365,84 +384,3 @@ class api():
         response.raise_for_status()
 
         return response.json()
-
-class embed_intent():
-    INFO = int("7289da", 16)
-    WARNING = int("faa61a", 16)
-    ERROR = int("f04747", 16)
-
-class events(Enum):
-    READY = auto()
-    RESUMED = auto()
-    CHANNEL_CREATE = auto()
-    CHANNEL_UPDATE = auto()
-    CHANNEL_DELETE = auto()
-    CHANNEL_PINS_UPATE = auto()
-    GUILD_CREATE = auto()
-    GUILD_UPDATE = auto()
-    GUILD_DELETE = auto()
-    GUILD_BAN_ADD = auto()
-    GUILD_BAN_REMOVE = auto()
-    GUILD_EMOJIS_UPDATE = auto()
-    GUILD_INTEGRATIONS_UPDATE = auto()
-    GUILD_MEMBER_ADD = auto()
-    GUILD_MEMBER_REMOVE = auto()
-    GUILD_MEMBER_UPDATE = auto()
-    GUILD_MEMBERS_CHUNK = auto()
-    GUILD_ROLE_CREATE = auto()
-    GUILD_ROLE_UPDATE = auto()
-    GUILD_ROLE_DELETE = auto()
-    MESSAGE_CREATE = auto()
-    MESSAGE_UPDATE = auto()
-    MESSAGE_DELETE = auto()
-    MESSAGE_DELETE_BULK = auto()
-    MESSAGE_REACTION_ADD = auto()
-    MESSAGE_REACTION_REMOVE = auto()
-    MESSAGE_REACTION_REMOVE_ALL = auto()
-    PRESENCE_UPDATE = auto()
-    TYPING_START = auto()
-    USER_UPDATE = auto()
-    VOICE_STATE_UPDATE = auto()
-    VOICE_SERVER_UPDATE = auto()
-    WEBHOOKS_UPDATE = auto()
-
-class event():
-    subscriptions = {}
-
-    @classmethod
-    def unsubscribe(cls, event_id, callback):
-        if event_id in cls.subscriptions.keys():
-            cls.subscriptions[event_id].remove(callback)
-
-    @classmethod
-    def subscribe(cls, event_id, callback):
-        event_id = event_id
-
-        if event_id not in cls.subscriptions.keys():
-            cls.subscriptions[event_id] = [callback]
-        else:
-            cls.subscriptions[event_id].append(callback)
-
-    @classmethod
-    def from_message(cls, message):
-        new_event = cls.to_object(message["d"])
-        new_event.name = getattr(events, message["t"])
-        new_event.sequence = message["s"]
-        new_event.subscriptions = cls.subscriptions.get(new_event.name, [])
-
-        return new_event
-
-    @classmethod
-    def to_object(cls, item):
-        def convert(item):
-            if isinstance(item, dict):
-                return type('Event', (), {k: convert(v) for k, v in item.items()})
-            if isinstance(item, list):
-                def yield_convert(item):
-                    for index, value in enumerate(item):
-                        yield convert(value)
-                return list(yield_convert(item))
-            else:
-                return item
-
-        return convert(item)
