@@ -1,5 +1,5 @@
 """
-    Class Name : Event
+
 
     Description:
         Class to handle event observers
@@ -12,60 +12,13 @@
         under the terms of the GNU General Public License v3; as published
         by the Free Software Foundation
 """
-from enum import Enum, auto
 
+import gevent
 import logging
-logger = logging.getLogger(__name__)
-
-def subscribe(event):
-    def decorate(callback):
-        def wrapper(self, *args, **kwargs):
-            return callback(self, *args, **kwargs)
-
-        if not hasattr(wrapper, 'is_command'):
-            wrapper.__name__ = callback.__name__
-            setattr(wrapper, 'is_subscriber', True)
-            setattr(wrapper, 'event', event)
-
-        return wrapper
-    return decorate
-
-class Events(Enum):
-    READY = auto()
-    RESUMED = auto()
-    CHANNEL_CREATE = auto()
-    CHANNEL_UPDATE = auto()
-    CHANNEL_DELETE = auto()
-    CHANNEL_PINS_UPATE = auto()
-    GUILD_CREATE = auto()
-    GUILD_UPDATE = auto()
-    GUILD_DELETE = auto()
-    GUILD_BAN_ADD = auto()
-    GUILD_BAN_REMOVE = auto()
-    GUILD_EMOJIS_UPDATE = auto()
-    GUILD_INTEGRATIONS_UPDATE = auto()
-    GUILD_MEMBER_ADD = auto()
-    GUILD_MEMBER_REMOVE = auto()
-    GUILD_MEMBER_UPDATE = auto()
-    GUILD_MEMBERS_CHUNK = auto()
-    GUILD_ROLE_CREATE = auto()
-    GUILD_ROLE_UPDATE = auto()
-    GUILD_ROLE_DELETE = auto()
-    MESSAGE_CREATE = auto()
-    MESSAGE_UPDATE = auto()
-    MESSAGE_DELETE = auto()
-    MESSAGE_DELETE_BULK = auto()
-    MESSAGE_REACTION_ADD = auto()
-    MESSAGE_REACTION_REMOVE = auto()
-    MESSAGE_REACTION_REMOVE_ALL = auto()
-    PRESENCE_UPDATE = auto()
-    TYPING_START = auto()
-    USER_UPDATE = auto()
-    VOICE_STATE_UPDATE = auto()
-    VOICE_SERVER_UPDATE = auto()
-    WEBHOOKS_UPDATE = auto()
+from arcbot.discord.events import Events
 
 class Event():
+    # def __init__(self, type, user, channel, content="", mentions=[], timestamp=time.time()):
     def __init__(self):
         pass
 
@@ -95,13 +48,22 @@ class Event():
 class EventManager():
     def __init__(self):
         self.subscriptions = {}
+        self.logger = logging.getLogger(__name__)
 
     def unsubscribe(self, event_id, callback):
         if event_id in self.subscriptions.keys():
+            self.logger.debug(f'Removing {callback} from {event_id}')
+
             self.subscriptions[event_id].remove(callback)
 
     def subscribe(self, event_id, callback):
+        self.logger.debug(f'Adding {callback} to {event_id}')
+
         if event_id not in self.subscriptions.keys():
             self.subscriptions[event_id] = [callback]
         else:
             self.subscriptions[event_id].append(callback)
+
+    def publish(self, event_id):
+        for callback in self.subscriptions[event_id]:
+            gevent.spawn()

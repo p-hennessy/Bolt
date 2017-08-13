@@ -3,3 +3,8 @@ Arcbot is an extensible chatbot written entirely in Python, inspired by Err and 
 The goal of Arcbot is to provide a simple to extend bot.
 
 Arcbot is open source software and released under the GPL v3 license. See LICENCE.txt for more info.
+
+# Under construction
+This bot is seeing a redesign given the updates done to the Discord API
+
+The goal of this project will to be more robust and meet pairity with the API
