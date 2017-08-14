@@ -4,7 +4,6 @@
 
     Contributors:
         - Patrick Hennessy
-        - Aleksandr Tihomirov
 
     License:
         Arcbot is free software: you can redistribute it and/or modify it under the terms of the GNU
@@ -14,25 +13,27 @@ from arcbot.core.event import Event
 from arcbot.discord.api import API
 from arcbot.discord.events import Events
 
-from platform import system
 from datetime import timedelta
-import time
-import websocket
+from platform import system
 import ujson as json
+import websocket
 import logging
 import gevent
+import time
+import re
 
 class Gateway():
     def __init__(self, bot, token):
         self.bot = bot
         self.token = token
+        self.api = API(self.token)
+        self.logger = logging.getLogger(__name__)
+
         self.websocket = None
         self.ping = -1
         self.sequence = 0
         self.id = None
-
-        self.api = API(self.token)
-        self.logger = logging.getLogger(__name__)
+        self.login_time = 0
 
         # Subscribe to events
         self.bot.events.subscribe(Events.MESSAGE_CREATE, self.handle_gateway_message)
@@ -40,6 +41,7 @@ class Gateway():
     def start(self):
         self.logger.debug('Spawning Gateway Greenlet')
         self.socket_url = f"{self.api.get_gateway_bot()['url']}?v=6&encoding=json"
+
         self.websocket_app = websocket.WebSocketApp(
             self.socket_url,
             on_message=self.handle_websocket_message,
@@ -66,6 +68,7 @@ class Gateway():
         self.websocket = None
 
     def handle_websocket_open(self, socket):
+        self.login_time = time.time()
         self.websocket = socket
 
     def handle_websocket_message(self, socket, message):
@@ -79,7 +82,7 @@ class Gateway():
             event = Event.from_message(message)
 
             for callback in self.bot.events.subscriptions.get(event_id, []):
-                gevent.spawn(callback, event)
+                self.bot.queue.put((callback, [event], {}))
 
         # Reconnect
         elif op_code == 7:
@@ -113,8 +116,6 @@ class Gateway():
             delta = timedelta(seconds=time.monotonic()-self._heartbeat_start)
             self.ping = round(delta.microseconds / 1000)
 
-        gevent.sleep(0)
-
     @property
     def status(self):
         if not self._status:
@@ -125,7 +126,7 @@ class Gateway():
     @status.setter
     def status(self, status):
         self._status = status
-        self._write_socket({
+        self.send({
             "op":3,
             "d":{
                 "idle_since": None,
@@ -139,4 +140,16 @@ class Gateway():
 
     # Event handlers
     def handle_gateway_message(self, event):
-        self.logger.debug('Notify commands and such')
+        for plugin in self.bot.plugins:
+            if not plugin.enabled:
+                continue
+
+            for command in plugin.commands:
+                if event.content.startswith(command.trigger):
+                    content = event.content.replace(command.trigger, "", 1)
+                    match = re.search(command.pattern, content)
+
+                    if match:
+                        setattr(event, "arguments", match)
+                        self.bot.queue.put((command.invoke, [event], {}))
+                        gevent.sleep(0)

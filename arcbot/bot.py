@@ -11,6 +11,7 @@
 """
 import gevent
 from gevent import monkey
+from gevent import queue
 
 # Patch must happen before requests is imported: https://github.com/requests/requests/issues/3752
 gevent.monkey.patch_all()
@@ -18,7 +19,6 @@ gevent.monkey.patch_all()
 from arcbot.config import Config
 from arcbot.discord.api import API
 from arcbot.discord.gateway import Gateway
-from arcbot.core.plugin import PluginManager
 from arcbot.core.event import EventManager
 from arcbot.core.webhook import WebhookManager
 from arcbot.core.scheduler import Scheduler
@@ -32,22 +32,40 @@ class Bot():
         self.config = Config()
         self._setup_logger()
 
+        self.plugins = []
         self.events = EventManager()
-        self.plugins = PluginManager(self)
         self.webhooks = WebhookManager()
         self.scheduler = Scheduler()
+        self.queue = queue.Queue()
 
         self.gateway = Gateway(self, token)
         self.api = API(token)
 
+
     def run(self):
+        self.greenlet_gateway = gevent.spawn(self.gateway.start)
+        self.greenlet_scheduler = gevent.spawn(self.scheduler.start)
+        self.greenlet_webhooks = gevent.spawn(self.webhooks.start)
+        self.greenlet_workers = [gevent.spawn(self.worker) for _ in range(25)]
+
         greenlets = [
-            gevent.spawn(self.gateway.start),
-            gevent.spawn(self.scheduler.start),
-            gevent.spawn(self.webhooks.start)
+            self.greenlet_gateway,
+            self.greenlet_scheduler,
+            self.greenlet_webhooks,
         ]
-        monkey.patch_all()
+        greenlets.extend(self.greenlet_workers)
         gevent.joinall(greenlets)
+
+    def worker(self):
+        while True:
+            callback, args, kwargs = self.queue.get()
+
+            try:
+                callback(*args, **kwargs)
+            except Exception as e:
+                self.logger.warning(f"Exception running task: {callback}: {e}")
+            finally:
+                gevent.sleep(0)
 
     def _setup_logger(self):
         logging.getLogger("requests").setLevel(logging.WARNING)
@@ -78,5 +96,5 @@ class Bot():
 
         self.logger = logging.getLogger(__name__)
 
-    def load(self, module):
-        self.plugins.load(module)
+    def load(self, plugin_module):
+        self.plugins.append(plugin_module(self))

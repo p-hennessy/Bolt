@@ -25,7 +25,6 @@ class Command():
         self.access   = access
         self.callback = callback
         self.trigger  = trigger
-        self.silent   = silent
 
     def __str__(self):
         return self.callback.__name__

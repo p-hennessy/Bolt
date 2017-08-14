@@ -1,17 +1,19 @@
 import gevent
 import time
+import logging
 
 class Scheduler():
     def __init__(self):
         self.items = []
         self.running = False
+        self.logger = logging.getLogger(__name__)
 
     def start(self):
         self.running = True
 
         while self.running:
             if not self.items:
-                gevent.sleep(0)
+                gevent.sleep(1)
         #
         #
         # while True:
