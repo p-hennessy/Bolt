@@ -42,25 +42,33 @@ class Plugin(object):
             tags = getattr(callback, 'tags', [])
 
             for tag in tags:
-                if tag['name'] == "command":
+                name = tag['name']
+                properties = tag['properties']
+
+                if name == "command":
                     command = Command(
-                        tag['properties']['pattern'],
+                        properties['pattern'],
                         callback,
-                        trigger=tag['properties']['trigger'],
-                        access=tag['properties']['access']
+                        trigger=properties['trigger'],
+                        access=properties['access']
                     )
 
                     self.commands.append(command)
 
-                elif tag['name'] == "webhook":
-                    #self.bot.webhook.add_route()
-                    pass
+                elif name == "webhook":
+                    self.bot.webhooks.add_route(
+                        properties['route'],
+                        callback,
+                        properties['methods']
+                    )
 
-                elif tag['name'] == "interval":
-                    #self.bot.scheduler.add()
-                    pass
+                elif name == "interval":
+                    self.bot.scheduler.add(
+                        callback,
+                        properties['seconds']
+                    )
 
-                elif tag['name'] == "subscriber":
+                elif name == "subscriber":
                     pass
 
     def say(self, channel_id, message="", embed={}, mentions=[]):
