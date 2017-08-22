@@ -2,22 +2,15 @@ from gevent.pywsgi import WSGIServer
 import gevent
 import logging
 
-class WebhookManager():
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
-
-    def start(self):
-        gevent.sleep(1)
-
-class Webserver():
+class WebhookServer():
     def __init__(self):
         self.routes = {}
         self.server = WSGIServer(('', 8080), self.app)
         self.logger = logging.getLogger(__name__)
 
     def start(self):
-        gevent.sleep(1)
-        #self.server.serve_forever()
+        self.logger.debug('Spawning WebhookServer greenlet')
+        self.server.serve_forever()
 
     def ping(self, request):
         print('Ping recived')
