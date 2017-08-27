@@ -9,8 +9,6 @@
         Arcbot is free software: you can redistribute it and/or modify it under the terms of the GNU
         General Public License v3; as published by the Free Software Foundation
 """
-from arcbot.discord.permissions import Permissions
-
 import ujson as json
 import gevent
 import requests
@@ -33,15 +31,17 @@ def rate_limit():
             response = callback(self, *args, **kwargs)
 
             # Look for rate limit headers
-            remaining = int(response.headers.get('X-RateLimit-Remaining'))
-            reset = float(response.headers.get('X-RateLimit-Reset'))
+            remaining = int(response.headers.get('X-RateLimit-Remaining', 1))
+            reset = float(response.headers.get('X-RateLimit-Reset', time.time()))
 
             # We will have to wait on next request until reset
             if remaining == 0:
                 callback.reset = reset
 
             response.raise_for_status()
-            return response.json()
+
+            if response.text:
+                return response.json()
 
         return wrapper
     return decorate
@@ -75,14 +75,14 @@ class API():
     def get_channel(self, channel_id):
         return requests.get(
             f"{self.base_url}/channels/{channel_id}",
-            headers=auth_headers
+            headers=self.auth_headers
         )
 
     @rate_limit()
     def modify_channel(self, channel_id, **kwargs):
         return requests.put(
             f"{self.base_url}/channels/{channel_id}",
-            headers=auth_headers,
+            headers=self.auth_headers,
             data=json.dumps(kwargs)
         )
 
@@ -90,21 +90,21 @@ class API():
     def delete_channel(self, channel_id):
         return requests.delete(
             f"{self.base_url}/channels/{channel_id}",
-            headers=auth_headers
+            headers=self.auth_headers
         )
 
     @rate_limit()
     def get_channel_messages(self, channel_id):
         return requests.get(
             f"{self.base_url}/channels/{channel_id}/messages",
-            headers=auth_headers
+            headers=self.auth_headers
         )
 
     @rate_limit()
     def get_channel_message(self, channel_id, message_id):
         return requests.get(
             f"{self.base_url}/channels/{channel_id}/messages/{message_id}",
-            headers=auth_headers
+            headers=self.auth_headers
         )
 
     @rate_limit()
@@ -227,7 +227,6 @@ class API():
             f"{self.base_url}/channels/{channel_id}/recipients/{user_id}",
             headers=self.auth_headers,
         )
-
 
     # User Methods
     @rate_limit()
@@ -406,6 +405,12 @@ class API():
     def delete_guild_ban(self, guild_id, user_id):
         raise NotImplemented
 
+    @rate_limit()
+    def get_guild_roles(self, guild_id):
+        return requests.get(
+            f"{self.base_url}/guilds/{guild_id}/roles",
+            headers=self.auth_headers
+        )
     @rate_limit()
     def create_guild_role(self, guild_id, **kwargs):
         raise NotImplemented
