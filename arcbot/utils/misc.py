@@ -4,7 +4,7 @@ import importlib
 def find_plugins(path):
     for file in os.listdir(path):
         if not file.startswith('__'):
-            if file.endswith("Manage.py"):
+            if file.endswith(".py"):
                 fullname = os.path.splitext(os.path.basename(file))[0]
 
                 try:
@@ -14,9 +14,22 @@ def find_plugins(path):
 
                 yield module
 
-
-
 def Singleton(clazz):
     instance = clazz()
     instance.__call__ = lambda: instance
     return instance
+
+def readable_time(elapsed):
+    readable = ""
+
+    days = int(elapsed / (60 * 60 * 24))
+    hours = int((elapsed / (60 * 60)) % 24)
+    minutes = int((elapsed % (60 * 60)) / 60)
+    seconds = int(elapsed % 60)
+
+    if(days > 0):       readable += str(days) + " days "
+    if(hours > 0):      readable += str(hours) + " hours "
+    if(minutes > 0):    readable += str(minutes) + " minutes "
+    if(seconds > 0):    readable += str(seconds) + " seconds "
+
+    return readable
