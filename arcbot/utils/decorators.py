@@ -2,7 +2,7 @@ import time
 
 def add_method_tag(metadata):
     def decorate(callback):
-        if not hasattr(callback, 'metadata'):
+        if not hasattr(callback, 'tags'):
             callback.tags = []
 
         callback.tags.append(metadata)
