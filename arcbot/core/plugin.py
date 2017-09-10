@@ -1,23 +1,14 @@
 """
-    Class Name : Plugin
-
     Description:
         Superclass for which all plugins are derived
+        Provides some simple abstractions to make writing plugins easy
 
     Contributors:
         - Patrick Hennessy
-
-    License:
-        Arcbot is free software: you can redistribute it and/or modify it
-        under the terms of the GNU General Public License v3; as published
-        by the Free Software Foundation
 """
 from arcbot.utils.decorators import add_method_tag
 from arcbot.core.command import Command
 
-import logging
-import sys
-import os
 import logging
 import inspect
 import importlib
@@ -27,15 +18,24 @@ class Plugin(object):
     def __init__(self, bot):
         self.bot = bot
         self.name = __name__
-        self.logger = logging.getLogger(f"plugins.{self.name}")
+        self.logger = logging.getLogger(f"plugins.{self.__class__.__name__}")
 
+        self.pre_command_hooks = []
         self.commands = []
         self.webhooks = []
         self.intervals = []
         self.subscribers = []
 
+        self.database = bot.database_client[f"plugins-{self.__class__.__name__}"]
+
         self.load()
         self.enabled = True
+
+    def activate(self):
+        pass
+
+    def deactivate(self):
+        pass
 
     def load(self):
         for name, callback in inspect.getmembers(self, inspect.ismethod):
@@ -45,7 +45,10 @@ class Plugin(object):
                 name = tag['name']
                 properties = tag['properties']
 
-                if name == "command":
+                if name == "pre_command":
+                    self.pre_command_hooks.append(callback)
+
+                elif name == "command":
                     command = Command(
                         properties['pattern'],
                         callback,
@@ -63,13 +66,14 @@ class Plugin(object):
                     )
 
                 elif name == "interval":
-                    self.bot.scheduler.add(
+                    self.bot.scheduler.run_interval(
                         callback,
                         properties['seconds']
                     )
 
                 elif name == "subscriber":
-                    pass
+                    self.bot.events.subscribe(properties['event'], callback)
+
 
     def say(self, channel_id, message="", embed={}, mentions=[]):
         self.logger.debug("Sending message to channel " + channel_id)
@@ -106,42 +110,52 @@ class Plugin(object):
             self.logger.warning(f'Upload of {file} to channel {channel} failed: {e}')
 
 
-    # Decorators
-    @staticmethod
-    def command(pattern, access=0, trigger="arcbot "):
-        return add_method_tag({
-            'name': 'command',
-            'properties': {
-                'pattern': pattern,
-                'access': access,
-                'trigger': trigger
-            }
-        })
+def pre_command_hook():
+    return add_method_tag({
+        'name': 'pre_command',
+        'properties': {}
+    })
 
-    @staticmethod
-    def subscribe(event):
-        return add_method_tag({
-            'name': 'subscriber',
-            'properties': {
-                'event': event,
-            }
-        })
+def help(text, usage="Not Documented"):
+    return add_method_tag({
+        'name': 'help',
+        'properties': {
+            'text': text,
+            'usage': usage
+        }
+    })
 
-    @staticmethod
-    def interval(seconds):
-        return add_method_tag({
-            'name': 'interval',
-            'properties': {
-                'seconds': seconds
-            }
-        })
+def command(pattern, access=0, trigger="arcbot "):
+    return add_method_tag({
+        'name': 'command',
+        'properties': {
+            'pattern': pattern,
+            'access': access,
+            'trigger': trigger
+        }
+    })
 
-    @staticmethod
-    def webhook(route, methods=["GET","POST"]):
-        return add_method_tag({
-            'name': 'webhook',
-            'properties': {
-                'route': route,
-                'methods': methods
-            }
-        })
+def subscriber(event):
+    return add_method_tag({
+        'name': 'subscriber',
+        'properties': {
+            'event': event,
+        }
+    })
+
+def interval(seconds):
+    return add_method_tag({
+        'name': 'interval',
+        'properties': {
+            'seconds': seconds
+        }
+    })
+
+def webhook(route, methods=["GET","POST"]):
+    return add_method_tag({
+        'name': 'webhook',
+        'properties': {
+            'route': route,
+            'methods': methods
+        }
+    })

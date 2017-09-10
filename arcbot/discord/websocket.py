@@ -22,25 +22,30 @@ import gevent
 import time
 import re
 
-class Gateway():
+class Websocket():
     def __init__(self, bot, token):
         self.bot = bot
         self.token = token
-        self.api = API(self.token)
         self.logger = logging.getLogger(__name__)
 
+        # Initalize Things
         self.websocket = None
         self.ping = -1
         self.sequence = 0
-        self.id = None
-        self.login_time = 0
+        self.user_id = None
+        self.session_id = None
+        self.session_time = 0
+        self.login_time = 1503273600
+        self.heartbeat_greenlet = None
 
         # Subscribe to events
         self.bot.events.subscribe(Events.MESSAGE_CREATE, self.handle_gateway_message)
+        self.bot.events.subscribe(Events.READY, self.handle_gateway_ready)
+
 
     def start(self):
         self.logger.debug('Spawning Gateway Greenlet')
-        self.socket_url = f"{self.api.get_gateway_bot()['url']}?v=6&encoding=json"
+        self.socket_url = f"{self.bot.api.get_gateway_bot()['url']}?v=6&encoding=json"
 
         self.websocket_app = websocket.WebSocketApp(
             self.socket_url,
@@ -56,19 +61,28 @@ class Gateway():
 
     def heartbeat(self, interval):
         while True:
-            self.logger.debug(f'Heartbeat. Ping: {self.ping}')
             self._heartbeat_start = time.monotonic()
+            self.logger.debug(f'Heartbeat. Ping: {self.ping} @ {self._heartbeat_start}')
             self.send({"op":1,"d": self.sequence})
             gevent.sleep(interval / 1000)
 
     def handle_websocket_error(self, socket, error):
+        self.logger.warning(f"Socket error {error}")
         print(error)
 
     def handle_websocket_close(self, socket):
+        self.logger.warning("Socket closed unexpectedly")
+
+        self.websocket.close()
         self.websocket = None
 
+        if self.heartbeat_greenlet:
+            self.heartbeat_greenlet.kill()
+
+        self.start()
+
     def handle_websocket_open(self, socket):
-        self.login_time = time.time()
+        self.session_time = time.time()
         self.websocket = socket
 
     def handle_websocket_message(self, socket, message):
@@ -86,10 +100,12 @@ class Gateway():
 
         # Reconnect
         elif op_code == 7:
+            self.logger.warning("got reconnect sig")
             self.websocket.close()
 
         # Invalid Session
         elif op_code == 9:
+            self.logger.warning("invalid session")
             self.websocket.close()
 
         # Hello
@@ -109,12 +125,16 @@ class Gateway():
                 }
             })
 
-            gevent.spawn(self.heartbeat, message['d']['heartbeat_interval'])
+            self.heartbeat_greenlet = gevent.spawn(self.heartbeat, message['d']['heartbeat_interval'])
 
         # Heartbeak ACK
         elif op_code == 11:
             delta = timedelta(seconds=time.monotonic()-self._heartbeat_start)
             self.ping = round(delta.microseconds / 1000)
+
+        else:
+            self.logger.error(f"Recived unexpect OP code: {op_code}")
+
 
     @property
     def status(self):
@@ -125,31 +145,60 @@ class Gateway():
 
     @status.setter
     def status(self, status):
+        if not self.websocket:
+            return
+
         self._status = status
         self.send({
-            "op":3,
-            "d":{
-                "idle_since": None,
+            "op": 3,
+            "d": {
+                "since": None,
                 "game": {
-                    "name": status
+                    "name": str(status),
+                    "type": 0
                 },
+                "status": "online",
                 "afk": False
             }
         })
-        gevent.sleep(0)
+        self.logger.debug(f"Setting status: {status}")
 
     # Event handlers
     def handle_gateway_message(self, event):
+        for command in self.iter_commands():
+            if event.content.startswith(command.trigger):
+                content = event.content.replace(command.trigger, "", 1)
+                match = re.search(command.pattern, content)
+
+                if not match:
+                    continue
+
+                event.arguments = match
+
+                for hook in self.iter_pre_command_hooks():
+                    output = hook(command, event)
+                    if output == False:
+                        return
+
+                self.bot.queue.put((command.invoke, [event], {}))
+                gevent.sleep(0)
+
+    def handle_gateway_ready(self, event):
+        self.user_id = event.user.id
+        self.session_id = event.session_id
+
+    def iter_commands(self):
         for plugin in self.bot.plugins:
             if not plugin.enabled:
                 continue
 
             for command in plugin.commands:
-                if event.content.startswith(command.trigger):
-                    content = event.content.replace(command.trigger, "", 1)
-                    match = re.search(command.pattern, content)
+                yield command
 
-                    if match:
-                        setattr(event, "arguments", match)
-                        self.bot.queue.put((command.invoke, [event], {}))
-                        gevent.sleep(0)
+    def iter_pre_command_hooks(self):
+        for plugin in self.bot.plugins:
+            if not plugin.enabled:
+                continue
+
+            for hook in plugin.pre_command_hooks:
+                yield hook
