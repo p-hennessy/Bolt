@@ -26,7 +26,7 @@ class Access(Plugin):
                 self.say(event.channel_id, ":warning: You don't have enough access for that command.")
             return False
 
-    @command("^set access ([0-9]+) ([0-9]+)$", access=999)
+    @command("^set access ([0-9]+) ([0-9]+)$", access=1000)
     def set_access(self, event):
         user_id = event.arguments[1]
         access = int(event.arguments[2])

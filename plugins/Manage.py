@@ -10,6 +10,8 @@ from arcbot import command, interval, subscriber
 from arcbot.utils import Colors, Timer, readable_time
 from arcbot.discord import Events
 
+import random
+
 class Manage(Plugin):
     def activate(self):
         self.nickname = "Λгсвοт"
