@@ -63,7 +63,3 @@ class EventManager():
             self.subscriptions[event_id] = [callback]
         else:
             self.subscriptions[event_id].append(callback)
-
-    def publish(self, event_id):
-        for callback in self.subscriptions[event_id]:
-            gevent.spawn()

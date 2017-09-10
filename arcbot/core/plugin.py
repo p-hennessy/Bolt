@@ -83,8 +83,7 @@ class Plugin(object):
 
         message_data = {
             "content": "{}".format(message),
-            "embed": embed,
-            "mentions": mentions
+            "embed": embed
         }
 
         try:
@@ -126,6 +125,9 @@ def help(text, usage="Not Documented"):
     })
 
 def command(pattern, access=0, trigger="arcbot "):
+    if trigger is None:
+        trigger = ""
+
     return add_method_tag({
         'name': 'command',
         'properties': {

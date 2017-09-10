@@ -25,10 +25,22 @@ class Scheduler():
 
             gevent.sleep(1)
 
-    def add(self, callback, timeout):
+    def run_interval(self, callback, timeout):
         new_task = {
             'timeout': timeout,
             'last': 0,
+            'callback': callback
+        }
+        self.tasks.append(new_task)
+
+    def run_cron(self):
+        raise NotImplemented
+
+    def run_later(self, timestamp):
+        raise NotImplemented
+        
+        new_task = {
+            'timestamp': timestamp,
             'callback': callback
         }
         self.tasks.append(new_task)

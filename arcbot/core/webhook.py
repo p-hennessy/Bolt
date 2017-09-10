@@ -9,8 +9,8 @@ class WebhookServer():
         self.app = falcon.API()
         self.app.add_sink(self.handle, '/')
 
-        self.server = WSGIServer(('', 8080), self.app)
         self.logger = logging.getLogger(__name__)
+        self.server = WSGIServer(('', 8080), self.app, log=self.logger)
 
     def start(self):
         self.logger.debug('Spawning WebhookServer greenlet')
@@ -42,7 +42,7 @@ class WebhookServer():
             return response
 
         except Exception as e:
-            print(e)
+            self.logger.warning(f"Recieved exception processing web request: {e}")
             response.status = falcon.HTTP_500
 
     def add_route(self, route, callback, methods=['GET']):
@@ -56,12 +56,3 @@ class WebhookServer():
             route = "/" + str(route)
 
         del self.routes[route]
-
-
-#@webhook('/', methods=['GET'])
-def example(request):
-    data = json.loads(request.stream.read())
-    channel_id = '249770653534650378'
-    message = "New commit: {}"
-
-    import pdb; pdb.set_trace()

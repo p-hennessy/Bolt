@@ -94,10 +94,11 @@ class API():
         )
 
     @rate_limit()
-    def get_channel_messages(self, channel_id):
+    def get_channel_messages(self, channel_id, **kwargs):
         return requests.get(
             f"{self.base_url}/channels/{channel_id}/messages",
-            headers=self.auth_headers
+            headers=self.auth_headers,
+            params=kwargs
         )
 
     @rate_limit()

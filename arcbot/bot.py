@@ -1,55 +1,60 @@
 """
     Description:
+        Main entry point for the bot to function
+        Composes multiple things to allow for an interface to plugins
 
     Contributors:
         - Patrick Hennessy
-
-    License:
-        Arcbot is free software: you can redistribute it and/or modify it
-        under the terms of the GNU General Public License v3; as published
-        by the Free Software Foundation
 """
 import gevent
 from gevent import monkey
 from gevent import queue
 
-# Patch must happen before requests is imported: https://github.com/requests/requests/issues/3752
+# Patch must happen before requests is imported:
+# https://github.com/requests/requests/issues/3752
 gevent.monkey.patch_all()
 
 from arcbot.config import Config
 from arcbot.discord.api import API
-from arcbot.discord.gateway import Gateway
+from arcbot.discord.websocket import Websocket
 from arcbot.core.event import EventManager
-from arcbot.core.webhook import WebhookManager
+from arcbot.core.webhook import WebhookServer
 from arcbot.core.scheduler import Scheduler
+from arcbot.core.plugin import Plugin
+
+from pymongo import MongoClient
 
 import sys
 import logging
 import logging.handlers
+import inspect
 
 class Bot():
     def __init__(self, token):
-        self.config = Config()
         self._setup_logger()
 
+        # Core
         self.plugins = []
         self.events = EventManager()
-        self.webhooks = WebhookManager()
-        self.scheduler = Scheduler()
+        self.webhooks = WebhookServer()
+        self.scheduler = Scheduler(self)
         self.queue = queue.Queue()
 
-        self.gateway = Gateway(self, token)
+        # Backend
+        self.websocket = Websocket(self, token)
         self.api = API(token)
 
+        # Database
+        self.database_client = MongoClient()
 
     def run(self):
-        self.greenlet_gateway = gevent.spawn(self.gateway.start)
+        self.greenlet_websocket = gevent.spawn(self.websocket.start)
         self.greenlet_scheduler = gevent.spawn(self.scheduler.start)
         self.greenlet_webhooks = gevent.spawn(self.webhooks.start)
         self.greenlet_workers = [gevent.spawn(self.worker) for _ in range(25)]
 
         greenlets = [
-            self.greenlet_gateway,
+            self.greenlet_websocket,
             self.greenlet_scheduler,
             self.greenlet_webhooks,
         ]
@@ -74,10 +79,10 @@ class Bot():
         log = logging.getLogger('')
         log.setLevel(logging.DEBUG)
 
-        #Create console handler
+        # Create console handler
         console_handler = logging.StreamHandler(sys.stdout)
         console_formatter = logging.Formatter(
-            "%(created)s %(levelname)s %(name)s.%(funcName)s:%(lineno)s '%(message)s'"
+            "%(levelname)s %(name)s.%(funcName)s:%(lineno)s '%(message)s'"
         )
         console_handler.setFormatter(console_formatter)
         console_handler.setLevel(logging.DEBUG)
@@ -91,10 +96,16 @@ class Bot():
             style="{"
         )
         file_handler.setFormatter(file_formatter)
-        file_handler.setLevel(self.config.log_level)
+        file_handler.setLevel(logging.INFO)
         log.addHandler(file_handler)
 
         self.logger = logging.getLogger(__name__)
 
     def load(self, plugin_module):
-        self.plugins.append(plugin_module(self))
+        for name, clazz in inspect.getmembers(plugin_module, inspect.isclass):
+            if issubclass(clazz, Plugin) and name != "Plugin":
+                new_plugin = clazz(self)
+                new_plugin.activate()
+
+                self.plugins.append(new_plugin)
+                break
