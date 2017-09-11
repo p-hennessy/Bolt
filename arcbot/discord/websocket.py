@@ -4,10 +4,6 @@
 
     Contributors:
         - Patrick Hennessy
-
-    License:
-        Arcbot is free software: you can redistribute it and/or modify it under the terms of the GNU
-        General Public License v3; as published by the Free Software Foundation
 """
 from arcbot.core.event import Event
 from arcbot.discord.api import API
@@ -35,7 +31,7 @@ class Websocket():
         self.user_id = None
         self.session_id = None
         self.session_time = 0
-        self.login_time = 1503273600
+        self.login_time = 0
         self.heartbeat_greenlet = None
 
         # Subscribe to events
@@ -46,6 +42,7 @@ class Websocket():
     def start(self):
         self.logger.debug('Spawning Gateway Greenlet')
         self.socket_url = f"{self.bot.api.get_gateway_bot()['url']}?v=6&encoding=json"
+        self.login_time = time.time()
 
         self.websocket_app = websocket.WebSocketApp(
             self.socket_url,
@@ -68,7 +65,6 @@ class Websocket():
 
     def handle_websocket_error(self, socket, error):
         self.logger.warning(f"Socket error {error}")
-        print(error)
 
     def handle_websocket_close(self, socket):
         self.logger.warning("Socket closed unexpectedly")
@@ -186,6 +182,7 @@ class Websocket():
     def handle_gateway_ready(self, event):
         self.user_id = event.user.id
         self.session_id = event.session_id
+        self.guild_count = len(event.guilds)
 
     def iter_commands(self):
         for plugin in self.bot.plugins:
