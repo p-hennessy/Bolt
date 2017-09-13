@@ -47,6 +47,9 @@ class Advertise(Plugin):
 
     @interval(60*60)
     def advertise(self):
+        if not self.bot.websocket.user_id:
+            return
+
         for channel in self.ad_channels.find():
             channel_id = channel['channel_id']
             category = random.choice(channel['categories'])
@@ -57,9 +60,10 @@ class Advertise(Plugin):
             ]
             ad = list(self.ads.aggregate(pipeline))[0]["text"]
 
-            last_message = self.bot.api.get_channel_messages(channel_id, limit=1)
-
-            if last_message[0]['author']['id'] != "168419936966934528":
+            for message in self.bot.api.get_channel_messages(channel_id, limit=3):
+                if message['author']['id'] == self.bot.websocket.user_id:
+                    break
+            else:
                 category = category.replace("_", " ")
                 category = category.title()
 
