@@ -20,7 +20,7 @@ class Github(Plugin):
 
     @webhook('/github', methods=['POST'])
     def webhook(self, request):
-        self.admin_channel_id = "249770653534650378"
+        self.admin_channel_id = "136539488280248320"
 
         with Timer() as timer:
             data = json.loads(request.stream.read())
