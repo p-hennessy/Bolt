@@ -6,7 +6,7 @@ class Events(Enum):
     CHANNEL_CREATE = auto()
     CHANNEL_UPDATE = auto()
     CHANNEL_DELETE = auto()
-    CHANNEL_PINS_UPATE = auto()
+    CHANNEL_PINS_UPDATE = auto()
     GUILD_CREATE = auto()
     GUILD_UPDATE = auto()
     GUILD_DELETE = auto()
