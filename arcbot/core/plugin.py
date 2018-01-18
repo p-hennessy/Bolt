@@ -58,6 +58,26 @@ class Plugin(object):
 
                     self.commands.append(command)
 
+                elif name == "regex_command":
+                    command = RegexCommand(
+                        properties['pattern'],
+                        callback,
+                        trigger=properties['trigger'],
+                        access=properties['access']
+                    )
+
+                    self.commands.append(command)
+
+                elif name == "parse_command":
+                    command = ParseCommand(
+                        properties['pattern'],
+                        callback,
+                        trigger=properties['trigger'],
+                        access=properties['access']
+                    )
+
+                    self.commands.append(command)
+
                 elif name == "webhook":
                     self.bot.webhooks.add_route(
                         properties['route'],
@@ -76,7 +96,7 @@ class Plugin(object):
 
 
     def say(self, channel_id, message="", embed={}, mentions=[]):
-        self.logger.debug("Sending message to channel " + channel_id)
+        self.logger.debug("Sending message to channel " + str(channel_id))
 
         for user in mentions:
             message = f"<@{user}> {message}"
@@ -87,7 +107,7 @@ class Plugin(object):
         }
 
         try:
-            self.bot.api.create_message(channel_id, json.dumps(message_data))
+            self.bot.api.create_message(str(channel_id), json.dumps(message_data))
         except Exception as e:
             self.logger.warning(f'Send message to channel "{channel_id}" failed: {e}')
 
@@ -95,7 +115,7 @@ class Plugin(object):
         channel = self.bot.api.create_dm(user_id)
         channel_id = channel['id']
 
-        self.say(channel_id, message=message, embed=embed, mentions=mentions)
+        self.say(str(channel_id), message=message, embed=embed, mentions=mentions)
 
     def upload(self, channel_id, file):
         self.logger.debug('Uploading file to channel ' + channel)
@@ -130,6 +150,32 @@ def command(pattern, access=0, trigger="arcbot "):
 
     return add_method_tag({
         'name': 'command',
+        'properties': {
+            'pattern': pattern,
+            'access': access,
+            'trigger': trigger
+        }
+    })
+
+def regex_command(pattern, access=0, trigger="arcbot "):
+    if trigger is None:
+        trigger = ""
+
+    return add_method_tag({
+        'name': 'regex_command',
+        'properties': {
+            'pattern': pattern,
+            'access': access,
+            'trigger': trigger
+        }
+    })
+
+def parse_command(pattern, access=0, trigger="arcbot "):
+    if trigger is None:
+        trigger = ""
+
+    return add_method_tag({
+        'name': 'parse_command',
         'properties': {
             'pattern': pattern,
             'access': access,
