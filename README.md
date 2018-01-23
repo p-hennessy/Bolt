@@ -3,6 +3,7 @@
 # About Arcbot
 [![Python](https://img.shields.io/badge/Python-3.6-7289da.svg)](https://www.python.org/downloads/release/python-360/)
 [![License](https://img.shields.io/badge/License-GPL-7289da.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+[![Build Status](https://travis-ci.org/ns-phennessy/Arcbot.svg?branch=master)](https://travis-ci.org/ns-phennessy/Arcbot)
 
 Arcbot is an extensible chatbot written entirely in Python, inspired by Err and Hubot projects.
 The goal of Arcbot is to provide a simple to extend bot framework for Discord chat service.
