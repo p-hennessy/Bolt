@@ -8,6 +8,7 @@
 from arcbot.core.event import Event
 from arcbot.discord.api import API
 from arcbot.discord.events import Events
+from arcbot.discord.handlers import Handlers
 
 from datetime import timedelta
 from platform import system
@@ -33,11 +34,7 @@ class Websocket():
         self.session_time = 0
         self.login_time = 0
         self.heartbeat_greenlet = None
-
-        # Subscribe to events
-        self.bot.events.subscribe(Events.MESSAGE_CREATE, self.handle_gateway_message)
-        self.bot.events.subscribe(Events.READY, self.handle_gateway_ready)
-
+        self.handlers = Handlers(bot)
 
     def start(self):
         self.logger.debug('Spawning Gateway Greenlet')
@@ -89,10 +86,9 @@ class Websocket():
         if op_code == 0:
             self.sequence = message['s']
             event_id = getattr(Events, message['t'])
-            event = Event.from_message(message)
 
             for callback in self.bot.events.subscriptions.get(event_id, []):
-                self.bot.queue.put((callback, [event], {}))
+                self.bot.queue.put((callback, [message["d"]], {}))
 
         # Reconnect
         elif op_code == 7:
@@ -158,44 +154,3 @@ class Websocket():
             }
         })
         self.logger.debug(f"Setting status: {status}")
-
-    # Event handlers
-    def handle_gateway_message(self, event):
-        for command in self.iter_commands():
-            if event.content.startswith(command.trigger):
-                content = event.content.replace(command.trigger, "", 1)
-                match = re.search(command.pattern, content)
-
-                if not match:
-                    continue
-
-                event.arguments = match
-
-                for hook in self.iter_pre_command_hooks():
-                    output = hook(command, event)
-                    if output == False:
-                        return
-
-                self.bot.queue.put((command.invoke, [event], {}))
-                gevent.sleep(0)
-
-    def handle_gateway_ready(self, event):
-        self.user_id = event.user.id
-        self.session_id = event.session_id
-        self.guild_count = len(event.guilds)
-
-    def iter_commands(self):
-        for plugin in self.bot.plugins:
-            if not plugin.enabled:
-                continue
-
-            for command in plugin.commands:
-                yield command
-
-    def iter_pre_command_hooks(self):
-        for plugin in self.bot.plugins:
-            if not plugin.enabled:
-                continue
-
-            for hook in plugin.pre_command_hooks:
-                yield hook
