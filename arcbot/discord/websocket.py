@@ -5,7 +5,6 @@
     Contributors:
         - Patrick Hennessy
 """
-from arcbot.core.event import Event
 from arcbot.discord.api import API
 from arcbot.discord.events import Events
 from arcbot.discord.handlers import Handlers
