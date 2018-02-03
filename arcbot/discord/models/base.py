@@ -125,3 +125,43 @@ class DiscordEnum(Enum):
     def __repr__(self):
         classname = f"{type(self).__name__}"
         return f"{classname}.{self.name}({self.value})"
+
+class SearchableList(Generic[TypeVar("SearchableList")], list):
+    """
+        Subclass of List that allows for Mongo-esque querying of contents
+        Example:
+            users.find_one({"id": "1234"})
+            users.find({"bot": False})
+    """
+    def __repr__(self):
+        return "<class 'SearchableList'>"
+
+    def find(self, query={}):
+        for instance in self.__iter__():
+            match = False
+            for key, value in query.items():
+                attr = getattr(instance, key, None)
+                attr_type = type(attr)
+
+                if issubclass(attr_type, (int, bool, str, float)):
+                    match = (attr == attr_type(value))
+
+            if match:
+                yield instance
+
+    def find_one(self, query={}):
+        for instance in self.__iter__():
+            if query == {}:
+                return instance
+
+            match = False
+
+            for key, value in query.items():
+                attr = getattr(instance, key, None)
+                attr_type = type(attr)
+
+                if issubclass(attr_type, (int, bool, str, float)):
+                    match = (attr == attr_type(value))
+
+            if match:
+                return instance
