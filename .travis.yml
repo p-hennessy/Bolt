@@ -6,7 +6,8 @@ python:
   - '3.6'
 
 install:
-  - pip install -U pip setuptools
+  - pip install setuptools
+  - pip install flake8
 
 script:
   - python setup.py test
