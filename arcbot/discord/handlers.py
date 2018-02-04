@@ -6,11 +6,11 @@
     Contributors:
         - Patrick Hennessy
 """
-import re
 import gevent
 
-from arcbot.discord.models import *
+from arcbot.discord.models import Guild, Message
 from arcbot.discord.events import Events
+
 
 class Handlers():
     def __init__(self, bot):
@@ -85,9 +85,6 @@ class Handlers():
 
                 self.bot.queue.put((command.invoke, [message], {}))
                 gevent.sleep(0)
-
-    def handle_channel_create(self, event):
-        raise NotImplemented
 
     def handle_channel_create(self, event):
         raise NotImplemented

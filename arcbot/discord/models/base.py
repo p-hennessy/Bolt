@@ -6,12 +6,14 @@
         - Patrick Hennessy
 """
 
-from typing import List, Generic, TypeVar
+from typing import Generic, TypeVar
 from enum import Enum
 from datetime import datetime
 
+
 class Snowflake(int):
     pass
+
 
 class DiscordObject(object):
     """
@@ -118,6 +120,7 @@ class DiscordObject(object):
 
         return "{}({})".format(classname, ", ".join(items))
 
+
 class DiscordEnum(Enum):
     """
         Enum subclass that sets a default repr
@@ -125,6 +128,7 @@ class DiscordEnum(Enum):
     def __repr__(self):
         classname = f"{type(self).__name__}"
         return f"{classname}.{self.name}({self.value})"
+
 
 class SearchableList(Generic[TypeVar("SearchableList")], list):
     """

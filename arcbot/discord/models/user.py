@@ -1,4 +1,5 @@
-from arcbot.discord.models.base import *
+from arcbot.discord.models.base import DiscordObject, Snowflake
+
 
 class User(DiscordObject):
     id: Snowflake

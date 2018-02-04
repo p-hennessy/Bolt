@@ -5,7 +5,6 @@
     Contributors:
         - Patrick Hennessy
 """
-from arcbot.discord.api import API
 from arcbot.discord.events import Events
 from arcbot.discord.handlers import Handlers
 
@@ -16,7 +15,7 @@ import websocket
 import logging
 import gevent
 import time
-import re
+
 
 class Websocket():
     def __init__(self, bot, token):
@@ -56,7 +55,7 @@ class Websocket():
         while True:
             self._heartbeat_start = time.monotonic()
             self.logger.debug(f'Heartbeat. Ping: {self.ping} @ {self._heartbeat_start}')
-            self.send({"op":1,"d": self.sequence})
+            self.send({"op": 1, "d": self.sequence})
             gevent.sleep(interval / 1000)
 
     def handle_websocket_error(self, socket, error):
@@ -125,7 +124,6 @@ class Websocket():
 
         else:
             self.logger.error(f"Recived unexpect OP code: {op_code}")
-
 
     @property
     def status(self):

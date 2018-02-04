@@ -1,5 +1,8 @@
-from arcbot.discord.models.base import *
+from arcbot.discord.models.base import DiscordObject
 from arcbot.discord.models.user import User
+
+from typing import List
+
 
 class Emoji(DiscordObject):
     id: int

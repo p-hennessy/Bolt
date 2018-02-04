@@ -1,14 +1,18 @@
 from datetime import datetime
 
-from arcbot.discord.models.base import *
+from arcbot.discord.models.base import DiscordEnum, DiscordObject, SearchableList, Snowflake
 from arcbot.discord.models.channel import Channel
 from arcbot.discord.models.user import User
 from arcbot.discord.models.emoji import Emoji
 from arcbot.discord.permission import Permission
 
+from typing import List
+
+
 class MessageNotificationLevel(DiscordEnum):
     ALL_MESSAGES = 0
     ONLY_MENTIONS = 1
+
 
 class VerificationLevel(DiscordEnum):
     NONE = 0
@@ -17,14 +21,17 @@ class VerificationLevel(DiscordEnum):
     HIGH = 3
     VERY_HIGH = 4
 
+
 class ExplicitContentFilterLevel(DiscordEnum):
     DISABLED = 0
     MEMBERS_WITHOUT_ROLES = 1
     ALL_MEMBERS = 2
 
+
 class MFALevel(DiscordEnum):
     NONE = 0
     ELEVATED = 1
+
 
 class GuildMember(DiscordObject):
     user: User
@@ -57,6 +64,7 @@ class GuildMember(DiscordObject):
     def id(self):
         return self.user.id
 
+
 class Role(DiscordObject):
     id: Snowflake
     name: str
@@ -66,6 +74,7 @@ class Role(DiscordObject):
     permissions: Permission
     managed: bool
     mentionable: bool
+
 
 class VoiceState(DiscordObject):
     guild_id: Snowflake
@@ -78,10 +87,12 @@ class VoiceState(DiscordObject):
     self_mute: bool
     suppress: bool
 
+
 class ActivityType(DiscordEnum):
     GAME = 0
     STREAMING = 1
     LISTENING = 2
+
 
 class Activity(DiscordObject):
     name: str
@@ -94,6 +105,7 @@ class Activity(DiscordObject):
     # party:
     # assets:
 
+
 class Presence(DiscordObject):
     user: User
     game: Activity
@@ -103,6 +115,7 @@ class Presence(DiscordObject):
     def __repr__(self):
         classname = f"{type(self).__name__}"
         return f"{classname}({repr(self.user)})"
+
 
 class Guild(DiscordObject):
     id: int

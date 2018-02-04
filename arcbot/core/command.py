@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 
 class Command():
     def __init__(self, pattern, callback, trigger="", access=0):
-        self.pattern  = pattern
-        self.access   = access
+        self.pattern = pattern
+        self.access = access
         self.callback = callback
-        self.trigger  = trigger
+        self.trigger = trigger
 
     def __str__(self):
         return self.callback.__name__

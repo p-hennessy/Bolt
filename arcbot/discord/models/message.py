@@ -1,25 +1,29 @@
-from datetime import datetime
-
-from arcbot.discord.models.base import *
+from arcbot.discord.models.base import DiscordEnum, DiscordObject, Snowflake
 from arcbot.discord.models.emoji import Emoji
 from arcbot.discord.models.user import User
 from arcbot.discord.models.guild import Role
 from arcbot.discord.models.embed import Embed
 
+from datetime import datetime
+from typing import List
+
+
 class MessageType(DiscordEnum):
-    DEFAULT	= 0
+    DEFAULT = 0
     RECIPIENT_ADD = 1
     RECIPIENT_REMOVE = 2
     CALL = 3
-    CHANNEL_NAME_CHANGE	= 4
-    CHANNEL_ICON_CHANGE	= 5
+    CHANNEL_NAME_CHANGE = 4
+    CHANNEL_ICON_CHANGE = 5
     CHANNEL_PINNED_MESSAGE = 6
     GUILD_MEMBER_JOIN = 7
+
 
 class Reaction(DiscordObject):
     count: int
     me: bool
     emoji: Emoji
+
 
 class Attachment(DiscordObject):
     id: Snowflake
@@ -29,6 +33,7 @@ class Attachment(DiscordObject):
     proxy_url: str
     height: int
     width: int
+
 
 class Message(DiscordObject):
     id:	Snowflake

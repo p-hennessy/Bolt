@@ -1,6 +1,10 @@
-from arcbot.discord.models.base import *
+from arcbot.discord.models.base import DiscordEnum, DiscordObject, Snowflake
 from arcbot.discord.models.user import User
 from arcbot.discord.permission import Permission
+
+from datetime import datetime
+from typing import List
+
 
 class ChannelType(DiscordEnum):
     GUILD_TEXT = 0
@@ -9,11 +13,13 @@ class ChannelType(DiscordEnum):
     GROUP_DM = 3
     GUILD_CATEGORY = 4
 
+
 class PermissionOverwrite(DiscordObject):
     type:  str
     id: Snowflake
     deny: Permission
     allow: Permission
+
 
 class Channel(DiscordObject):
     id: Snowflake
