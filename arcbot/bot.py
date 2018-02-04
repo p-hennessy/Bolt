@@ -1,3 +1,4 @@
+# flake8: noqa: E402
 """
     Description:
         Main entry point for the bot to function
