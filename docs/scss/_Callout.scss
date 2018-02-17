@@ -1,0 +1,61 @@
+// Callout
+// ––––––––––––––––––––––––––––––––––––––––––––––––––
+
+.admonition {
+    width: 100%;
+    background: $color-tertiary;
+    padding: 1rem;
+    border-radius: 0.35rem;
+    border-left: .3rem solid $color-primary;
+    margin: 1rem 0;
+    position: relative;
+    color: $color-primary;
+
+    &:before {
+        font-weight: bold;
+    }
+    & > p{
+        margin-top:0;
+    }
+
+}
+
+.admonition-note {
+    border-color: $color-blue;
+    color: $color-blue;
+
+    &:before {
+        content: 'Note';
+        color: $color-blue;
+    }
+}
+
+.admonition-info {
+    border-color: $color-teal;
+    color: $color-teal;
+
+    &:before {
+        content: 'Info';
+        color: $color-teal;
+    }
+}
+
+.admonition-tip {
+    border-color: $color-green;
+    color: $color-green;
+
+    &:before {
+        content: 'Tip';
+        color: $color-green;
+    }
+}
+
+.admonition-warning {
+    border-color: $color-yellow;
+    color: $color-yellow;
+
+    &:before {
+        content: 'Warning';
+        color: $color-yellow;
+    }
+}
