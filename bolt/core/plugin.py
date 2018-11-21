@@ -11,8 +11,8 @@ from bolt.core.command import Command
 
 import logging
 import inspect
-import importlib
 import ujson as json
+
 
 class Plugin(object):
     def __init__(self, bot):
@@ -74,7 +74,6 @@ class Plugin(object):
                 elif name == "subscriber":
                     self.bot.events.subscribe(properties['event'], callback)
 
-
     def say(self, channel_id, message="", embed={}, mentions=[]):
         self.logger.debug("Sending message to channel " + channel_id)
 
@@ -98,7 +97,7 @@ class Plugin(object):
         self.say(channel_id, message=message, embed=embed, mentions=mentions)
 
     def upload(self, channel_id, file):
-        self.logger.debug('Uploading file to channel ' + channel)
+        self.logger.debug('Uploading file to channel ' + channel_id)
 
         endpoint = self.base_url + f"channels/{channel_id}/messages"
         files = {'file': open(file, 'rb')}
@@ -106,7 +105,7 @@ class Plugin(object):
         try:
             self.bot.api.create_message(endpoint, files=files, headers=self.auth_headers)
         except Exception as e:
-            self.logger.warning(f'Upload of {file} to channel {channel} failed: {e}')
+            self.logger.warning(f'Upload of {file} to channel {channel_id} failed: {e}')
 
 
 def pre_command_hook():
@@ -114,6 +113,7 @@ def pre_command_hook():
         'name': 'pre_command',
         'properties': {}
     })
+
 
 def help(text, usage="Not Documented"):
     return add_method_tag({
@@ -123,6 +123,7 @@ def help(text, usage="Not Documented"):
             'usage': usage
         }
     })
+
 
 def command(pattern, access=0, trigger="!"):
     if trigger is None:
@@ -137,6 +138,7 @@ def command(pattern, access=0, trigger="!"):
         }
     })
 
+
 def subscriber(event):
     return add_method_tag({
         'name': 'subscriber',
@@ -144,6 +146,7 @@ def subscriber(event):
             'event': event,
         }
     })
+
 
 def interval(seconds):
     return add_method_tag({
@@ -153,7 +156,8 @@ def interval(seconds):
         }
     })
 
-def webhook(route, methods=["GET","POST"]):
+
+def webhook(route, methods=["GET", "POST"]):
     return add_method_tag({
         'name': 'webhook',
         'properties': {

@@ -6,12 +6,11 @@
         - Patrick Hennessy
 """
 
-import gevent
 import logging
 from bolt.discord.events import Events
 
+
 class Event():
-    # def __init__(self, type, user, channel, content="", mentions=[], timestamp=time.time()):
     def __init__(self):
         pass
 
@@ -37,6 +36,7 @@ class Event():
                 return item
 
         return convert(item)
+
 
 class EventManager():
     def __init__(self):

@@ -10,12 +10,12 @@ import gevent
 import requests
 import time
 import logging
-import inspect
-import functools
+
 
 def rate_limit():
     def decorate(callback):
         callback.reset = time.time()
+
         def wrapper(self, *args, **kwargs):
             # Check if there is a timeout
             if time.time() < callback.reset:
@@ -41,6 +41,7 @@ def rate_limit():
 
         return wrapper
     return decorate
+
 
 class API():
     def __init__(self, token):
@@ -337,7 +338,7 @@ class API():
 
     @rate_limit()
     def modify_guild_channel_positions(self, guild_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def get_guild_member(self, guild_id, user_id):
@@ -356,7 +357,7 @@ class API():
 
     @rate_limit()
     def add_guild_members(self, guild_id, user_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def modify_guild_member(self, guild_id, user_id, **kwargs):
@@ -383,23 +384,23 @@ class API():
 
     @rate_limit()
     def remove_guild_member_role(self, guild_id, user_id, role_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def remove_guild_member(self, guild_id, user_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def get_guild_bans(self, guild_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def create_guild_ban(self, guild_id, user_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def delete_guild_ban(self, guild_id, user_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def get_guild_roles(self, guild_id):
@@ -426,11 +427,11 @@ class API():
 
     @rate_limit()
     def modify_guild_role_positions(self, guild_id, **kwargs):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def modify_guild_role(self, guild_id, role_id, **kwargs):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def delete_guild_role(self, guild_id, role_id):
@@ -441,47 +442,47 @@ class API():
 
     @rate_limit()
     def get_guild_prune_count(self, guild_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def begin_guild_prune(self, guild_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def get_guild_voice_region(self, guild_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def get_guild_invites(self, guild_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def get_guild_integrations(self, guild_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def create_guild_integrations(self, guild_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def modify_guild_integrations(self, guild_id, integration_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def delete_guild_integrations(self, guild_id, integration_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def sync_guild_integration(self, guild_id, integration_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def get_guild_embed(self, guild_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def modify_guild_embed(self, guild_id):
-        raise NotImplemented
+        raise NotImplementedError
 
     @rate_limit()
     def list_guild_emojis(self, guild_id):

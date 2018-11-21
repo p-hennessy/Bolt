@@ -11,18 +11,20 @@ import re
 import logging
 logger = logging.getLogger(__name__)
 
+
 class Command():
     def __init__(self, pattern, callback, trigger="", access=0):
-        self.pattern  = pattern
-        self.access   = access
+        self.pattern = pattern
+        self.access = access
         self.callback = callback
-        self.trigger  = trigger
+        self.trigger = trigger
 
     def __str__(self):
         return self.callback.__name__
 
     def invoke(self, event):
         self.callback(event)
+
 
 class CommandManager():
     def __init__(self, core):
@@ -49,7 +51,6 @@ class CommandManager():
                     setattr(event, "arguments", match)
                     self.core.thread_pool.queue(command.invoke, event)
 
-
     def register(self, pattern, callback, trigger="", access=0, silent=False):
         """
             Pushes command instance to command list
@@ -58,10 +59,10 @@ class CommandManager():
         name = clazz + "." + callback.__name__
 
         if name in self.commands:
-            logger.warning("Duplicate command \"" + clazz + "." + name + "\". Skipping registration.")
+            logger.warning(f"Duplicate command {clazz}.{name}")
             return
         else:
-            logger.debug("Registering command \"" +  clazz + "." + name + "\"")
+            logger.debug(f"Registering command {clazz}.{name}")
 
             if trigger is None:
                 trigger = ""
@@ -89,7 +90,7 @@ class CommandManager():
             name = clazz + "." + command.callback.__name__
 
             del self.commands[command_name]
-            logger.debug("Unregistered command \"" + name + "\"")
+            logger.debug(f"Unregistered command {name}")
 
         else:
-            logger.warning("Cannot unregister \"" + command_name + "\", command not found.")
+            logger.warning(f"Cannot unregister {command_name}, command not found.")

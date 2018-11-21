@@ -1,5 +1,6 @@
 from enum import Enum, auto
 
+
 class Events(Enum):
     READY = auto()
     RESUMED = auto()

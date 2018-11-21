@@ -6,7 +6,6 @@
         - Patrick Hennessy
 """
 from bolt.core.event import Event
-from bolt.discord.api import API
 from bolt.discord.events import Events
 
 from datetime import timedelta
@@ -17,6 +16,7 @@ import logging
 import gevent
 import time
 import re
+
 
 class Websocket():
     def __init__(self, bot, token):
@@ -37,7 +37,6 @@ class Websocket():
         # Subscribe to events
         self.bot.events.subscribe(Events.MESSAGE_CREATE, self.handle_gateway_message)
         self.bot.events.subscribe(Events.READY, self.handle_gateway_ready)
-
 
     def start(self):
         self.logger.debug('Spawning Gateway Greenlet')
@@ -60,7 +59,7 @@ class Websocket():
         while True:
             self._heartbeat_start = time.monotonic()
             self.logger.debug(f'Heartbeat. Ping: {self.ping} @ {self._heartbeat_start}')
-            self.send({"op":1,"d": self.sequence})
+            self.send({"op": 1, "d": self.sequence})
             gevent.sleep(interval / 1000)
 
     def handle_websocket_error(self, socket, error):
@@ -138,7 +137,6 @@ class Websocket():
 
         return True
 
-
     @property
     def status(self):
         if not self._status:
@@ -180,7 +178,7 @@ class Websocket():
 
                 for hook in self.iter_pre_command_hooks():
                     output = hook(command, event)
-                    if output == False:
+                    if output is False:
                         return
 
                 self.bot.queue.put((command.invoke, [event], {}))

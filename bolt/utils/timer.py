@@ -1,6 +1,7 @@
 import time
 from datetime import timedelta
 
+
 class Timer():
     def __init__(self, percision=3):
         self.percision = percision

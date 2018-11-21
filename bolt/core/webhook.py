@@ -3,6 +3,7 @@ import logging
 import ujson as json
 import falcon
 
+
 class WebhookServer():
     def __init__(self):
         self.routes = {}

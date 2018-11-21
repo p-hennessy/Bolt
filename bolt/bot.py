@@ -1,3 +1,4 @@
+# flake8: noqa: E402
 """
     Description:
         Main entry point for the bot to function
@@ -12,9 +13,8 @@ from gevent import queue
 
 # Patch must happen before requests is imported:
 # https://github.com/requests/requests/issues/3752
-gevent.monkey.patch_all()
+monkey.patch_all()
 
-from bolt.config import Config
 from bolt.discord.api import API
 from bolt.discord.websocket import Websocket
 from bolt.core.event import EventManager
@@ -29,6 +29,7 @@ import logging
 import logging.handlers
 import inspect
 
+
 class Bot():
     def __init__(self, token):
         self._setup_logger()
@@ -39,7 +40,6 @@ class Bot():
         self.webhooks = WebhookServer()
         self.scheduler = Scheduler(self)
         self.queue = queue.Queue()
-        self.config = Config()
 
         # Backend
         self.websocket = Websocket(self, token)
@@ -47,8 +47,6 @@ class Bot():
 
         # Database
         self.database_client = MongoClient()
-        user_database = self.database_client[f"core-users"]
-        self.users = user_database.users
 
     def run(self):
         self.greenlet_websocket = gevent.spawn(self.websocket.start)
@@ -66,8 +64,7 @@ class Bot():
 
     def worker(self):
         while True:
-            callback, args, kwargs = self.queue.get(block=True, timeout=None)
-            gevent.sleep(0)
+            callback, args, kwargs = self.queue.get()
 
             try:
                 callback(*args, **kwargs)
