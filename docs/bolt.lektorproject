@@ -1,5 +1,5 @@
 [project]
-name = arcbot
+name = bolt
 
 [packages]
 lektor-markdown-highlighter = 0.1
@@ -7,4 +7,4 @@ lektor-markdown-admonition = 0.1
 lektor-markdown-header-anchors = 0.2
 
 [servers.ghpages]
-target = ghpages://ns-phennessy/Arcbot?cname=docs.arcbot.io
+target = ghpages://ns-phennessy/Bolt?cname=bolt.bot

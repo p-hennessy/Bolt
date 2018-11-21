@@ -16,6 +16,6 @@ install:
 
 script:
   - python setup.py test
-  - flake8 arcbot/
+  - flake8 bolt/
   - scss --style=compressed docs/scss/milligram.scss > docs/assets/static/milligram.min.css
   - pushd docs && lektor build && popd

@@ -6,11 +6,11 @@ order: 2
 ---
 article:
 
-Arcbot derives all functionality via plugins. A very basic plugin looks something like this:
+Bolt derives all functionality via plugins. A very basic plugin looks something like this:
 
 ```python
-from arcbot import Plugin
-from arcbot import command
+from bolt import Plugin
+from bolt import command
 
 class Example(Plugin):
 

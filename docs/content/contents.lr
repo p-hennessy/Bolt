@@ -5,7 +5,7 @@ article:
 !!!! This bot is not at a stable state and it's very likely to have breaking changes on a regular
 basis until I am happy with calling it stable.
 
-Arcbot is an extensible chatbot written entirely in Python, inspired by
+Bolt is an extensible chatbot written entirely in Python, inspired by
 [Errbot](https://github.com/errbotio/errbot) and [Hubot](https://hubot.github.com/) projects.
 The goal of this project is to provide a simple to extend bot framework for [Discord](https://discordapp.com).
 
@@ -17,9 +17,9 @@ The goal of this project is to provide a simple to extend bot framework for [Dis
 * Schedule code to be run after a time period
 * Simple database interaction with MongoDB
 * Intuitive Discord object mapping
-* Uses Gevent to maximize performance of a single thread 
+* Uses Gevent to maximize performance of a single thread
 
-Arcbot originally started out as a simple Trivia Bot that used long polling and webhooks to read and
+Bolt originally started out as a simple Trivia Bot that used long polling and webhooks to read and
 write to chat channels. I became obsessed with making this bot more robust and at that time, no bots
 existed for Discord, so this bot evolved into a fully vetted framework that I could use to build
 functionality off of. This project is a place I can experiment with design ideas and evolve a sense
