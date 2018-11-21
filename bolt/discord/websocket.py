@@ -118,8 +118,8 @@ class Websocket():
                     "token": self.token,
                     "properties": {
                         "$os": system(),
-                        "$browser": "Arcbot",
-                        "$device": "Arcbot"
+                        "$browser": "Bolt",
+                        "$device": "Bolt"
                     },
                     "large_threshold": 50,
                     "compress": False
