@@ -22,6 +22,6 @@ script:
 
 deploy:
   provider: script
-  script: "pushd docs && lektor deploy ghpages && popd"
+  script: "cd docs && lektor deploy ghpages"
   on:
     branch: master
