@@ -2,6 +2,7 @@ import gevent
 import time
 import logging
 
+
 class Scheduler():
     def __init__(self, bot):
         self.tasks = []
@@ -36,9 +37,9 @@ class Scheduler():
     def run_cron(self):
         raise NotImplemented
 
-    def run_later(self, timestamp):
+    def run_later(self, timestamp, callback):
         raise NotImplemented
-        
+
         new_task = {
             'timestamp': timestamp,
             'callback': callback

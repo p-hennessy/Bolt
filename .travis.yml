@@ -1,0 +1,21 @@
+language: python
+
+cache:
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/.cache/lektor/builds
+
+python:
+  - '3.6'
+
+install:
+  - pip install setuptools
+  - pip install flake8
+  - pip install lektor
+  - gem install sass
+
+script:
+  - python setup.py test
+  - flake8 arcbot/
+  - scss --style=compressed docs/scss/milligram.scss > docs/assets/static/milligram.min.css
+  - pushd docs && lektor build && popd

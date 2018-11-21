@@ -1,3 +1,4 @@
+# flake8: noqa: E402
 """
     Description:
         Main entry point for the bot to function
@@ -12,9 +13,8 @@ from gevent import queue
 
 # Patch must happen before requests is imported:
 # https://github.com/requests/requests/issues/3752
-gevent.monkey.patch_all()
+monkey.patch_all()
 
-from arcbot.config import Config
 from arcbot.discord.api import API
 from arcbot.discord.websocket import Websocket
 from arcbot.core.event import EventManager
@@ -28,6 +28,7 @@ import sys
 import logging
 import logging.handlers
 import inspect
+
 
 class Bot():
     def __init__(self, token):

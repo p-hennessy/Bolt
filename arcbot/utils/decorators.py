@@ -1,5 +1,6 @@
 import time
 
+
 def add_method_tag(metadata):
     def decorate(callback):
         if not hasattr(callback, 'tags'):
@@ -9,6 +10,7 @@ def add_method_tag(metadata):
 
         return callback
     return decorate
+
 
 class cache(object):
     def __init__(self, ttl):

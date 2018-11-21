@@ -14,12 +14,12 @@ import gevent
 import requests
 import time
 import logging
-import inspect
-import functools
+
 
 def rate_limit():
     def decorate(callback):
         callback.reset = time.time()
+
         def wrapper(self, *args, **kwargs):
             # Check if there is a timeout
             if time.time() < callback.reset:
@@ -45,6 +45,7 @@ def rate_limit():
 
         return wrapper
     return decorate
+
 
 class API():
     def __init__(self, token):
@@ -123,51 +124,51 @@ class API():
     @rate_limit()
     def create_reaction(self, channel_id, message_id, emoji):
         return requests.put(
-            f"{self.base_url}/channels/{channel_id}/messages/{messsage_id}/reactions/{emoji}/@me",
-            headers=headers
+            f"{self.base_url}/channels/{channel_id}/messages/{message_id}/reactions/{emoji}/@me",
+            headers=self.auth_headers
         )
 
     @rate_limit()
     def delete_own_reaction(self, channel_id, message_id, emoji):
         return requests.delete(
-            f"{self.base_url}/channels/{channel_id}/messages/{messsage_id}/reactions/{emoji}/@me",
-            headers=headers
+            f"{self.base_url}/channels/{channel_id}/messages/{message_id}/reactions/{emoji}/@me",
+            headers=self.auth_headers
         )
 
     @rate_limit()
     def delete_user_reaction(self, channel_id, message_id, emoji, user_id):
         return requests.delete(
-            f"{self.base_url}/channels/{channel_id}/messages/{messsage_id}/reactions/{emoji}/{user_id}",
-            headers=headers
+            f"{self.base_url}/channels/{channel_id}/messages/{message_id}/reactions/{emoji}/{user_id}",
+            headers=self.auth_headers
         )
 
     @rate_limit()
     def delete_all_reactions(self, channel_id, message_id):
         return requests.delete(
-            f"{self.base_url}/channels/{channel_id}/messages/{messsage_id}/reactions",
-            headers=headers
+            f"{self.base_url}/channels/{channel_id}/messages/{message_id}/reactions",
+            headers=self.auth_headers
         )
 
     @rate_limit()
     def edit_message(self, channel_id, message_id, **kwargs):
         return requests.patch(
-            f"{self.base_url}/channels/{channel_id}/messages/{messsage_id}",
-            headers=headers,
+            f"{self.base_url}/channels/{channel_id}/messages/{message_id}",
+            headers=self.auth_headers,
             data=json.dumps(kwargs)
         )
 
     @rate_limit()
     def delete_message(self, channel_id, message_id):
         return requests.delete(
-            f"{self.base_url}/channels/{channel_id}/messages/{messsage_id}",
-            headers=headers,
+            f"{self.base_url}/channels/{channel_id}/messages/{message_id}",
+            headers=self.auth_headers,
         )
 
     @rate_limit()
     def bulk_delete_messages(self, channel_id, **kwargs):
         return requests.delete(
             f"{self.base_url}/channels/{channel_id}/messages/bulk-delete",
-            headers=headers,
+            headers=self.auth_headers,
             data=json.dumps(kwargs)
         )
 
@@ -175,14 +176,14 @@ class API():
     def get_channel_invites(self, channel_id):
         return requests.delete(
             f"{self.base_url}/channels/{channel_id}/invites",
-            headers=headers
+            headers=self.auth_headers
         )
 
     @rate_limit()
     def create_channel_invite(self, channel_id, **kwargs):
         return requests.post(
             f"{self.base_url}/channels/{channel_id}/invites",
-            headers=headers,
+            headers=self.auth_headers,
             data=json.dumps(kwargs)
         )
 
@@ -256,6 +257,13 @@ class API():
     def get_current_user_guilds(self):
         return requests.get(
             f"{self.base_url}/users/@me/guilds",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
+    def get_user_profile(self, user_id):
+        return requests.get(
+            f"{self.base_url}/users/{user_id}/profile",
             headers=self.auth_headers
         )
 
@@ -355,7 +363,7 @@ class API():
         return requests.get(
             f"{self.base_url}/guilds/{guild_id}/members",
             headers=self.auth_headers,
-            data=json.dumps(kwargs)
+            params=kwargs
         )
 
     @rate_limit()
@@ -377,10 +385,6 @@ class API():
             headers=self.auth_headers,
             data=json.dumps({"nick": nick})
         )
-
-    @rate_limit()
-    def add_guild_member_role(self, guild_id, user_id, role_id):
-        raise NotImplemented
 
     @rate_limit()
     def add_guild_member_role(self, guild_id, user_id, role_id):
@@ -412,6 +416,7 @@ class API():
             f"{self.base_url}/guilds/{guild_id}/roles",
             headers=self.auth_headers
         )
+
     @rate_limit()
     def create_guild_role(self, guild_id, **kwargs):
         raise NotImplemented
@@ -471,3 +476,10 @@ class API():
     @rate_limit()
     def modify_guild_embed(self, guild_id):
         raise NotImplemented
+
+    @rate_limit()
+    def accept_invite(self, invite_code):
+        return requests.post(
+            f"{self.base_url}/invites/{invite_code}",
+            headers=self.auth_headers
+        )
