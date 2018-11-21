@@ -1,5 +1,5 @@
 import unittest
-from bolt.discord.permission import Permission
+from bolt.discord.permissions import Permission
 
 class TestPermission(unittest.TestCase):
 

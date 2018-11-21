@@ -1,13 +1,12 @@
 """
     Description:
-        Manager for commands
+        Classes that manage commands
 
     Contributors:
         - Patrick Hennessy
 """
-
-from .event import Events
 import re
+import parse
 import logging
 logger = logging.getLogger(__name__)
 
@@ -22,75 +21,68 @@ class Command():
     def __str__(self):
         return self.callback.__name__
 
-    def invoke(self, event):
-        self.callback(event)
+    def __repr__(self):
+        classname = f"{type(self).__name__}"
+        return f"{classname}({self.callback.__class__.__name__}.{self.callback.__name__})"
 
+    def invoke(self, message):
+        message.content = message.content.replace(self.trigger, "", 1)
+        self.callback(message)
 
-class CommandManager():
-    def __init__(self, core):
-        self.commands = {}
-        self.core = core
-
-        self.core.events.subscribe(Events.MESSAGE_CREATE, self.check)
-
-    def check(self, event):
-        """
-            Checks if an incoming message is a command
-            Invokes any command that matches the criteria
-        """
-        # Ignore our own messages
-        if event.author.id == self.core.backend.id:
-            return
-
-        for _, command in self.commands.items():
-            if event.content.startswith(command.trigger):
-                content = event.content.replace(command.trigger, "", 1)
-                match = re.search(command.pattern, content)
-
-                if match:
-                    setattr(event, "arguments", match)
-                    self.core.thread_pool.queue(command.invoke, event)
-
-    def register(self, pattern, callback, trigger="", access=0, silent=False):
-        """
-            Pushes command instance to command list
-        """
-        clazz = type(callback.__self__).__name__
-        name = clazz + "." + callback.__name__
-
-        if name in self.commands:
-            logger.warning(f"Duplicate command {clazz}.{name}")
-            return
+    def matches(self, text):
+        if text.startswith(self.trigger):
+            text = text.replace(self.trigger, "", 1)
+            return self.pattern == text
         else:
-            logger.debug(f"Registering command {clazz}.{name}")
+            return False
 
-            if trigger is None:
-                trigger = ""
-            elif trigger == "":
-                trigger = self.core.config.trigger
+    def parse(self, text):
+        return [], {}
 
-            self.commands[name] = Command(
-                pattern,
-                callback,
-                trigger=trigger,
-                access=access,
-                silent=silent
-            )
 
-    def unregister(self, command_name):
-        """
-            Unregisters a command
-            Removes command instance from command list
-            Command will no longer run when message parser finds a match
-        """
-        if command_name in self.commands:
-            command = self.commands[command_name]
+class RegexCommand(Command):
+    def __init__(self, pattern, *args, **kwargs):
+        self.compiled_pattern = re.compile(pattern)
+        super(RegexCommand, self).__init__(pattern, *args, **kwargs)
 
-            clazz = type(command.callback.__self__).__name__
-            name = clazz + "." + command.callback.__name__
+    def matches(self, text):
+        if text.startswith(self.trigger):
+            text = text.replace(self.trigger, "", 1)
+            match = self.compiled_pattern.search(text)
 
-            del self.commands[command_name]
-            logger.debug(f"Unregistered command {name}")
-
+            return match is not None
         else:
-            logger.warning(f"Cannot unregister {command_name}, command not found.")
+            return False
+
+    def parse(self, text):
+        text = text.replace(self.trigger, "", 1)
+        result = self.compiled_pattern.search(text)
+
+        args = list(result.groups()) or []
+        kwargs = {}
+
+        return args, kwargs
+
+
+class ParseCommand(Command):
+    def __init__(self, pattern, *args, **kwargs):
+        self.compiled_pattern = parse.compile(pattern)
+        super(ParseCommand, self).__init__(pattern, *args, **kwargs)
+
+    def matches(self, text):
+        if text.startswith(self.trigger):
+            text = text.replace(self.trigger, "", 1)
+            match = self.compiled_pattern.parse(text)
+
+            return match is not None
+        else:
+            return False
+
+    def parse(self, text):
+        text = text.replace(self.trigger, "", 1)
+        result = self.compiled_pattern.parse(text)
+
+        args = list(result.fixed) or []
+        kwargs = dict(result.named) or {}
+
+        return args, kwargs
