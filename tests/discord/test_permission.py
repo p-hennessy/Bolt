@@ -1,5 +1,5 @@
 import unittest
-from arcbot.discord.permission import Permission
+from bolt.discord.permission import Permission
 
 class TestPermission(unittest.TestCase):
 

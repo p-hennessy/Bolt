@@ -1,5 +1,5 @@
 import unittest
-from arcbot.core.command import Command, RegexCommand, ParseCommand
+from bolt.core.command import Command, RegexCommand, ParseCommand
 
 class TestCommand(unittest.TestCase):
 
