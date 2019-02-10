@@ -3,7 +3,7 @@
 # About Bolt
 [![Python](https://img.shields.io/badge/Python-3.6-7289da.svg?style=flat-square)](https://www.python.org/downloads/release/python-360/)
 [![License](https://img.shields.io/badge/License-MIT-7289da.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![Build Status](https://img.shields.io/travis/ns-phennessy/Arcbot.svg?style=flat-square)](https://travis-ci.org/ns-phennessy/Bolt)
+[![Build Status](https://img.shields.io/travis/ns-phennessy/Bolt.svg?style=flat-square)](https://travis-ci.org/ns-phennessy/Bolt)
 
 Bolt is an extensible chatbot written entirely in Python, inspired by
 [Errbot](https://github.com/errbotio/errbot) and [Hubot](https://hubot.github.com/) projects.
