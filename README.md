@@ -14,13 +14,13 @@ The goal of this project is to provide a simple to extend bot framework for
 [Discord](https://discordapp.com).
 
 Batteries included:
-* [Simple command creation](#Command creation)
-* [Hook any event from Discord](#Hook Discord Event)
+* [Simple command creation](#Command-creation)
+* [Hook any event from Discord](#Hook-Discord-Event)
 * [Receive data ingress with webhooks](#Webhook)
-* [Run code on a set interval](#Code interval)
-* [Schedule code to be run after a time period](#Database Interaction)
-* [Simple database interaction with MongoDB](#Schedule code to run)
-* [Intuitive Discord object mapping](#Discord object mapping)
+* [Run code on a set interval](#Code-interval)
+* [Schedule code to be run after a time period](#Database-Interaction)
+* [Simple database interaction with MongoDB](#Schedule-code-to-run)
+* [Intuitive Discord object mapping](#Discord-object-mapping)
 
 Bolt originally started out as a simple Trivia Bot that used long polling and webhooks to read and
 write to chat channels. I became obsessed with making this bot more robust and at that time, no bots
@@ -93,3 +93,6 @@ class SomePlugin(Plugin):
 
 ## Schedule code to run
 ## Discord object mapping
+
+# License
+Bolt is licensed under the [MIT License](https://github.com/ns-phennessy/Bolt/blob/master/LICENSE.txt)
