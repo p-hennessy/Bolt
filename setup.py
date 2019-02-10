@@ -1,21 +1,21 @@
 from setuptools import setup, find_packages
 
 with open('REQUIREMENTS.txt') as file:
-    requirements = file.read()
+    REQUIREMENTS = file.read()
 
 with open('VERSION.txt') as file:
     VERSION = file.read().strip('\n')
 
 setup(
-    name='arcbot',
+    name='bolt',
     author='phennessy',
-    url='https://github.com/ns-phennessy/Arcbot',
+    url='https://github.com/ns-phennessy/Bolt',
     version=VERSION,
     packages=find_packages(),
-    license='GPLv3',
-    description='Mechanical chat enrichment associate f or Discord',
+    license='MIT',
+    description='All the parts for building a Discord robot https://bolt.bot',
     test_suite='tests',
-    install_requires=requirements,
+    install_requires=REQUIREMENTS,
     setup_requires=[],
     tests_require=[]
 )
