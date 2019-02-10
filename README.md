@@ -10,13 +10,13 @@ Bolt is an extensible chatbot written entirely in Python, inspired by
 The goal of this project is to provide a simple to extend bot framework for [Discord](https://discordapp.com).
 
 Batteries included:
-* Simple command creation
-* Hook any event from Discord
-* Receive data ingress with webhooks
-* Run code on a set interval
-* Schedule code to be run after a time period
-* Simple database interaction with MongoDB
-* Intuitive Discord object mapping
+  * Simple command creation
+  * Hook any event from Discord
+  * Receive data ingress with webhooks
+  * Run code on a set interval
+  * Schedule code to be run after a time period
+  * Simple database interaction with MongoDB
+  * Intuitive Discord object mapping
 
 Bolt originally started out as a simple Trivia Bot that used long polling and webhooks to read and
 write to chat channels. I became obsessed with making this bot more robust and at that time, no bots

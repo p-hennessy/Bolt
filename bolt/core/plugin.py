@@ -58,6 +58,26 @@ class Plugin(object):
 
                     self.commands.append(command)
 
+                elif name == "regex_command":
+                    command = RegexCommand(
+                        properties['pattern'],
+                        callback,
+                        trigger=properties['trigger'],
+                        access=properties['access']
+                    )
+
+                    self.commands.append(command)
+
+                elif name == "parse_command":
+                    command = ParseCommand(
+                        properties['pattern'],
+                        callback,
+                        trigger=properties['trigger'],
+                        access=properties['access']
+                    )
+
+                    self.commands.append(command)
+                    
                 elif name == "webhook":
                     self.bot.webhooks.add_route(
                         properties['route'],
@@ -137,6 +157,35 @@ def command(pattern, access=0, trigger="!"):
             'trigger': trigger
         }
     })
+
+
+def regex_command(pattern, access=0, trigger="!"):
+    if trigger is None:
+        trigger = ""
+
+    return add_method_tag({
+        'name': 'regex_command',
+        'properties': {
+            'pattern': pattern,
+            'access': access,
+            'trigger': trigger
+        }
+    })
+
+
+def parse_command(pattern, access=0, trigger="!"):
+    if trigger is None:
+        trigger = ""
+
+    return add_method_tag({
+        'name': 'parse_command',
+        'properties': {
+            'pattern': pattern,
+            'access': access,
+            'trigger': trigger
+        }
+    })
+
 
 
 def subscriber(event):

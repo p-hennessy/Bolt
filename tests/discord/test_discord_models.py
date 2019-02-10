@@ -8,7 +8,7 @@ from bolt.discord.models.guild import Guild
 
 class TestDiscordModel(unittest.TestCase):
     def test_user(self):
-        input = {
+        input_data = {
             "id": "80351110224678912",
             "username": "Nelly",
             "discriminator": "1337",
@@ -19,19 +19,19 @@ class TestDiscordModel(unittest.TestCase):
             "premium_type": 1
         }
 
-        actual = User.marshal(input)
+        actual = User.marshal(input_data)
 
-        self.assertEqual(actual.id, input['id'])
-        self.assertEqual(actual.name, input['username'])
-        self.assertEqual(actual.email, input['email'])
+        self.assertEqual(actual.id, input_data['id'])
+        self.assertEqual(actual.name, input_data['username'])
+        self.assertEqual(actual.email, input_data['email'])
 
         serialized = actual.serialize()
-        self.assertEqual(serialized['id'], input['id'])
-        self.assertEqual(serialized['username'], input['username'])
-        self.assertEqual(serialized['email'], input['email'])
+        self.assertEqual(serialized['id'], input_data['id'])
+        self.assertEqual(serialized['username'], input_data['username'])
+        self.assertEqual(serialized['email'], input_data['email'])
 
     def test_embed(self):
-        input = {
+        input_data = {
             "title": "Title",
             "description": "Description",
             "url": "https://discordapp.com",
@@ -65,17 +65,17 @@ class TestDiscordModel(unittest.TestCase):
             ]
         }
 
-        actual = Embed.marshal(input)
+        actual = Embed.marshal(input_data)
 
-        self.assertEqual(actual.title, input['title'])
-        self.assertEqual(actual.url, input['url'])
-        self.assertEqual(actual.fields[1].name, input['fields'][1]['name'])
+        self.assertEqual(actual.title, input_data['title'])
+        self.assertEqual(actual.url, input_data['url'])
+        self.assertEqual(actual.fields[1].name, input_data['fields'][1]['name'])
 
         serialized = actual.serialize()
-        self.assertEqual(serialized['title'], input['title'])
-        self.assertDictEqual(serialized['fields'][1], input['fields'][1])
+        self.assertEqual(serialized['title'], input_data['title'])
+        self.assertDictEqual(serialized['fields'][1], input_data['fields'][1])
 
-    def test_embed_long_input(self):
+    def test_embed_long_input_data(self):
         with self.assertRaises(ModelValidationError):
             Embed.marshal({"title": "t" * 512,})
 
@@ -86,7 +86,7 @@ class TestDiscordModel(unittest.TestCase):
             Embed.marshal({"fields": [{"name": "name", "value": "value"} for f in range(0,50)]})
 
     def test_channel_text(self):
-        input = {
+        input_data = {
             "id": "41771983423143937",
             "guild_id": "41771983423143937",
             "name": "general",
@@ -100,20 +100,20 @@ class TestDiscordModel(unittest.TestCase):
             "parent_id": "399942396007890945"
         }
 
-        actual = Channel.marshal(input)
+        actual = Channel.marshal(input_data)
 
-        self.assertEqual(actual.id, input['id'])
-        self.assertEqual(actual.name, input['name'])
-        self.assertEqual(actual.last_message_id, input['last_message_id'])
+        self.assertEqual(actual.id, input_data['id'])
+        self.assertEqual(actual.name, input_data['name'])
+        self.assertEqual(actual.last_message_id, input_data['last_message_id'])
         self.assertEqual(actual.type, ChannelType.GUILD_TEXT)
 
         serialized = actual.serialize()
-        self.assertEqual(serialized['id'], input['id'])
-        self.assertEqual(serialized['topic'], input['topic'])
-        self.assertEqual(serialized['nsfw'], input['nsfw'])
+        self.assertEqual(serialized['id'], input_data['id'])
+        self.assertEqual(serialized['topic'], input_data['topic'])
+        self.assertEqual(serialized['nsfw'], input_data['nsfw'])
 
     def test_channel_voice(self):
-        input = {
+        input_data = {
             "id": "155101607195836416",
             "guild_id": "41771983423143937",
             "name": "ROCKET CHEESE",
@@ -126,18 +126,18 @@ class TestDiscordModel(unittest.TestCase):
             "parent_id": None
         }
 
-        actual = Channel.marshal(input)
+        actual = Channel.marshal(input_data)
 
-        self.assertEqual(actual.id, input['id'])
-        self.assertEqual(actual.guild_id, input['guild_id'])
+        self.assertEqual(actual.id, input_data['id'])
+        self.assertEqual(actual.guild_id, input_data['guild_id'])
         self.assertEqual(actual.type, ChannelType.GUILD_VOICE)
 
         serialized = actual.serialize()
-        self.assertEqual(serialized['id'], input['id'])
-        self.assertEqual(serialized['nsfw'], input['nsfw'])
+        self.assertEqual(serialized['id'], input_data['id'])
+        self.assertEqual(serialized['nsfw'], input_data['nsfw'])
 
     def test_channel_dm(self):
-        input = {
+        input_data = {
             "id": "319674150115610528",
             "last_message_id": "3343820033257021450",
             "type": 1,
@@ -150,20 +150,20 @@ class TestDiscordModel(unittest.TestCase):
                 }
             ]
         }
-        actual = Channel.marshal(input)
+        actual = Channel.marshal(input_data)
 
-        self.assertEqual(actual.id, input['id'])
-        self.assertEqual(actual.last_message_id, input['last_message_id'])
+        self.assertEqual(actual.id, input_data['id'])
+        self.assertEqual(actual.last_message_id, input_data['last_message_id'])
         self.assertEqual(actual.type, ChannelType.DM)
         self.assertTrue(isinstance(actual.recipients[0], User))
-        self.assertTrue(len(actual.recipients) == len(input['recipients']))
+        self.assertTrue(len(actual.recipients) == len(input_data['recipients']))
 
         serialized = actual.serialize()
-        self.assertEqual(serialized['id'], input['id'])
-        self.assertEqual(serialized['recipients'][0]['id'], input['recipients'][0]['id'])
+        self.assertEqual(serialized['id'], input_data['id'])
+        self.assertEqual(serialized['recipients'][0]['id'], input_data['recipients'][0]['id'])
 
     def test_channel_group_dm(self):
-        input = {
+        input_data = {
             "name": "Some test channel",
             "icon": None,
             "recipients": [
@@ -185,20 +185,20 @@ class TestDiscordModel(unittest.TestCase):
             "id": "319674150115710528",
             "owner_id": "82198810841029460"
         }
-        actual = Channel.marshal(input)
+        actual = Channel.marshal(input_data)
 
-        self.assertEqual(actual.id, input['id'])
-        self.assertEqual(actual.last_message_id, input['last_message_id'])
+        self.assertEqual(actual.id, input_data['id'])
+        self.assertEqual(actual.last_message_id, input_data['last_message_id'])
         self.assertEqual(actual.type, ChannelType.GROUP_DM)
         self.assertTrue(isinstance(actual.recipients[0], User))
-        self.assertTrue(len(actual.recipients) == len(input['recipients']))
+        self.assertTrue(len(actual.recipients) == len(input_data['recipients']))
 
         serialized = actual.serialize()
-        self.assertEqual(serialized['id'], input['id'])
-        self.assertEqual(serialized['recipients'][0]['id'], input['recipients'][0]['id'])
+        self.assertEqual(serialized['id'], input_data['id'])
+        self.assertEqual(serialized['recipients'][0]['id'], input_data['recipients'][0]['id'])
 
     def test_channel_category(self):
-        input = {
+        input_data = {
             "permission_overwrites": [],
             "name": "Test",
             "parent_id": None,
@@ -208,17 +208,17 @@ class TestDiscordModel(unittest.TestCase):
             "type": 4,
             "id": "399942396007890945"
         }
-        actual = Channel.marshal(input)
+        actual = Channel.marshal(input_data)
 
-        self.assertEqual(actual.id, input['id'])
+        self.assertEqual(actual.id, input_data['id'])
         self.assertEqual(actual.type, ChannelType.GUILD_CATEGORY)
         self.assertTrue(len(actual.recipients) == 0)
 
         serialized = actual.serialize()
-        self.assertEqual(serialized['id'], input['id'])
+        self.assertEqual(serialized['id'], input_data['id'])
 
     def test_guild_basic(self):
-        input = {
+        input_data = {
             "id": "41771983423143937",
             "application_id": None,
             "name": "Discord Developers",
@@ -241,4 +241,5 @@ class TestDiscordModel(unittest.TestCase):
             "features": ["INVITE_SPLASH"],
             "unavailable": False
         }
-        actual = Guild.marshal(input)
+        actual = Guild.marshal(input_data)
+        self.assertEqual(actual.id, input_data['id'])

@@ -8,20 +8,29 @@ class TestModel(unittest.TestCase):
             id = Field(int)
             name = Field(str)
 
-        input = {"id": 123, "name": "Boltbot"}
+        input_data = {"id": 123, "name": "Boltbot"}
 
-        actual = CoolModel.marshal(input)
+        actual = CoolModel.marshal(input_data)
 
-        self.assertEqual(actual.id, input['id'])
-        self.assertEqual(actual.name, input['name'])
+        self.assertEqual(actual.id, input_data['id'])
+        self.assertEqual(actual.name, input_data['name'])
+
+    def test_model_missingfield(self):
+        class CoolModel(Model):
+            id = Field(int, required=True)
+
+        input_data = {"name": 123}
+
+        with self.assertRaises(ModelMissingRequiredKeyError):
+            actual = CoolModel.marshal(input_data)
 
     def test_field_immutable(self):
         class CoolModel(Model):
             id = Field(int, immutable=True)
 
-        input = {"id": 123}
+        input_data = {"id": 123}
 
-        actual = CoolModel.marshal(input)
+        actual = CoolModel.marshal(input_data)
 
         with self.assertRaises(ImmutableFieldError):
             actual.id = 1000
@@ -33,10 +42,10 @@ class TestModel(unittest.TestCase):
         class CoolModel(Model):
             pass
 
-        input = {}
+        input_data = {}
 
         try:
-            actual = CoolModel.marshal(input)
+            actual = CoolModel.marshal(input_data)
         except Exception as e:
             self.fail(f"test_field_blank raised exception {e}")
 
@@ -44,19 +53,28 @@ class TestModel(unittest.TestCase):
         class CoolModel(Model):
             name = Field(str, json_key="username")
 
-        input = {"username": "Boltbot"}
+        input_data = {"username": "Boltbot"}
 
-        actual = CoolModel.marshal(input)
+        actual = CoolModel.marshal(input_data)
 
-        self.assertEqual(actual.name, input['username'])
+        self.assertEqual(actual.name, input_data['username'])
+
+    def test_field_length(self):
+        class CoolModel(Model):
+            name = Field(str, max_length=10)
+
+        input_data = {"name": "b" * 100}
+
+        with self.assertRaises(ModelValidationError):
+            actual = CoolModel.marshal(input_data)
 
     def test_field_default_value(self):
         class CoolModel(Model):
             name = Field(str, default="Nice")
 
-        input = {}
+        input_data = {}
 
-        actual = CoolModel.marshal(input)
+        actual = CoolModel.marshal(input_data)
 
         self.assertEqual(actual.name, "Nice")
 
@@ -65,50 +83,50 @@ class TestModel(unittest.TestCase):
             id = Field(int, required=True)
             name = Field(str)
 
-        input = {"name": "Boltbot"}
+        input_data = {"name": "Boltbot"}
 
         with self.assertRaises(ModelMissingRequiredKeyError):
-            actual = CoolModel.marshal(input)
+            actual = CoolModel.marshal(input_data)
 
 
     def test_field_int(self):
         class CoolModel(Model):
             id = Field(int)
 
-        input = {"id": 123}
+        input_data = {"id": 123}
 
-        actual = CoolModel.marshal(input)
-        self.assertEqual(actual.id, int(input['id']))
+        actual = CoolModel.marshal(input_data)
+        self.assertEqual(actual.id, int(input_data['id']))
         self.assertIsInstance(actual.id, int)
 
     def test_field_str(self):
         class CoolModel(Model):
             name = Field(str)
 
-        input = {"name": 123}
+        input_data = {"name": 123}
 
-        actual = CoolModel.marshal(input)
-        self.assertEqual(actual.name, str(input['name']))
+        actual = CoolModel.marshal(input_data)
+        self.assertEqual(actual.name, str(input_data['name']))
         self.assertIsInstance(actual.name, str)
 
     def test_field_bool(self):
         class CoolModel(Model):
             flag = Field(bool)
 
-        input = {"flag": False}
+        input_data = {"flag": False}
 
-        actual = CoolModel.marshal(input)
-        self.assertEqual(actual.flag, bool(input['flag']))
+        actual = CoolModel.marshal(input_data)
+        self.assertEqual(actual.flag, bool(input_data['flag']))
         self.assertIsInstance(actual.flag, bool)
 
     def test_list_field(self):
         class CoolModel(Model):
             alist = ListField(int)
 
-        input = {"alist": [1,2,3,4,5]}
+        input_data = {"alist": [1,2,3,4,5]}
 
-        actual = CoolModel.marshal(input)
-        self.assertListEqual(actual.alist, input['alist'])
+        actual = CoolModel.marshal(input_data)
+        self.assertListEqual(actual.alist, input_data['alist'])
         self.assertIsInstance(actual.alist, list)
 
     def test_field_custom(self):
@@ -118,10 +136,10 @@ class TestModel(unittest.TestCase):
         class CoolModel(Model):
             custom = Field(CustomType)
 
-        input = {"custom": "field"}
+        input_data = {"custom": "field"}
 
-        actual = CoolModel.marshal(input)
-        self.assertEqual(actual.custom, CustomType(input['custom']))
+        actual = CoolModel.marshal(input_data)
+        self.assertEqual(actual.custom, CustomType(input_data['custom']))
         self.assertIsInstance(actual.custom, CustomType)
 
     def test_field_model(self):
@@ -131,9 +149,9 @@ class TestModel(unittest.TestCase):
         class CoolModel(Model):
             foreign = Field(AnotherModel)
 
-        input = {"foreign": {"id": 123}}
+        input_data = {"foreign": {"id": 123}}
 
-        actual = CoolModel.marshal(input)
+        actual = CoolModel.marshal(input_data)
 
-        self.assertEqual(actual.foreign.id, input['foreign']['id'])
+        self.assertEqual(actual.foreign.id, input_data['foreign']['id'])
         self.assertIsInstance(actual.foreign, AnotherModel)

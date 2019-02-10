@@ -29,7 +29,7 @@ class Event():
                 return type('Event', (), {k: convert(v) for k, v in item.items()})
             if isinstance(item, list):
                 def yield_convert(item):
-                    for index, value in enumerate(item):
+                    for _, value in enumerate(item):
                         yield convert(value)
                 return list(yield_convert(item))
             else:

@@ -47,6 +47,8 @@ class Bot():
 
         # Database
         self.database_client = MongoClient()
+        user_database = self.database_client[f"core-users"]
+        self.users = user_database.users
 
     def run(self):
         self.greenlet_websocket = gevent.spawn(self.websocket.start)

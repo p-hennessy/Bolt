@@ -39,25 +39,25 @@ class Model(object):
         new_obj.__fields__ = {}
         new_obj.__immutable_fields__ = []
 
-        for property, field in cls.__dict__.items():
+        for field_name, field in cls.__dict__.items():
             if not isinstance(field, Field):
                 continue
 
-            new_obj.__fields__[property] = field
+            new_obj.__fields__[field_name] = field
 
-            json_key = field.json_key if field.json_key else property
+            json_key = field.json_key if field.json_key else field_name
             json_data = data.get(json_key, None)
 
             if json_data is None and field.required:
                 raise ModelMissingRequiredKeyError(f"{cls.__name__} model is missing required key {json_key}")
             elif json_data is None:
-                setattr(new_obj, property, field.default)
+                setattr(new_obj, field_name, field.default)
             else:
                 attr = field.marshal(json_data)
-                setattr(new_obj, property, attr)
+                setattr(new_obj, field_name, attr)
 
             if field.immutable:
-                new_obj.__immutable_fields__.append(property)
+                new_obj.__immutable_fields__.append(field_name)
 
         return new_obj
 
@@ -179,7 +179,7 @@ class Enum(enum.Enum):
 
 class Snowflake(str):
     def __init__(self, value):
-        if value and type(value) == str:
+        if value and isinstance(value, str):
             value = int(value)
 
         self.timestamp = int(((value >> 22) + 1420070400000) / 1000)
