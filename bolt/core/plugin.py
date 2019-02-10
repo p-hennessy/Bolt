@@ -94,7 +94,10 @@ class Plugin(object):
                 elif name == "subscriber":
                     self.bot.events.subscribe(properties['event'], callback)
 
-    def say(self, channel_id, message="", embed={}, mentions=[]):
+    def say(self, channel_id, message="", embed=None, mentions=None):
+        embed = {} if embed is None else embed
+        mentions = [] if mentions is None else mentions
+
         self.logger.debug("Sending message to channel " + channel_id)
 
         for user in mentions:
@@ -110,7 +113,10 @@ class Plugin(object):
         except Exception as e:
             self.logger.warning(f'Send message to channel "{channel_id}" failed: {e}')
 
-    def whisper(self, user_id, message="", embed={}, mentions=[]):
+    def whisper(self, user_id, message="", embed=None, mentions=None):
+        embed = {} if embed is None else embed
+        mentions = [] if mentions is None else mentions
+
         channel = self.bot.api.create_dm(user_id)
         channel_id = channel['id']
 
@@ -205,7 +211,9 @@ def interval(seconds):
     })
 
 
-def webhook(route, methods=["GET", "POST"]):
+def webhook(route, methods=None):
+    methods = ["GET", "POST"] if methods is None else methods
+
     return add_method_tag({
         'name': 'webhook',
         'properties': {

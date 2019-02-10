@@ -47,6 +47,8 @@ class WebhookServer():
             response.status = falcon.HTTP_500
 
     def add_route(self, route, callback, methods=['GET']):
+        methods = ["GET"] if methods is None else methods
+
         if not route.startswith("/"):
             route = "/" + str(route)
 

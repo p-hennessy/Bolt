@@ -499,7 +499,9 @@ class API():
         )
 
     @rate_limit()
-    def create_guild_emoji(self, guild_id, name, image_data, roles=[]):
+    def create_guild_emoji(self, guild_id, name, image_data, roles=None):
+        roles = [] if roles is None else roles
+
         emoji_data = {
             "name": name,
             "image": image_data,
