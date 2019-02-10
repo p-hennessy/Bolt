@@ -21,13 +21,22 @@ Batteries included:
 * [Schedule code to be run after a time period](#Database-Interaction)
 * [Simple database interaction with MongoDB](#Schedule-code-to-run)
 * [Intuitive Discord object mapping](#Discord-object-mapping)
+* [Bundled in standardized distribution formats](#Installing)
+
+I am open to feedback and suggestions. Feel free to submit a pull request or open an issue :)
 
 Bolt originally started out as a simple Trivia Bot that used long polling and webhooks to read and
 write to chat channels. I became obsessed with making this bot more robust and at that time, no bots
 existed for Discord, so this bot evolved into a fully vetted framework that I could use to build
-functionality off of. This project is a place I can experiment with design ideas and evolve a sense
-of personal code standards. I treat it more as an academic project to learn about new libraries and
-tools available to me as Python continues to grow.
+functionality off of.
+
+This project is a place I can experiment with design ideas and evolve a sense of personal code
+standards. I treat it as an academic project to learn about new libraries and tools available to me
+as Python continues to grow.
+
+# Installing
+
+Coming soon...
 
 
 # Examples
@@ -92,7 +101,10 @@ class SomePlugin(Plugin):
 ```
 
 ## Schedule code to run
+Coming soon...
+
 ## Discord object mapping
+Coming soon...
 
 # License
 Bolt is licensed under the [MIT License](https://github.com/ns-phennessy/Bolt/blob/master/LICENSE.txt)
