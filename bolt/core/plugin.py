@@ -7,7 +7,7 @@
         - Patrick Hennessy
 """
 from bolt.utils.decorators import add_method_tag
-from bolt.core.command import Command
+from bolt.core.command import Command, RegexCommand, ParseCommand
 
 import logging
 import inspect
@@ -185,7 +185,6 @@ def parse_command(pattern, access=0, trigger="!"):
             'trigger': trigger
         }
     })
-
 
 
 def subscriber(event):
