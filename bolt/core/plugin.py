@@ -77,7 +77,7 @@ class Plugin(object):
                     )
 
                     self.commands.append(command)
-                    
+
                 elif name == "webhook":
                     self.bot.webhooks.add_route(
                         properties['route'],
