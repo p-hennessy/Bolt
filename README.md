@@ -4,6 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-3.6-7289da.svg?style=flat-square)](https://www.python.org/downloads/release/python-360/)
 [![License](https://img.shields.io/badge/License-MIT-7289da.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Build Status](https://img.shields.io/travis/ns-phennessy/Bolt.svg?style=flat-square)](https://travis-ci.org/ns-phennessy/Bolt)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/01884c4719a746ba8ae317ba10268a44)](https://www.codacy.com/app/ns-phennessy/Bolt?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ns-phennessy/Bolt&amp;utm_campaign=Badge_Grade)
 
 Bolt is an extensible chatbot written entirely in Python, inspired by
 [Errbot](https://github.com/errbotio/errbot) and [Hubot](https://hubot.github.com/) projects.
