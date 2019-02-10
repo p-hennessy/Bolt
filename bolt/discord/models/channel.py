@@ -2,12 +2,14 @@ from bolt.discord.models.base import Snowflake, Model, Field, ListField, Enum, T
 from bolt.discord.models.user import User
 from bolt.discord.permissions import Permission
 
+
 class ChannelType(Enum):
     GUILD_TEXT = 0
     DM = 1
     GUILD_VOICE = 2
     GROUP_DM = 3
     GUILD_CATEGORY = 4
+
 
 class PermissionOverwrite(Model):
     __repr_keys__ = ['id', 'type']
@@ -16,6 +18,7 @@ class PermissionOverwrite(Model):
     type = Field(str)
     deny = Field(Permission)
     allow = Field(Permission)
+
 
 class Channel(Model):
     __repr_keys__ = ['id', 'name', 'type']

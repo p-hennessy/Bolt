@@ -9,17 +9,20 @@
 import enum
 from datetime import datetime
 
+
 # Exceptions
 class ModelMissingRequiredKeyError(Exception):
     pass
 
+
 class ModelValidationError(Exception):
     pass
+
 
 class ImmutableFieldError(Exception):
     pass
 
-# Base Classes
+
 class Model(object):
     """
         Base class for data bound objects
@@ -110,6 +113,7 @@ class Model(object):
     def update(self):
         pass
 
+
 class Field(object):
     """
         Conterpart class for Models, instructing the model how to consume json data
@@ -138,6 +142,7 @@ class Field(object):
                 raise ModelValidationError("Length of input is too long")
 
             return value
+
 
 class ListField(Field):
     """
@@ -171,7 +176,7 @@ class Enum(enum.Enum):
     def __repr__(self):
         return f"{self.__class__.__name__}.{self._name_}"
 
-# Discord Types
+
 class Snowflake(str):
     def __init__(self, value):
         if value and type(value) == str:
@@ -210,100 +215,59 @@ class Timestamp():
     def timestamp(self):
         return int(self.datetime.timestamp())
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class Autoslots(type):
-    def __new__(metaclass, name, bases, dct):
-        slots = []
-
-        # Add fields to slots
-        for property, field in dct.items():
-            if isinstance(field, Field):
-                slots.append(property)
-
-        # Merge items from predefined slots
-        if not dct.get('__slots__'):
-            dct['__slots__'] = set(slots)
-        else:
-            dct['__slots__'] = set(dct['__slots__'] + slots)
-
-        if not dct['__slots__']:
-            del dct['__slots__']
-
-        return super(Autoslots, metaclass).__new__(metaclass, name, bases, dct)
-
-class SearchableList(list):
-    """
-        Subclass of List that allows for Mongo-esque querying of contents
-        Example:
-            users.find_one({"id": "1234"})
-            users.find({"bot": False})
-    """
-    def find(self, query={}):
-        for instance in self.__iter__():
-            match = False
-            for key, value in query.items():
-                attr = getattr(instance, key, None)
-                attr_type = type(attr)
-
-                if issubclass(attr_type, (int, bool, str, float)):
-                    match = (attr == attr_type(value))
-
-            if match:
-                yield instance
-
-    def find_one(self, query={}):
-        for instance in self.__iter__():
-            if query == {}:
-                return instance
-
-            match = False
-
-            for key, value in query.items():
-                attr = getattr(instance, key, None)
-                attr_type = type(attr)
-
-                if issubclass(attr_type, (int, bool, str, float)):
-                    match = (attr == attr_type(value))
-
-            if match:
-                return instance
+# class Autoslots(type):
+#     def __new__(metaclass, name, bases, dct):
+#         slots = []
+#
+#         # Add fields to slots
+#         for property, field in dct.items():
+#             if isinstance(field, Field):
+#                 slots.append(property)
+#
+#         # Merge items from predefined slots
+#         if not dct.get('__slots__'):
+#             dct['__slots__'] = set(slots)
+#         else:
+#             dct['__slots__'] = set(dct['__slots__'] + slots)
+#
+#         if not dct['__slots__']:
+#             del dct['__slots__']
+#
+#         return super(Autoslots, metaclass).__new__(metaclass, name, bases, dct)
+#
+# class SearchableList(list):
+#     """
+#         Subclass of List that allows for Mongo-esque querying of contents
+#         Example:
+#             users.find_one({"id": "1234"})
+#             users.find({"bot": False})
+#     """
+#     def find(self, query={}):
+#         for instance in self.__iter__():
+#             match = False
+#             for key, value in query.items():
+#                 attr = getattr(instance, key, None)
+#                 attr_type = type(attr)
+#
+#                 if issubclass(attr_type, (int, bool, str, float)):
+#                     match = (attr == attr_type(value))
+#
+#             if match:
+#                 yield instance
+#
+#     def find_one(self, query={}):
+#         for instance in self.__iter__():
+#             if query == {}:
+#                 return instance
+#
+#             match = False
+#
+#             for key, value in query.items():
+#                 attr = getattr(instance, key, None)
+#                 attr_type = type(attr)
+#
+#                 if issubclass(attr_type, (int, bool, str, float)):
+#                     match = (attr == attr_type(value))
+#
+#             if match:
+#                 return instance

@@ -1,8 +1,10 @@
 from bolt.discord.models.base import Snowflake, Model, Field, Enum
 
+
 class PremiumType(Enum):
     NITROCLASSIC = 1
     NITRO = 2
+
 
 class User(Model):
     __repr_keys__ = ['id', 'name']

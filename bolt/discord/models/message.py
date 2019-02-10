@@ -1,7 +1,7 @@
-from bolt.discord.models.base import Enum, Model, Snowflake, Field, ListField
+from bolt.discord.models.base import Enum, Model, Snowflake, Field, ListField, Timestamp
 from bolt.discord.models.emoji import Emoji
 from bolt.discord.models.user import User
-from bolt.discord.models.guild import Role
+from bolt.discord.models.guild import Role, GuildMember
 from bolt.discord.models.embed import Embed
 
 
