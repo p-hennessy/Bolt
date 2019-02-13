@@ -3,3 +3,32 @@ _model: page
 title: Commands
 ---
 order: 1
+---
+article:
+
+### Basic Commands
+```python
+from bolt import Plugin
+from bolt import command
+
+class SayHi(Plugin):
+    @command("hi")
+    def hi(self, event):
+        self.say(event.channel_id, f"Hello {event.sender.name}")
+```
+
+This will register a command with the bot's plugin manager.
+
+If someone says "hi" in a text channel that the bot is in; then the decorated function will execute.
+Commands themselves don't remember state, unless persisted to the database or set state on the
+plugin class itself. It is recommended that you use the database for most stateful things.
+
+
+### Regex Commands
+
+! Coming soon
+
+
+### Parse Commands
+
+! Coming soon
