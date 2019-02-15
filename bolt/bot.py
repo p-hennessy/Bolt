@@ -21,18 +21,26 @@ from bolt.core.event import EventManager
 from bolt.core.webhook import WebhookServer
 from bolt.core.scheduler import Scheduler
 from bolt.core.plugin import Plugin
+from bolt.core.config import Config
+from bolt.utils import setup_logger
 
 from pymongo import MongoClient
 
 import sys
+import os
 import logging
 import logging.handlers
 import inspect
+import importlib.util
 
 
 class Bot():
-    def __init__(self, token):
-        self._setup_logger()
+    VERSION = "0.3.2"
+
+    def __init__(self, config_path):
+        self.config = Config(config_path)
+        setup_logger(self.config)
+        self.logger = logging.getLogger(__name__)
 
         # Core
         self.plugins = []
@@ -42,8 +50,8 @@ class Bot():
         self.queue = queue.Queue()
 
         # Backend
-        self.websocket = Websocket(self, token)
-        self.api = API(token)
+        self.websocket = Websocket(self, self.config.api_key)
+        self.api = API(self.config.api_key)
 
         # Database
         self.database_client = MongoClient()
@@ -75,36 +83,15 @@ class Bot():
             finally:
                 gevent.sleep(0)
 
-    def _setup_logger(self):
-        logging.getLogger("requests").setLevel(logging.WARNING)
-        logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
+    def load_plugin(self, path):
+        name = path.split('/')[-1].split('.')[0]
+        path = os.path.abspath(path)
+        self.logger.info(f"Loading plugin \"{name}\" from \"{path}\"")
 
-        log = logging.getLogger('')
-        log.setLevel(logging.DEBUG)
+        plugin_module_spec = importlib.util.spec_from_file_location(name, path)
+        plugin_module = importlib.util.module_from_spec(plugin_module_spec)
+        plugin_module_spec.loader.exec_module(plugin_module)
 
-        # Create console handler
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_formatter = logging.Formatter(
-            "%(levelname)s %(name)s.%(funcName)s:%(lineno)s '%(message)s'"
-        )
-        console_handler.setFormatter(console_formatter)
-        console_handler.setLevel(logging.DEBUG)
-        log.addHandler(console_handler)
-
-        # Create log file handler
-        file_handler = logging.handlers.TimedRotatingFileHandler("logs/botlog.json", when="midnight")
-        file_formatter = logging.Formatter(
-            '{{"time":"{created}","lvl":"{levelname}","src":"{name}.{funcName}:{lineno}","msg":"{message}"}}',
-            datefmt='%m/%d/%Y %H:%M:%S',
-            style="{"
-        )
-        file_handler.setFormatter(file_formatter)
-        file_handler.setLevel(logging.INFO)
-        log.addHandler(file_handler)
-
-        self.logger = logging.getLogger(__name__)
-
-    def load(self, plugin_module):
         for name, clazz in inspect.getmembers(plugin_module, inspect.isclass):
             if issubclass(clazz, Plugin) and name != "Plugin":
                 new_plugin = clazz(self)
@@ -112,3 +99,15 @@ class Bot():
 
                 self.plugins.append(new_plugin)
                 break
+
+    def unload_plugin(self, name):
+        found_index = None
+        for index, plugin in self.plugins.enumerate():
+            if plugin.name == name:
+                found_index = index
+                break
+        else:
+            return
+
+        plugin = self.plugins.pop(found_index)
+        plugin.deactivate()

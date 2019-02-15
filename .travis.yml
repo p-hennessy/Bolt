@@ -8,20 +8,43 @@ cache:
 python:
   - '3.6'
 
-install:
-  - pip install setuptools
-  - pip install flake8
-  - pip install lektor
-  - gem install sass
+jobs:
+  include:
+    - stage: Run Tests
+      install:
+        - pip install flake8
+        - pip install nose
+      script:
+        - nosetests -w tests/
+        - flake8 bolt/
 
-script:
-  - python setup.py test
-  - flake8 bolt/
-  - scss --style=compressed docs/scss/milligram.scss > docs/assets/static/milligram.min.css
-  - pushd docs && lektor build && popd
+    - stage: Build Artifacts
+      install:
+        - pip install pyinstaller
 
-deploy:
-  provider: script
-  script: "cd docs && lektor deploy ghpages"
-  on:
-    branch: master
+    - stage: Bump Version
+      install:
+        - pip install bumpversion
+      script:
+        - bumpversion patch --allow-dirty
+
+    - stage: Build Docs
+      install:
+        - pip install lektor
+        - gem install sass
+      script:
+        - scss --style=compressed docs/scss/milligram.scss > docs/assets/static/milligram.min.css
+        - pushd docs && lektor build && popd
+      deploy:
+        provider: script
+        script: "cd docs && lektor deploy ghpages"
+        on:
+          branch: master
+
+stages:
+  - name: Run Tests
+  - name: Build Artifacts
+  - name: Bump Version
+    if: branch = master
+  - name: Build Docs
+    if: branch = master

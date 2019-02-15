@@ -45,6 +45,9 @@ class Plugin(object):
                 name = tag['name']
                 properties = tag['properties']
 
+                if properties.get('trigger', '') is None:
+                    properties['trigger'] = self.bot.config.trigger
+
                 if name == "pre_command":
                     self.pre_command_hooks.append(callback)
 
@@ -151,10 +154,7 @@ def help(text, usage="Not Documented"):
     })
 
 
-def command(pattern, access=0, trigger="!"):
-    if trigger is None:
-        trigger = ""
-
+def command(pattern, access=0, trigger=None):
     return add_method_tag({
         'name': 'command',
         'properties': {
@@ -165,10 +165,7 @@ def command(pattern, access=0, trigger="!"):
     })
 
 
-def regex_command(pattern, access=0, trigger="!"):
-    if trigger is None:
-        trigger = ""
-
+def regex_command(pattern, access=0, trigger=None):
     return add_method_tag({
         'name': 'regex_command',
         'properties': {
@@ -179,10 +176,7 @@ def regex_command(pattern, access=0, trigger="!"):
     })
 
 
-def parse_command(pattern, access=0, trigger="!"):
-    if trigger is None:
-        trigger = ""
-
+def parse_command(pattern, access=0, trigger=None):
     return add_method_tag({
         'name': 'parse_command',
         'properties': {

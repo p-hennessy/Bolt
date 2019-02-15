@@ -1,3 +1,15 @@
+"""
+    Description:
+        Entry point for loading Bolt
+
+    Contributors:
+        - Patrick Hennessy
+
+    License:
+        Bolt is free software: you can redistribute it and/or modify it
+        under the terms of the GNU General Public License v3; as published
+        by the Free Software Foundation
+"""
 from bolt import Bot
 
 import argparse
@@ -6,6 +18,7 @@ import os
 import yaml
 import socket
 import requests
+import importlib.util
 
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
@@ -14,25 +27,29 @@ RED = "\033[1;31m"
 GREEN = "\033[1;32m"
 RESET = "\033[0m"
 
-config_dir = "dist/etc/bolt/"
-
 
 def main():
     parser = init_parser()
     args = vars(parser.parse_args())
 
+    config_path = args.get('config')
+    plugin_dir = args.get('plugin_dir')
+
     if args['command'] == "version":
         version()
     elif args['command'] == "verify-config":
-        verify_config()
+        verify_config(config_path)
     elif args['command'] == "verify-plugins":
-        verify_config()
+        verify_plugins()
     else:
-        run_bot()
+        run_bot(config_path, plugin_dir)
 
 
 def init_parser():
     parser = argparse.ArgumentParser()
+
+    parser.add_argument("--config", default='pkg/etc/bolt/config.yml')
+    parser.add_argument("--plugin-dir", default='plugins/')
 
     subparser = parser.add_subparsers(dest='command')
     parser_version = subparser.add_parser('version')
@@ -42,10 +59,10 @@ def init_parser():
     return parser
 
 
-def verify_config():
+def verify_config(config_path):
     exit_error = False
 
-    with open(os.path.join(config_dir, "config.yml")) as config_file:
+    with open(config_path) as config_file:
         config = yaml.load(config_file.read())
 
     required_keys = [
@@ -114,21 +131,24 @@ def verify_plugins():
 
 
 def version():
-    pass
+    print(f"{Bot.VERSION}")
 
 
-def run_bot():
-    with open(os.path.join(config_dir, "config.yml")) as config_file:
-        config = yaml.load(config_file.read())
-
-    bot = Bot(config['api_key'])
-    ## TODO Import Plugin stuff
+def run_bot(config_path, plugin_dir):
+    bot = Bot(config_path)
+    bot.load_plugin("./plugins/Access.py")
+    bot.load_plugin("./plugins/Manage.py")
+    bot.load_plugin("./plugins/Chance.py")
+    bot.load_plugin("./plugins/DemosTF.py")
+    bot.load_plugin("./plugins/LogsTF.py")
+    bot.load_plugin("./plugins/Steam.py")
+    bot.load_plugin("./plugins/UrbanDictionary.py")
+    bot.load_plugin("./plugins/ServeMe.py")
 
     try:
         bot.run()
     except KeyboardInterrupt:
         sys.exit(0)
-
 
 
 def is_port_in_use(port):
