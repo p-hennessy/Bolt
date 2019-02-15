@@ -53,7 +53,7 @@ def get_logging_configuation(config):
     log_dir = os.path.abspath(config.log_dir)
     try:
         test_log_file = os.path.join(log_dir, "temp")
-        with open(test_log_file, 'a') as _: # noqa: F841
+        with open(test_log_file, 'a') as _:  # noqa: F841
             pass
         os.remove(test_log_file)
     except OSError:
