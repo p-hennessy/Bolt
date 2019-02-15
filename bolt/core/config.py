@@ -1,6 +1,5 @@
 from bolt.core.exceptions import InvalidConfigurationError
 
-import logging
 import yaml
 
 
@@ -31,7 +30,7 @@ class Config():
             setattr(self, key, value)
 
     @staticmethod
-    def validate():
+    def validate(config_path):
         with open(config_path) as config_file:
             config = yaml.load(config_file.read())
 

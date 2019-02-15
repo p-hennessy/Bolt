@@ -53,10 +53,10 @@ def get_logging_configuation(config):
     log_dir = os.path.abspath(config.log_dir)
     try:
         test_log_file = os.path.join(log_dir, "temp")
-        with open(test_log_file, 'a') as _:
+        with open(test_log_file, 'a') as _: # noqa: F841
             pass
         os.remove(test_log_file)
-    except OSError as e:
+    except OSError:
         raise InvalidConfigurationError(f"Log directory at {log_dir} does not exist!")
 
     return (level, log_dir)
@@ -68,10 +68,10 @@ class ColoredFormatter(Formatter):
 
     def format(self, record):
         MAPPING = {
-            'DEBUG'   : 36,
-            'INFO'    : 32,
-            'WARNING' : 33,
-            'ERROR'   : 31,
+            'DEBUG': 36,
+            'INFO': 32,
+            'WARNING': 33,
+            'ERROR': 31,
             'CRITICAL': 41,
         }
 

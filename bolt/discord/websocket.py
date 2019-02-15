@@ -15,7 +15,6 @@ import websocket
 import logging
 import gevent
 import time
-import ssl
 import re
 
 
