@@ -31,6 +31,7 @@ jobs:
         - pyinstaller --onefile -n bolt entrypoint.py
         - mv dist/bolt pkg/usr/bin/bolt
         - pushd pkg/
+        - find . -name "gitkeep" -type f -delete
         - tar -czf bolt-installer.tar.gz *
         - mv bolt-installer.tar.gz ..
         - popd

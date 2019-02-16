@@ -1,5 +1,14 @@
+# -----------------------------------------------------------------------------
+# Bolt v0.4.4
+#
+# Author: Patrick Hennessy
+# Source Code: https://github.com/ns-phennessy/Bolt
+# License: MIT
+# -----------------------------------------------------------------------------
 ---
 
+# General
+# -----------------------------------------------------------------------------
 # Discord API key used to connect to the websocket and use the Discord API
 # https://discordapp.com/developers/applications/
 api_key: ""
@@ -8,7 +17,7 @@ api_key: ""
 # Some plugins may set the bot's name to this
 name: "Ms. Pauling"
 
-# Trigger is used as the default way of getting the bots attention
+# Trigger is used as the default prefix for invoking commands
 # Some plugins may choose to override this value
 trigger: "!"
 
@@ -17,20 +26,21 @@ trigger: "!"
 # This allows for N amount of concurrent work to be performed by the bot
 worker_threads: 25
 
-# Database Settings
-# Mongo is used by plugins and the core bot itself to store persistant state
+# Database Credentials
+# -----------------------------------------------------------------------------
 mongo_database_uri: "mongodb://localhost:27017"
 mongo_database_username: ""
 mongo_database_password: ""
 
 # Webhook
-# Port the webhook HTTP server will listen on
+# -----------------------------------------------------------------------------
 webhook_port: 8080
 
 # Plugins
+# -----------------------------------------------------------------------------
 plugin_dir: /etc/bolt/plugins.enabled.d/
 
 # Logging
-# log_level must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL
-log_level: DEBUG
+# -----------------------------------------------------------------------------
+log_level: DEBUG        # Must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL
 log_dir: /var/log/bolt/
