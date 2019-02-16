@@ -61,8 +61,7 @@ def verify_config(config_path):
     exit_error = False
 
     with open(config_path) as config_file:
-        config_file_contents = config_file.read()
-        config = yaml.load(config_file_contents)
+        config = yaml.safe_load(config_file.read())
 
     required_keys = [
         'api_key',
