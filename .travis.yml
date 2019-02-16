@@ -36,6 +36,7 @@ jobs:
         - popd
       deploy:
         provider: releases
+        skip_cleanup: true
         api_key:
           secure: EK+NEDqmU5saU+yUdDpeQrSy6k5XIJiDU2ppYwW/5QvcsY4fwEzpAY+NaoD79JxuW1CjuFfSt7LgW+gg0bWNNzI8HnCaU0v64L0n4alChZtEU14BXQxX+YpUEqiQDgnvCs+SaK3xsOhbqxfVosVwTWMtsEyR17kfX1sF4rgtabc=
         file: "bolt-installer.tar.gz"
