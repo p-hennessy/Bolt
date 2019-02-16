@@ -1,5 +1,7 @@
 language: python
 
+dist: xenial
+
 cache:
   directories:
     - $HOME/.cache/pip
@@ -21,7 +23,7 @@ jobs:
 
     - stage: Build Artifacts
       install:
-        - sudo apt-get install python3.6-dev libxml2-dev libxslt-dev
+        - sudo apt-get install libxml2-dev libxslt-dev
         - pip install bumpversion
         - pip install pyinstaller
         - pip install -r REQUIREMENTS.txt
