@@ -14,11 +14,9 @@ from bolt import Bot
 
 import argparse
 import sys
-import os
 import yaml
 import socket
 import requests
-import importlib.util
 
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
@@ -63,7 +61,8 @@ def verify_config(config_path):
     exit_error = False
 
     with open(config_path) as config_file:
-        config = yaml.load(config_file.read())
+        config_file_contents = config_file.read()
+        config = yaml.load(config_file_contents)
 
     required_keys = [
         'api_key',

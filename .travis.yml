@@ -22,6 +22,8 @@ jobs:
     - stage: Build Artifacts
       install:
         - pip install pyinstaller
+      script:
+        - pyinstaller entrypoint.py
 
     - stage: Bump Version
       install:

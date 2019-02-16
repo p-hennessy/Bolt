@@ -26,7 +26,6 @@ from bolt.utils import setup_logger
 
 from pymongo import MongoClient
 
-import sys
 import os
 import logging
 import logging.handlers
