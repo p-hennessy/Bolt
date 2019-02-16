@@ -1,0 +1,23 @@
+# -----------------------------------------------------------------------------
+# Bolt v0.4.6
+#
+# Author: Patrick Hennessy
+# Source Code: https://github.com/ns-phennessy/Bolt
+# License: MIT
+# -----------------------------------------------------------------------------
+[Unit]
+Description=Bolt - Discord Bot Server
+After=network.target
+AssertPathExists=/etc/bolt/
+AssertPathExists=/var/log/bolt/
+
+[Service]
+Type=simple
+User=bolt
+Group=bolt
+Environment=WEBSOCKET_CLIENT_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+ExecStart=/usr/bin/bolt
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target

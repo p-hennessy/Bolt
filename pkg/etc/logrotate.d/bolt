@@ -1,0 +1,15 @@
+# -----------------------------------------------------------------------------
+# Bolt v0.4.6
+#
+# Author: Patrick Hennessy
+# Source Code: https://github.com/ns-phennessy/Bolt
+# License: MIT
+# -----------------------------------------------------------------------------
+/var/log/bolt/*.log {
+    rotate 12
+    create 640 bolt bolt
+    daily
+    compress
+    missingok
+    notifempty
+}

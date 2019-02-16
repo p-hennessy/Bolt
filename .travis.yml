@@ -1,5 +1,7 @@
 language: python
 
+dist: xenial
+
 cache:
   directories:
     - $HOME/.cache/pip
@@ -8,20 +10,58 @@ cache:
 python:
   - '3.6'
 
-install:
-  - pip install setuptools
-  - pip install flake8
-  - pip install lektor
-  - gem install sass
+jobs:
+  include:
+    - stage: Run Tests
+      install:
+        - pip install flake8
+        - pip install nose
+        - pip install -r REQUIREMENTS.txt
+      script:
+        - nosetests -w tests/
+        - flake8 bolt/
 
-script:
-  - python setup.py test
-  - flake8 bolt/
-  - scss --style=compressed docs/scss/milligram.scss > docs/assets/static/milligram.min.css
-  - pushd docs && lektor build && popd
+    - stage: Build Artifacts
+      install:
+        - sudo apt-get install libxml2-dev libxslt-dev
+        - pip install bumpversion
+        - pip install pyinstaller
+        - pip install -r REQUIREMENTS.txt
+      script:
+        - VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+        - pyinstaller --onefile -n bolt entrypoint.py
+        - mv dist/bolt pkg/usr/bin/bolt
+        - pushd pkg/
+        - find . -name "gitkeep" -type f -delete
+        - tar -czf bolt-$VERSION.tar.gz *
+        - mv bolt-$VERSION.tar.gz ..
+        - popd
+      deploy:
+        provider: releases
+        skip_cleanup: true
+        api_key:
+          secure: EK+NEDqmU5saU+yUdDpeQrSy6k5XIJiDU2ppYwW/5QvcsY4fwEzpAY+NaoD79JxuW1CjuFfSt7LgW+gg0bWNNzI8HnCaU0v64L0n4alChZtEU14BXQxX+YpUEqiQDgnvCs+SaK3xsOhbqxfVosVwTWMtsEyR17kfX1sF4rgtabc=
+        file_glob: true
+        file: "bolt-*.tar.gz"
+        prerelease: true
+        on:
+          tags: true
 
-deploy:
-  provider: script
-  script: "cd docs && lektor deploy ghpages"
-  on:
-    branch: master
+    - stage: Build Docs
+      install:
+        - pip install lektor
+        - gem install sass
+      script:
+        - scss --style=compressed docs/scss/milligram.scss > docs/assets/static/milligram.min.css
+        - pushd docs && lektor build && popd
+      deploy:
+        provider: script
+        script: "cd docs && lektor deploy ghpages"
+        on:
+          branch: master
+
+stages:
+  - name: Run Tests
+  - name: Build Artifacts
+  - name: Build Docs
+    if: branch = master

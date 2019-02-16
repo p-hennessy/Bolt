@@ -1,8 +1,5 @@
 *.pyc
 *.db
-conf/settings.py
-resources/
-databases/
-logs/
 .*
 *.egg-info/
+*__pycache__*
