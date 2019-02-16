@@ -28,12 +28,20 @@ jobs:
         - pip install pyinstaller
         - pip install -r REQUIREMENTS.txt
       script:
-        - bumpversion patch --allow-dirty
+        - VERSION=$(git tag --points-at HEAD)
+        - bumpversion patch --allow-dirty --new-version $VERSION
         - pyinstaller --onefile -n bolt entrypoint.py
         - mv dist/bolt pkg/usr/bin/bolt
         - pushd pkg/
-        - tar -czf bolt-0.3.2.tar.gz *
+        - tar -czf bolt-$(VERSION).tar.gz *
         - popd
+      deploy:
+        provider: releases
+        api_key:
+          secure: EK+NEDqmU5saU+yUdDpeQrSy6k5XIJiDU2ppYwW/5QvcsY4fwEzpAY+NaoD79JxuW1CjuFfSt7LgW+gg0bWNNzI8HnCaU0v64L0n4alChZtEU14BXQxX+YpUEqiQDgnvCs+SaK3xsOhbqxfVosVwTWMtsEyR17kfX1sF4rgtabc=
+        file: "pkg/bolt-$(VERSION).tar.gz"
+        on:
+          tags: true
 
     - stage: Build Docs
       install:
