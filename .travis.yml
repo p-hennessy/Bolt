@@ -14,22 +14,23 @@ jobs:
       install:
         - pip install flake8
         - pip install nose
-      script:
         - pip install -r REQUIREMENTS.txt
+      script:
         - nosetests -w tests/
         - flake8 bolt/
 
     - stage: Build Artifacts
       install:
-        - pip install pyinstaller
-      script:
-        - pyinstaller entrypoint.py
-
-    - stage: Bump Version
-      install:
         - pip install bumpversion
+        - pip install pyinstaller
+        - pip install -r REQUIREMENTS.txt
       script:
         - bumpversion patch --allow-dirty
+        - pyinstaller --onefile -n bolt entrypoint.py
+        - mv dist/bolt pkg/usr/bin/bolt
+        - pushd pkg/
+        - tar -czf bolt-0.3.2.tar.gz *
+        - popd
 
     - stage: Build Docs
       install:
@@ -47,7 +48,5 @@ jobs:
 stages:
   - name: Run Tests
   - name: Build Artifacts
-  - name: Bump Version
-    if: branch = master
   - name: Build Docs
     if: branch = master
