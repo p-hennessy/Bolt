@@ -31,6 +31,7 @@ worker_threads: 25
 mongo_database_uri: "mongodb://localhost:27017"
 mongo_database_username: ""
 mongo_database_password: ""
+mongo_database_use_tls: false
 
 # Webhook
 # -----------------------------------------------------------------------------

@@ -53,7 +53,7 @@ class Bot():
         self.api = API(self.config.api_key)
 
         # Database
-        self.database_client = MongoClient()
+        self.database_client = MongoClient(ssl=self.config.mongo_database_use_tls)
         user_database = self.database_client[f"core-users"]
         self.users = user_database.users
 
