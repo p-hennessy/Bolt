@@ -43,36 +43,39 @@ from bolt.discord import PermissionFlag
 ```python
 from bolt.discord import Events
 ```
-* `READY`
-* `RESUMED`
-* `CHANNEL_CREATE`
-* `CHANNEL_UPDATE`
-* `CHANNEL_DELETE`
-* `CHANNEL_PINS_UPDATE`
-* `GUILD_CREATE`
-* `GUILD_UPDATE`
-* `GUILD_DELETE`
-* `GUILD_BAN_ADD`
-* `GUILD_BAN_REMOVE`
-* `GUILD_EMOJIS_UPDATE`
-* `GUILD_INTEGRATIONS_UPDATE`
-* `GUILD_MEMBER_ADD`
-* `GUILD_MEMBER_REMOVE`
-* `GUILD_MEMBER_UPDATE`
-* `GUILD_MEMBERS_CHUNK`
-* `GUILD_ROLE_CREATE`
-* `GUILD_ROLE_UPDATE`
-* `GUILD_ROLE_DELETE`
-* `MESSAGE_CREATE`
-* `MESSAGE_UPDATE`
-* `MESSAGE_DELETE`
-* `MESSAGE_DELETE_BULK`
-* `MESSAGE_REACTION_ADD`
-* `MESSAGE_REACTION_REMOVE`
-* `MESSAGE_REACTION_REMOVE_ALL`
-* `PRESENCE_UPDATE`
-* `TYPING_START`
-* `USER_UPDATE`
-* `VOICE_STATE_UPDATE`
-* `VOICE_SERVER_UPDATE`
-* `WEBHOOKS_UPDATE`
+
+| Event Name                                                                                                       | Description                                                                                                      |
+|------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| [READY](https://discordapp.com/developers/docs/topics/gateway#ready)                                             | Contains the initial state information                                                                           |
+| [RESUMED](https://discordapp.com/developers/docs/topics/gateway#resumed)                                         | Response to [Resume](https://discordapp.com/developers/docs/topics/gateway#resume)                               |
+| [CHANNEL_CREATE](https://discordapp.com/developers/docs/topics/gateway#channel-create)                           | New channel created                                                                                              |
+| [CHANNEL_UPDATE](https://discordapp.com/developers/docs/topics/gateway#channel-update)                           | Channel was updated                                                                                              |
+| [CHANNEL_DELETE](https://discordapp.com/developers/docs/topics/gateway#channel-delete)                           | Channel was deleted                                                                                              |
+| [CHANNEL_PINS_UPDATE](https://discordapp.com/developers/docs/topics/gateway#channel-pins-update)                 | Message was pinned or unpinned                                                                                   |
+| [GUILD_CREATE](https://discordapp.com/developers/docs/topics/gateway#guild-create)                               | Unavailable guild, guild became available, or joined a new guild                                                 |
+| [GUILD_UPDATE](https://discordapp.com/developers/docs/topics/gateway#guild-update)                               | Guild was updated                                                                                                |
+| [GUILD_DELETE](https://discordapp.com/developers/docs/topics/gateway#guild-delete)                               | Guild became unavailable, or user removed from guild                                                             |
+| [GUILD_BAN_ADD](https://discordapp.com/developers/docs/topics/gateway#guild-ban-add)                             | User was banned from a guild                                                                                     |
+| [GUILD_BAN_REMOVE](https://discordapp.com/developers/docs/topics/gateway#guild-ban-remove)                       | User was unbanned from a guild                                                                                   |
+| [GUILD_EMOJIS_UPDATE](https://discordapp.com/developers/docs/topics/gateway#guild-emojis-update)                 | Guild emojis were updated                                                                                        |
+| [GUILD_INTEGRATIONS_UPDATE](https://discordapp.com/developers/docs/topics/gateway#guild-integrations-update)     | Guild integration was updated                                                                                    |
+| [GUILD_MEMBER_ADD](https://discordapp.com/developers/docs/topics/gateway#guild-member-add)                       | New user joined a guild                                                                                          |
+| [GUILD_MEMBER_REMOVE](https://discordapp.com/developers/docs/topics/gateway#guild-member-remove)                 | User was removed from a guild                                                                                    |
+| [GUILD_MEMBER_UPDATE](https://discordapp.com/developers/docs/topics/gateway#guild-member-update)                 | Guild member was updated                                                                                         |
+| [GUILD_MEMBERS_CHUNK](https://discordapp.com/developers/docs/topics/gateway#guild-members-chunk)                 | Response to Request [Guild Members](https://discordapp.com/developers/docs/topics/gateway#request-guild-members) |
+| [GUILD_ROLE_CREATE](https://discordapp.com/developers/docs/topics/gateway#guild-role-create)                     | Guild role was created                                                                                           |
+| [GUILD_ROLE_UPDATE](https://discordapp.com/developers/docs/topics/gateway#guild-role-update)                     | Guild role was updated                                                                                           |
+| [GUILD_ROLE_DELETE](https://discordapp.com/developers/docs/topics/gateway#guild-role-delete)                     | Guild role was deleted                                                                                           |
+| [MESSAGE_CREATE](https://discordapp.com/developers/docs/topics/gateway#message-create)                           | Message was created                                                                                              |
+| [MESSAGE_UPDATE](https://discordapp.com/developers/docs/topics/gateway#message-update)                           | Message was edited                                                                                               |
+| [MESSAGE_DELETE](https://discordapp.com/developers/docs/topics/gateway#message-delete)                           | Message was deleted                                                                                              |
+| [MESSAGE_DELETE_BULK](https://discordapp.com/developers/docs/topics/gateway#message-delete-bulk)                 | Multiple messages were deleted at once                                                                           |
+| [MESSAGE_REACTION_ADD](https://discordapp.com/developers/docs/topics/gateway#message-reaction-add)               | User reacted to a message                                                                                        |
+| [MESSAGE_REACTION_REMOVE](https://discordapp.com/developers/docs/topics/gateway#message-reaction-remove)         | User removed a reaction from a message                                                                           |
+| [MESSAGE_REACTION_REMOVE_ALL](https://discordapp.com/developers/docs/topics/gateway#message-reaction-remove-all) | All reactions were explicitly removed from a message                                                             |
+| [PRESENCE_UPDATE](https://discordapp.com/developers/docs/topics/gateway#presence-update)                         | User was updated                                                                                                 |
+| [TYPING_START](https://discordapp.com/developers/docs/topics/gateway#typing-start)                               | User started typing in a channel                                                                                 |
+| [USER_UPDATE](https://discordapp.com/developers/docs/topics/gateway#user-update)                                 | Properties about the user changed                                                                                |
+| [VOICE_STATE_UPDATE](https://discordapp.com/developers/docs/topics/gateway#voice-state-update)                   | Someone joined, left, or moved a voice channel                                                                   |
+| [VOICE_SERVER_UPDATE](https://discordapp.com/developers/docs/topics/gateway#voice-server-update)                 | Guild's voice server was updated                                                                                 |
+| [WEBHOOKS_UPDATE](https://discordapp.com/developers/docs/topics/gateway#webhooks-update)                         | Guild channel webhook was created, update, or deleted                                                            |
