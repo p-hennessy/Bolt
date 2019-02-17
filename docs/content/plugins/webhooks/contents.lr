@@ -3,3 +3,53 @@ _model: page
 title: Webhooks
 ---
 order: 3
+---
+article:
+
+
+### Overview
+
+Bolt is able to listen for HTTP requests. An example of this would be Github pushing events to an
+HTTP endpoint when an event is triggered.
+
+The [Falcon library](https://falcon.readthedocs.io/en/stable/index.html) is used as an embedded HTTP
+server.
+
+Refer to the [`falcon.Request`](https://falcon.readthedocs.io/en/stable/api/request_and_response.html#id1)
+object for specifics of the object being passed into the handler.
+
+-----
+
+### Example
+
+```python
+from bolt import webhook
+
+@webhook('/github', methods=['POST'])
+def webhook(self, request):
+    data = json.loads(request.stream.read())
+    headers = request.headers
+    event = headers['X-GITHUB-EVENT']
+
+    # handle request...
+
+    self.say(channel_id, f"Github event recieved: {event}")
+```
+
+webhook arguments:
+* `route` (_str_): Will be where the bot listens relative to the root URL. This must be unique across
+the bots plugins.
+* `methods` (_list[str]_): List of methods bot will trigger on
+
+-----
+
+### Handling SSL Requests
+
+! Bolt does not have support for SSL termination
+
+You should run a proxy server like [Nginx](https://www.nginx.com/) or
+[Apache](https://httpd.apache.org/) for this purpose, they are extremely stable and support almost
+every type of SSL configuration necessary.
+
+Here is Nginx's official documentation on configuring SSL:
+https://nginx.org/en/docs/http/configuring_https_servers.html

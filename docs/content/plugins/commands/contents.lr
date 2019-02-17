@@ -23,11 +23,13 @@ If someone says "hi" in a text channel that the bot is in; then the decorated fu
 Commands themselves don't remember state, unless persisted to the database or set state on the
 plugin class itself. It is recommended that you use the database for most stateful things.
 
+------
 
 ### Regex Commands
 
 ! Coming soon
 
+------
 
 ### Parse Commands
 

@@ -46,6 +46,7 @@ jobs:
         prerelease: true
         on:
           tags: true
+          repo: ns-phennessy/Bolt
 
     - stage: Build Docs
       install:
