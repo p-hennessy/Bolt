@@ -58,6 +58,11 @@ Plugins are loaded dynamically, and are namespaced from one another. It should n
 load the same plugin twice, or overwrite another plugin.
 
 
+You can enable / disable, load or unload a plugin if you desire. This can be very useful for testing
+your plugins. The plugin superclass has all of the methods listed above exposed for this purpose.
+You can access the plugins list on the bot object: `self.bot.plugins`
+
+
 -----
 
 ### Plugin API

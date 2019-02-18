@@ -6,7 +6,6 @@
         - Patrick Hennessy
 """
 
-import logging
 from bolt.discord.events import Events
 
 
