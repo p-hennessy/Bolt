@@ -1,0 +1,31 @@
+_model: page
+---
+title: Configuration
+---
+order: 4
+---
+article:
+
+### Overview
+
+The global configuration file for Bolt is (by default) at `/etc/bolt/config.yml`
+
+It uses the [YAML](https://yaml.org/) markup language. There are inline comments that should provide
+a lot of information.
+
+Here is a brief of some of the important items:
+
+| Key                       | Type   | Required | Description                                                                                                                                                     |
+|---------------------------|--------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `api_key`                 | `str`  | Yes      | API Token used to connect to Discord                                                                                                                            |
+| `name`                    | `str`  | No       | Some plugins may set the bot's name to this or refer to the bot with this                                                                                       |
+| `trigger`                 | `str`  | No       | Trigger is used as the default prefix for invoking commands                                                                                                     |
+| `worker_threads`          | `int`  | Yes      | Amount of Green threads for the bot to spin up, these are extremely light threads so high numbers are okay                                                      |
+| `mongo_database_uri`      | `str`  | Yes      | Where to find the Mongo database                                                                                                                                |
+| `mongo_database_username` | `str`  | No       | Username to login to Mongo database                                                                                                                             |
+| `mongo_database_password` | `str`  | No       | Password for logging into Mongo database                                                                                                                        |
+| `mongo_database_use_tls`  | `bool` | No       | Encrypt traffic between Bolt and the database (Recommended) See [Mongo with TLS](https://docs.mongodb.com/manual/tutorial/configure-ssl/) for more information. |
+| `webhook_port`            | `str`  | Yes      | Local port the Webhook HTTP server will listen on                                                                                                               |
+| `plugin_dir`              | `str`  | Yes      | Where on file system does Bolt find plugins                                                                                                                     |
+| `log_level`               | `str`  | Yes      | Default log level. See [Python Log Levels](https://docs.python.org/3/library/logging.html#logging-levels)                                                       |
+| `log_dir`                 | `str`  | Yes      | Where on file system does Bolt put logs                                                                                                                         |

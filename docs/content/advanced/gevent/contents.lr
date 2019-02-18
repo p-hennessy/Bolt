@@ -3,3 +3,63 @@ _model: page
 title: Gevent
 ---
 order: 3
+---
+article:
+
+### Overview
+
+Bolt uses [Gevent](http://www.gevent.org/) to allow for highly concurrent functioning.
+
+At a high level, Bolt creates threads for everything it does. There will be green threads for:
+* Websocket Listener
+* Webhook HTTP Server
+* Scheduler
+* Workers
+
+-----
+
+### Blocking
+
+It is important to remember to NEVER
+[block](https://stackoverflow.com/questions/15680422/difference-between-wait-and-blocked-thread-states).
+
+Gevent will hotpatch the stdlib on anything that would normally block, however it's still possible
+to block by using `time.sleep()`. If you need to introduce a delay, use
+[`gevent.sleep()`](http://www.gevent.org/api/gevent.html#sleeping) instead.
+
+Gevent does _NOT_ patch file IO. Usually this is already so fast there's not a lot of benefit to it.
+This is part of the reason Bolt uses MongoDB for it's database, since that will be handled via a
+socket.
+
+-----
+
+### Worker Queue
+
+Bolt will create lots of worker threads to handle anything the bot is needed to do asynchronously.
+The idea is that the websocket will send data to Bolt, which will be immediately handed off to a
+worker thread to process further. This makes the bot extremely responsive since the websocket will
+process incoming data as soon as it can get thread control (which is extremely fast)
+
+The worker threads will constantly pull "work" off of a central queue. "Work" in this case means
+executing a function with some arguments.
+
+You _may_ choose to schedule work for the bot to execute asynchronously:
+
+```python
+from bolt import Plugin
+
+class Example(Plugin):
+    def activate(self):
+        self.bot.queue.put((workme, ["arg1", "arg2"], {}))
+
+def workme(arg1, arg2):
+    # does stuff
+```
+
+The bot queue is simply a [gevent queue](http://www.gevent.org/api/gevent.queue.html)
+
+This code will run asynchronously, so there is no guarantee when it will finish. You will also not
+be able to get a return value from putting things on the queue. If you're already running a handler
+on a worker thread, it is totally okay to keep it running for a long-ish time. So long as you have
+enough threads in the pool. These threads are extremely light weight so you can have hundreds if
+necessary.

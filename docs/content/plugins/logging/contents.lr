@@ -1,0 +1,33 @@
+_model: page
+---
+title: Logging
+---
+order: 7
+---
+article:
+
+### Overview
+
+Bolt uses the [Python logging library](https://docs.python.org/3/library/logging.html), so this
+should feel very familiar to Python developers.
+
+The plugin class will automatically create a logger for you to use, so it's not needed to create
+your own instance. It does some setup behind the scenes to make it so the logs outputted are pretty
+and the source of the logs is name spaced as one might expect. Ultimate, this is less code for you
+to write!
+
+-----
+
+### Example
+
+```python
+from bolt import Plugin
+
+def Example(Plugin):
+    def activate(self):
+        self.logger.debug("Debug")
+        self.logger.info("Info")
+        self.logger.warning("Warning")
+        self.logger.error("Error")
+        self.logger.critical("Critical")
+```
