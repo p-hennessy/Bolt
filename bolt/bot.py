@@ -17,7 +17,6 @@ monkey.patch_all()
 
 from bolt.discord.api import API
 from bolt.discord.websocket import Websocket
-from bolt.core.event import EventManager
 from bolt.core.webhook import WebhookServer
 from bolt.core.scheduler import Scheduler
 from bolt.core.plugin import Plugin
@@ -43,8 +42,7 @@ class Bot():
 
         # Core
         self.plugins = []
-        self.events = EventManager()
-        self.webhooks = WebhookServer()
+        self.webhooks = WebhookServer(self)
         self.scheduler = Scheduler(self)
         self.queue = queue.Queue()
 
@@ -85,7 +83,6 @@ class Bot():
     def load_plugin(self, path):
         name = path.split('/')[-1].split('.')[0]
         path = os.path.abspath(path)
-        self.logger.info(f"Loading plugin \"{name}\" from \"{path}\"")
 
         plugin_module_spec = importlib.util.spec_from_file_location(name, path)
         plugin_module = importlib.util.module_from_spec(plugin_module_spec)
@@ -93,10 +90,10 @@ class Bot():
 
         for name, clazz in inspect.getmembers(plugin_module, inspect.isclass):
             if issubclass(clazz, Plugin) and name != "Plugin":
-                new_plugin = clazz(self)
-                new_plugin.activate()
+                plugin = clazz(self)
+                plugin.load()
 
-                self.plugins.append(new_plugin)
+                self.plugins.append(plugin)
                 break
 
     def unload_plugin(self, name):
@@ -109,4 +106,4 @@ class Bot():
             return
 
         plugin = self.plugins.pop(found_index)
-        plugin.deactivate()
+        plugin.unload()

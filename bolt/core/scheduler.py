@@ -5,7 +5,6 @@ import logging
 
 class Scheduler():
     def __init__(self, bot):
-        self.tasks = []
         self.running = False
         self.bot = bot
         self.logger = logging.getLogger(__name__)
@@ -15,33 +14,23 @@ class Scheduler():
         self.running = True
 
         while self.running:
-            if not self.tasks:
-                gevent.sleep(1)
+            for plugin in self.bot.plugins:
+                if not plugin.enabled:
+                    continue
 
-            now = time.time()
-            for task in self.tasks:
-                if int(now - task['last']) >= task['timeout']:
-                    task['last'] = time.time()
-                    self.bot.queue.put((task['callback'], [], {}))
+                for interval in plugin.intervals:
+                    if interval.ready():
+                        interval.last = time.time()
+                        self.bot.queue.put((interval.callback, [], {}))
 
             gevent.sleep(1)
 
-    def run_interval(self, callback, timeout):
-        new_task = {
-            'timeout': timeout,
-            'last': 0,
-            'callback': callback
-        }
-        self.tasks.append(new_task)
 
-    def run_cron(self):
-        raise NotImplementedError
+class Interval():
+    def __init__(self, timeout, callback):
+        self.timeout = timeout
+        self.callback = callback
+        self.last = 0
 
-    def run_later(self, timestamp):
-        raise NotImplementedError
-
-        # new_task = {
-        #     'timestamp': timestamp,
-        #     'callback': callback
-        # }
-        # self.tasks.append(new_task)
+    def ready(self):
+        return int(time.time() - self.last) >= self.timeout

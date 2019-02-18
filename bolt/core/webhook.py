@@ -5,7 +5,8 @@ import falcon
 
 
 class WebhookServer():
-    def __init__(self):
+    def __init__(self, bot):
+        self.bot = bot
         self.routes = {}
         self.app = falcon.API()
         self.app.add_sink(self.handle, '/')
@@ -21,41 +22,44 @@ class WebhookServer():
         route = request.path
         method = request.method
 
-        if route not in self.routes.keys():
-            response.status = falcon.HTTP_404
-            return response
+        for plugin in self.bot.plugins:
+            if not plugin.enabled:
+                continue
 
-        route_data = self.routes[route]
+            for plugin_route in plugin.routes:
+                if route not in plugin_route.route:
+                    continue
+                else:
+                    if method not in plugin_route.methods:
+                        response.status = falcon.HTTP_405
+                        return response
+                    else:
+                        try:
+                            ret = plugin_route.callback(request)
 
-        if method not in route_data['methods']:
-            response.status = falcon.HTTP_405
-            return response
+                            if isinstance(ret, str):
+                                response.body = ret
+                            elif isinstance(ret, dict):
+                                response.body = json.dumps(ret)
 
-        try:
-            ret = route_data['callback'](request)
+                            response.status = falcon.HTTP_200
+                            return response
 
-            if isinstance(ret, str):
-                response.body = ret
-            elif isinstance(ret, dict):
-                response.body = json.dumps(ret)
+                        except Exception as e:
+                            self.logger.warning(f"Recieved exception processing web request: {e}")
+                            response.status = falcon.HTTP_500
+            else:
+                response.status = falcon.HTTP_404
+                return response
 
-            response.status = falcon.HTTP_200
-            return response
 
-        except Exception as e:
-            self.logger.warning(f"Recieved exception processing web request: {e}")
-            response.status = falcon.HTTP_500
-
-    def add_route(self, route, callback, methods=['GET']):
+class Route():
+    def __init__(self, route, callback, methods=None):
         methods = ["GET"] if methods is None else methods
 
         if not route.startswith("/"):
             route = "/" + str(route)
 
-        self.routes[route] = {'callback': callback, 'methods': methods}
-
-    def delete_route(self, route):
-        if not route.startswith("/"):
-            route = "/" + str(route)
-
-        del self.routes[route]
+        self.route = route
+        self.callback = callback
+        self.methods = methods

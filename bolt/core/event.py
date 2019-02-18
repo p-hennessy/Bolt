@@ -38,21 +38,7 @@ class Event():
         return convert(item)
 
 
-class EventManager():
-    def __init__(self):
-        self.subscriptions = {}
-        self.logger = logging.getLogger(__name__)
-
-    def unsubscribe(self, event_id, callback):
-        if event_id in self.subscriptions.keys():
-            self.logger.debug(f'Removing {callback} from {event_id}')
-
-            self.subscriptions[event_id].remove(callback)
-
-    def subscribe(self, event_id, callback):
-        self.logger.debug(f'Adding {callback} to {event_id}')
-
-        if event_id not in self.subscriptions.keys():
-            self.subscriptions[event_id] = [callback]
-        else:
-            self.subscriptions[event_id].append(callback)
+class Subscription():
+    def __init__(self, event, callback):
+        self.event = event
+        self.callback = callback

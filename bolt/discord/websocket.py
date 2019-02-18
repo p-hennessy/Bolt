@@ -5,7 +5,7 @@
     Contributors:
         - Patrick Hennessy
 """
-from bolt.core.event import Event
+from bolt.core.event import Event, Subscription
 from bolt.discord.events import Events
 
 from datetime import timedelta
@@ -36,8 +36,10 @@ class Websocket():
         self.heartbeat_greenlet = None
 
         # Subscribe to events
-        self.bot.events.subscribe(Events.MESSAGE_CREATE, self.handle_gateway_message)
-        self.bot.events.subscribe(Events.READY, self.handle_gateway_ready)
+        self.subscriptions = [
+            Subscription(Events.MESSAGE_CREATE, self.handle_gateway_message),
+            Subscription(Events.READY, self.handle_gateway_ready)
+        ]
 
     def start(self):
         self.logger.debug('Spawning Gateway Greenlet')
@@ -91,11 +93,20 @@ class Websocket():
             event_id = getattr(Events, message['t'])
             event = Event.from_message(message)
 
-            for callback in self.bot.events.subscriptions.get(event_id, []):
-                self.bot.queue.put((callback, [event], {}))
+            for plugin in self.bot.plugins:
+                if not plugin.enabled:
+                    continue
+
+                for subscription in plugin.subscriptions:
+                    if subscription.event == event_id:
+                        self.bot.queue.put((subscription.callback, [event], {}))
+                    gevent.sleep(0)
+
+            for subscription in self.subscriptions:
+                if subscription.event == event_id:
+                    self.bot.queue.put((subscription.callback, [event], {}))
                 gevent.sleep(0)
 
-            gevent.sleep(0)
             return
 
         elif op_code == GatewayOpCodes.RECONNECT:
