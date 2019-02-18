@@ -10,6 +10,7 @@ from bolt.discord.events import Events
 
 from datetime import timedelta
 from platform import system
+from enum import IntEnum
 import ujson as json
 import websocket
 import logging
@@ -59,7 +60,7 @@ class Websocket():
         while True:
             self._heartbeat_start = time.monotonic()
             self.logger.debug(f'Heartbeat. Ping: {self.ping} @ {self._heartbeat_start}')
-            self.send({"op": 1, "d": self.sequence})
+            self.send({"op": GatewayOpCodes.HEARTBEAT, "d": self.sequence})
             gevent.sleep(interval / 1000)
 
     def handle_websocket_error(self, socket, error):
@@ -84,8 +85,7 @@ class Websocket():
         message = json.loads(message)
         op_code = message['op']
 
-        # Dispatch Event
-        if op_code == 0:
+        if op_code == GatewayOpCodes.DISPATCH:
             self.sequence = message['s']
 
             event_id = getattr(Events, message['t'])
@@ -98,20 +98,17 @@ class Websocket():
             gevent.sleep(0)
             return
 
-        # Reconnect
-        elif op_code == 7:
-            self.logger.warning("got reconnect sig")
+        elif op_code == GatewayOpCodes.RECONNECT:
+            self.logger.warning("Got reconnect signal")
             self.websocket.close()
 
-        # Invalid Session
-        elif op_code == 9:
-            self.logger.warning("invalid session")
+        elif op_code == GatewayOpCodes.INVALID_SESSION:
+            self.logger.warning("Invalid websocket session")
             self.websocket.close()
 
-        # Hello
-        elif op_code == 10:
+        elif op_code == GatewayOpCodes.HELLO:
             self.send({
-                "op": 2,
+                "op": GatewayOpCodes.IDENTIFY,
                 "v": 6,
                 "d": {
                     "token": self.token,
@@ -127,13 +124,12 @@ class Websocket():
 
             self.heartbeat_greenlet = gevent.spawn(self.heartbeat, message['d']['heartbeat_interval'])
 
-        # Heartbeak ACK
-        elif op_code == 11:
+        elif op_code == GatewayOpCodes.HEARTBEAT_ACK:
             delta = timedelta(seconds=time.monotonic()-self._heartbeat_start)
             self.ping = round(delta.microseconds / 1000)
 
         else:
-            self.logger.error(f"Recived unexpect OP code: {op_code}")
+            self.logger.error(f"Recieved unexpected OP code: {op_code}")
 
         return True
 
@@ -204,3 +200,17 @@ class Websocket():
 
             for hook in plugin.pre_command_hooks:
                 yield hook
+
+
+class GatewayOpCodes(IntEnum):
+    DISPATCH = 0
+    HEARTBEAT = 1
+    IDENTIFY = 2
+    STATUS_UPDATE = 3
+    VOICE_STATE_UPDATE = 4
+    RESUME = 6
+    RECONNECT = 7
+    REQUEST_GUILD_MEMBERS = 8
+    INVALID_SESSION = 9
+    HELLO = 10
+    HEARTBEAT_ACK = 11
