@@ -34,7 +34,7 @@ import importlib.util
 
 
 class Bot():
-    VERSION = "0.4.7"
+    VERSION = "0.4.8"
 
     def __init__(self, config_path):
         self.config = Config(config_path)
