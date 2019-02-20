@@ -26,16 +26,16 @@ class WebhookServer():
             if not plugin.enabled:
                 continue
 
-            for plugin_route in plugin.routes:
-                if route not in plugin_route.route:
+            for webhook in plugin.webhooks:
+                if route not in webhook.route:
                     continue
                 else:
-                    if method not in plugin_route.methods:
+                    if method not in webhook.methods:
                         response.status = falcon.HTTP_405
                         return response
                     else:
                         try:
-                            ret = plugin_route.callback(request)
+                            ret = webhook.callback(request)
 
                             if isinstance(ret, str):
                                 response.body = ret
@@ -53,7 +53,7 @@ class WebhookServer():
                 return response
 
 
-class Route():
+class Webhook():
     def __init__(self, route, callback, methods=None):
         methods = ["GET"] if methods is None else methods
 

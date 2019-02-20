@@ -35,7 +35,7 @@ class Attachment(Model):
 
 
 class Message(Model):
-    __repr_keys__ = ['id', 'channel_id']
+    __repr_keys__ = ['id', 'timestamp']
 
     id = Field(Snowflake, required=True)
     channel_id = Field(Snowflake, required=True)
@@ -56,3 +56,9 @@ class Message(Model):
     pinned = Field(bool)
     type = Field(MessageType)
     webhook_id = Field(Snowflake)
+
+    def add_reaction(self):
+        pass
+
+    def edit(self, content, embed=None):
+        pass

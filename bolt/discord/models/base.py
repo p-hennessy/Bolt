@@ -9,7 +9,6 @@
 import enum
 from datetime import datetime
 
-
 # Exceptions
 class ModelMissingRequiredKeyError(Exception):
     pass
@@ -35,6 +34,9 @@ class Model(object):
 
     @classmethod
     def marshal(cls, data):
+        """
+            Create a new instance of the class from the JSON data passed in
+        """
         new_obj = cls()
         new_obj.__fields__ = {}
         new_obj.__immutable_fields__ = []
@@ -61,7 +63,33 @@ class Model(object):
 
         return new_obj
 
+    def remarshal(self, data):
+        """
+            Apply updates to existing fields given JSON data
+            Fails if an update comes to an immutable field
+        """
+        for field_name, field in self.__fields__.items():
+            if not isinstance(field, Field):
+                continue
+
+            json_key = field.json_key if field.json_key else field_name
+
+            if not json_key in data.keys():
+                continue
+
+            json_data = data[json_key]
+            attr = field.marshal(json_data)
+
+            if field.immutable and not getattr(self, field_name) == attr:
+                raise ImmutableFieldError(f"Field {field_name} cannot be updated")
+
+            setattr(self, field_name, attr)
+
+
     def serialize(self):
+        """
+            Turn object back into a JSON-ified object
+        """
         dct = {}
 
         for item, field in self.__fields__.items():
@@ -87,11 +115,15 @@ class Model(object):
         return dct
 
     def __repr__(self):
+        """
+            Pretty repr that allows models to specify keys to use
+        """
         classname = f"{type(self).__name__}"
         items = []
 
-        for item in self.__repr_keys__:
-            items.append(str(getattr(self, item)))
+        for key in self.__repr_keys__:
+            value = str(getattr(self, key))
+            items.append(f"{key}=\"{value}\"")
 
         if len(items) > 0:
             return "{}({})".format(classname, ", ".join(items))
@@ -110,22 +142,20 @@ class Model(object):
         else:
             return object.__delattr__(self, name)
 
-    def update(self):
-        pass
-
 
 class Field(object):
     """
         Conterpart class for Models, instructing the model how to consume json data
         Includes a nice repr
     """
-    def __init__(self, typ, default=None, required=False, json_key=None, max_length=-1, immutable=False):
+    def __init__(self, typ, default=None, required=False, json_key=None, max_length=-1, immutable=False, nullable=True):
         self.type = typ
         self.default = default
         self.required = required
         self.json_key = json_key
         self.max_length = max_length
         self.immutable = immutable
+        self.nullable = nullable
 
     def __repr__(self):
         if self.required is True:
@@ -134,10 +164,21 @@ class Field(object):
             return f"Field({self.type.__name__})"
 
     def marshal(self, data):
+        # Recursively marshal types of other models
         if issubclass(self.type, Model):
             return self.type.marshal(data)
         else:
+            # Check if data is able to be None type
+            if data is None:
+                if self.nullable is True:
+                    return None
+                else:
+                    raise ModelValidationError(f"Field cannot be nullified")
+
+            # Cast it to intended type
             value = self.type(data)
+
+            # Validate field
             if not self.max_length == -1 and len(value) > self.max_length:
                 raise ModelValidationError("Length of input is too long")
 
@@ -175,7 +216,7 @@ class Enum(enum.Enum):
     """
     def __repr__(self):
         return f"{self.__class__.__name__}.{self._name_}"
-
+        
 
 class Snowflake(str):
     def __init__(self, value):

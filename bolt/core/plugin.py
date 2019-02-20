@@ -9,7 +9,7 @@
 from bolt.utils.decorators import add_method_tag
 from bolt.core.command import Command, RegexCommand, ParseCommand
 from bolt.core.scheduler import Interval
-from bolt.core.webhook import Route
+from bolt.core.webhook import Webhook
 from bolt.core.event import Subscription
 
 import logging
@@ -20,7 +20,7 @@ import ujson as json
 class Plugin(object):
     def __init__(self, bot):
         self.bot = bot
-        self.name = __name__
+        self.name = type(self).__name__
         self.logger = logging.getLogger(f"plugins.{self.__class__.__name__}")
 
         self.database = bot.database_client[f"plugins-{self.__class__.__name__}"]
@@ -88,13 +88,13 @@ class Plugin(object):
                     self.commands.append(command)
 
                 elif name == "webhook":
-                    route = Route(
+                    webhook = Webhook(
                         properties['route'],
                         callback,
                         properties['methods']
 
                     )
-                    self.routes.append(route)
+                    self.webhooks.append(webhook)
 
                 elif name == "interval":
                     interval = Interval(
@@ -170,6 +170,9 @@ class Plugin(object):
             self.bot.api.create_message(endpoint, files=files, headers=self.auth_headers)
         except Exception as e:
             self.logger.warning(f'Upload of {file} to channel {channel_id} failed: {e}')
+
+    def __repr__(self):
+        return f"Plugin({self.name})"
 
 
 def pre_command_hook():

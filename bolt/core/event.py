@@ -10,6 +10,7 @@ from bolt.discord.events import Events
 
 
 class Event():
+    # Deprecated
     def __init__(self):
         pass
 

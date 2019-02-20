@@ -10,6 +10,7 @@
 import gevent
 from gevent import monkey
 from gevent import queue
+from gevent.backdoor import BackdoorServer
 
 # Patch must happen before requests is imported:
 # https://github.com/requests/requests/issues/3752
@@ -47,8 +48,8 @@ class Bot():
         self.queue = queue.Queue()
 
         # Backend
-        self.websocket = Websocket(self, self.config.api_key)
         self.api = API(self.config.api_key)
+        self.websocket = Websocket(self, self.config.api_key)
 
         # Database
         self.database_client = MongoClient(ssl=self.config.mongo_database_use_tls)
@@ -59,15 +60,21 @@ class Bot():
         self.greenlet_websocket = gevent.spawn(self.websocket.start)
         self.greenlet_scheduler = gevent.spawn(self.scheduler.start)
         self.greenlet_webhooks = gevent.spawn(self.webhooks.start)
+        self.greenlet_backdoor = gevent.spawn(self.backdoor)
         self.greenlet_workers = [gevent.spawn(self.worker) for _ in range(25)]
 
         greenlets = [
             self.greenlet_websocket,
             self.greenlet_scheduler,
-            self.greenlet_webhooks,
+            self.greenlet_backdoor,
+            self.greenlet_webhooks
         ]
         greenlets.extend(self.greenlet_workers)
         gevent.joinall(greenlets)
+
+    def backdoor(self):
+        server = BackdoorServer(('127.0.0.1', 5001), locals={'bot': self})
+        server.serve_forever()
 
     def worker(self):
         while True:
@@ -76,7 +83,11 @@ class Bot():
             try:
                 callback(*args, **kwargs)
             except Exception as e:
-                self.logger.warning(f"Exception running task: {callback}: {e}")
+                module_name = f"{callback.__self__.__module__}"
+                class_name = f"{callback.__self__.__class__.__name__}"
+                method_name = f"{callback.__name__}"
+
+                self.logger.warning(f"Exception in task: {module_name}.{class_name}.{method_name}: {e}", exc_info=True)
             finally:
                 gevent.sleep(0)
 

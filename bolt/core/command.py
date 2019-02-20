@@ -25,9 +25,9 @@ class Command():
         classname = f"{type(self).__name__}"
         return f"{classname}({self.callback.__class__.__name__}.{self.callback.__name__})"
 
-    def invoke(self, message):
-        message.content = message.content.replace(self.trigger, "", 1)
-        self.callback(message)
+    def invoke(self, event):
+        event.message.content = event.message.content.replace(self.trigger, "", 1)
+        self.callback(event)
 
     def matches(self, text):
         if text.startswith(self.trigger):

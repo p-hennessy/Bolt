@@ -58,6 +58,12 @@ class GuildMember(Model):
     def remove_role(self):
         pass
 
+    def get_voice_state(self):
+        pass
+
+    def unban(self):
+        pass
+
     @property
     def id(self):
         return self.user.id
@@ -74,6 +80,9 @@ class Role(Model):
     permissions = Field(Permission)
     managed = Field(bool)
     mentionable = Field(bool)
+
+    def delete(self):
+        pass
 
 
 class VoiceState(Model):
@@ -148,13 +157,13 @@ class Guild(Model):
     name = Field(str)
     icon = Field(str)
     splash = Field(str)
-    owner = Field(bool)
+    owner = Field(bool, default=False)
     owner_id = Field(Snowflake)
     permissions = Field(Permission)
     region = Field(str)
     afk_channel_id = Field(Snowflake)
     afk_timeout = Field(int)
-    embed_enabled = Field(bool)
+    embed_enabled = Field(bool, default=False)
     embed_channel_id = Field(Snowflake)
     verification_level = Field(VerificationLevel)
     default_message_notifications = Field(MessageNotificationLevel)
@@ -175,3 +184,19 @@ class Guild(Model):
     members = ListField(GuildMember)
     channels = ListField(Channel)
     presences = ListField(Presence)
+
+    def update(self):
+        pass
+
+    def delete(self):
+        pass
+
+    def leave(self):
+        pass
+
+    @property
+    def system_channel(self):
+        pass
+
+    def get_owner(self):
+        pass
