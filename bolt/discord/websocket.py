@@ -119,7 +119,10 @@ class Websocket():
                 "v": 6,
                 "d": {
                     "token": self.token,
-                    "shard": [self.bot.config.shard_id, self.bot.config.shard_total],
+                    "shard": [
+                        self.bot.config.shard_id,
+                        self.bot.config.shard_total
+                    ],
                     "properties": {
                         "$os": system(),
                         "$browser": "Bolt",
@@ -170,6 +173,9 @@ class Websocket():
 
     # Event handlers
     def handle_gateway_message(self, event):
+        if event.message.author.id == self.cache.user.id:
+            return
+
         for command in self.iter_commands():
             if event.message.content.startswith(command.trigger):
                 content = event.message.content.replace(command.trigger, "", 1)

@@ -17,8 +17,8 @@ class MessageType(Enum):
 
 
 class Reaction(Model):
-    count = Field(int, required=True)
-    me = Field(bool, default=False, required=True)
+    count = Field(int, default=1)
+    me = Field(bool, default=False)
     emoji = Field(Emoji, required=True)
 
 
@@ -42,8 +42,8 @@ class Message(Model):
     guild_id = Field(Snowflake)
     author = Field(User)
     member = Field(GuildMember)
-    content = Field(str, required=True)
-    timestamp = Field(Timestamp, required=True)
+    content = Field(str)
+    timestamp = Field(Timestamp)
     edited_timestamp = Field(Timestamp)
     tts = Field(bool, default=False)
     mention_everyone = Field(bool, default=False)

@@ -8,13 +8,8 @@
         - Patrick Hennessy
 """
 import gevent
-from gevent import monkey
-from gevent import queue
+from gevent import monkey, queue
 from gevent.backdoor import BackdoorServer
-
-# Patch must happen before requests is imported:
-# https://github.com/requests/requests/issues/3752
-monkey.patch_all()
 
 from bolt.discord.api import API
 from bolt.discord.websocket import Websocket
@@ -37,9 +32,13 @@ class Bot():
     VERSION = "0.4.8"
 
     def __init__(self, config_path):
+        monkey.patch_all()
+
         self.config = Config(config_path)
         setup_logger(self.config)
         self.logger = logging.getLogger(__name__)
+
+        self.logger.info(f"Initializing Bolt v{self.VERSION}...")
 
         # Core
         self.plugins = []
@@ -57,6 +56,8 @@ class Bot():
         self.users = user_database.users
 
     def run(self):
+        self.logger.debug('Starting main event loop')
+
         self.greenlet_websocket = gevent.spawn(self.websocket.start)
         self.greenlet_scheduler = gevent.spawn(self.scheduler.start)
         self.greenlet_webhooks = gevent.spawn(self.webhooks.start)
@@ -73,7 +74,8 @@ class Bot():
         gevent.joinall(greenlets)
 
     def backdoor(self):
-        server = BackdoorServer(('127.0.0.1', 5001), locals={'bot': self})
+        self.logger.debug('Spawning Backdoor Greenlet')
+        server = BackdoorServer(('127.0.0.1', 5000), locals={'bot': self})
         server.serve_forever()
 
     def worker(self):
@@ -87,7 +89,7 @@ class Bot():
                 class_name = f"{callback.__self__.__class__.__name__}"
                 method_name = f"{callback.__name__}"
 
-                self.logger.warning(f"Exception in task: {module_name}.{class_name}.{method_name}: {e}", exc_info=True)
+                self.logger.warning(f"Exception \"{type(e).__name__}\" raised in task: {module_name}.{class_name}.{method_name}: {e}", exc_info=True)
             finally:
                 gevent.sleep(0)
 
@@ -109,7 +111,7 @@ class Bot():
 
     def unload_plugin(self, name):
         found_index = None
-        for index, plugin in self.plugins.enumerate():
+        for index, plugin in enumerate(self.plugins):
             if plugin.name == name:
                 found_index = index
                 break

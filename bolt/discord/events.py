@@ -1,4 +1,9 @@
-from bolt.discord.models import Channel, Embed, Guild, User, Message
+from bolt.discord.models import Embed, User, Message
+from bolt.discord.models.message import Reaction
+from bolt.discord.models.guild import Guild, GuildMember
+from bolt.discord.models.channel import Channel, ChannelType
+
+
 
 from enum import Enum, auto
 import json
@@ -93,11 +98,18 @@ class EventHandler():
         event.user = self.cache.user
         event.session_id = event_data['session_id']
 
+    #
+    # Guild Handlers
+    #
+
     def on_guild_create(self, event):
         event_data = event._raw_data_
         guild = self.cache.guilds[event_data['id']]
         guild.remarshal(event_data)
         event.guild = guild
+
+        for member in event.guild.members:
+            self.cache.users[str(member.user.id)] = member.user
 
     def on_guild_update(self, event):
         event_data = event._raw_data_
@@ -106,54 +118,142 @@ class EventHandler():
         event.guild = guild
 
     def on_guild_delete(self, event):
-        pass
+        event_data = event._raw_data_
+        guild = self.cache.guilds[event_data['id']]
+        del self.cache.guilds[event_data['id']]
+        event.guild = guild
 
     def on_guild_ban_add(self, event):
-        pass
+        event_data = event._raw_data_
+        guild_id = event_data['guild_id']
+        guild = self.cache.guilds[guild_id]
+        banned_member = None
+
+        for member in guild.members:
+            if member.user.id == event_data['user']['id']:
+                banned_member = member
+                guild.members.remove(member)
+
+        event.guild = guild
+        event.member = banned_member
 
     def on_guild_ban_remove(self, event):
-        pass
+        event_data = event._raw_data_
+
+        guild_id = event_data['guild_id']
+        user_id = event_data['user']['id']
+
+        try:
+            user = self.cache.users[event_data['user']['id']]
+        except KeyError as e:
+            user = User.marshal(event_data['user'])
+            self.cache.users[user.id] = user
+
+        event.guild = self.cache.guilds[guild_id]
+        event.user = user
 
     def on_guild_emojis_update(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_guild_integrations_update(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_guild_member_add(self, event):
-        pass
+        """
+            Create new guild member
+            Append guild member to existing guild
+            Upsert new member in user cache
+            Add Guild and User info to event object
+        """
+        event_data = event._raw_data_
+        guild_id = event_data['guild_id']
+        user_id = event_data['user']['id']
+
+        guild = self.cache.guilds[guild_id]
+        member = GuildMember.marshal(event_data)
+        guild.members.append(member)
+
+        if not self.cache.users.get(member.user.id):
+            self.cache.users[str(member.user.id)] = member.user
+
+        event.guild = guild
+        event.member = member
 
     def on_guild_member_remove(self, event):
-        pass
+        event_data = event._raw_data_
+
+        guild_id = event_data['guild_id']
+        user_id = event_data['user']['id']
+
+        guild = self.cache.guilds[guild_id]
+        removed_member = None
+
+        for index, member in enumerate(guild.members):
+            if member.user.id == user_id:
+                removed_member = guild.members.pop(index)
+                break
+
+        event.member = removed_member
+        event.guild = guild
 
     def on_guild_member_update(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_guild_members_chunk(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_guild_role_create(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_guild_role_update(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_guild_role_delete(self, event):
-        pass
+        event_data = event._raw_data_
+
+    #
+    # Channel Handlers
+    #
 
     def on_channel_create(self, event):
-        pass
+        event_data = event._raw_data_
+
+        channel = Channel.marshal(event_data)
+        if channel.type in [ChannelType.GUILD_TEXT, ChannelType.GUILD_VOICE, ChannelType.GUILD_CATEGORY]:
+            guild = self.cache.guilds[str(channel.guild_id)]
+            guild.channels.append(channel)
+            event.guild = guild
+
+        event.channel = channel
 
     def on_channel_update(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_channel_delete(self, event):
-        pass
+        event_data = event._raw_data_
+
+        if ChannelType(event_data['type']) in [ChannelType.GUILD_TEXT, ChannelType.GUILD_VOICE, ChannelType.GUILD_CATEGORY]:
+            guild = self.cache.guilds[str(event_data['guild_id'])]
+            removed_channel = None
+
+            for index, channel in enumerate(guild.channels):
+                if channel.id == event_data['id']:
+                    removed_channel = guild.channels.pop(index)
+
+            event.channel = removed_channel
+
 
     def on_channel_pins_update(self, event):
-        pass
+        event_data = event._raw_data_
+
+    #
+    # Message Handlers
+    #
 
     def on_message_create(self, event):
+        """
+            Required for the Command system to function
+        """
         event_data = event._raw_data_
         message = Message.marshal(event_data)
         event.message = message
@@ -164,34 +264,89 @@ class EventHandler():
         event.message = message
 
     def on_message_delete(self, event):
-        pass
+        event_data = event._raw_data_
+        message = Message.marshal(event_data)
+        event.message = message
 
     def on_message_delete_bulk(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_message_reaction_add(self, event):
-        pass
+        event_data = event._raw_data_
+        message = Reaction.marshal(event_data)
+        event.message = message
 
     def on_message_reaction_remove(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_message_reaction_remove_all(self, event):
-        pass
+        event_data = event._raw_data_
+
+    #
+    # Misc Handlers
+    #
 
     def on_presence_update(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_typing_start(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_user_update(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_voice_state_update(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_voice_server_update(self, event):
-        pass
+        event_data = event._raw_data_
 
     def on_webhooks_update(self, event):
-        pass
+        event_data = event._raw_data_
+
+
+
+
+"""
+    ✔   unknown user joins guild
+    ✔   user joins guild
+    ✔   user leaves guild
+    ✔   user kicked from guild
+    ✔   user banned from guild
+    ✔   user unbanned from guild
+    unknown user unbanned from guild
+    guild roles updated
+    guild emojis add
+    guild emojis remove
+    guild emojis update
+
+    ✔   channel created
+    ✔   channel deleted
+    channel permissions override
+    channel updated
+
+    typing start
+    pressence update
+
+    unknown user creates DM with you
+    user creates DM with you
+    message deleted from channel
+    message edited from channel
+    message pinned in channel
+    message created in channel
+    user adds react to message
+    user removes reaction from message
+    all reactions cleared from message
+
+    user moved voice channels by admin
+    user joins voice channel
+    user leaves voice channel
+    user mutes mic
+    user mutes speakers
+    user mutes both
+    user unmutes mic
+    user unmutes speakers
+    user unmutes both
+    user global muted by admin
+    user global unmuted by admin
+"""
