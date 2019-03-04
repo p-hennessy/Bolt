@@ -1,6 +1,6 @@
 from bolt.discord.models import Embed, User, Message
 from bolt.discord.models.message import Reaction
-from bolt.discord.models.guild import Guild, GuildMember
+from bolt.discord.models.guild import Guild, GuildMember, VoiceState
 from bolt.discord.models.channel import Channel, ChannelType
 
 
@@ -289,8 +289,26 @@ class EventHandler():
     def on_presence_update(self, event):
         event_data = event._raw_data_
 
+        event.user = self.cache.users[event_data['user']['id']]
+        event.user.status = event_data['status']
+
     def on_typing_start(self, event):
         event_data = event._raw_data_
+
+        guild = self.cache.guilds[str(event_data['guild_id'])]
+
+        for member in guild.members:
+            if member.user.id == event_data['user_id']:
+                event.member = member
+                break
+
+        for channel in guild.channels:
+            if channel.id == event_data['channel_id']:
+                event.channel = channel
+                break
+
+        event.guild = guild
+        event.timestamp = event_data['timestamp']
 
     def on_user_update(self, event):
         event_data = event._raw_data_
@@ -325,8 +343,8 @@ class EventHandler():
     channel permissions override
     channel updated
 
-    typing start
-    pressence update
+    ✔ typing start
+    ✔ pressence update
 
     unknown user creates DM with you
     user creates DM with you
@@ -337,6 +355,7 @@ class EventHandler():
     user adds react to message
     user removes reaction from message
     all reactions cleared from message
+    voice channel deleted with users in it
 
     user moved voice channels by admin
     user joins voice channel
