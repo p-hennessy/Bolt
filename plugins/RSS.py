@@ -5,75 +5,98 @@
     Contributors:
         - Patrick Hennessy
 """
-from arcbot import Plugin
-from arcbot import interval
-from arcbot import Colors
-from arcbot.utils import Timer
+from bolt import Plugin
+from bolt import interval
+from bolt import parse_command
+from bolt.utils import Timer
 import feedparser
 import html2text
 import time
 import datetime
+import gevent
 
 class RSS(Plugin):
     def activate(self):
-        test = datetime.datetime.now() - datetime.timedelta(days=10)
-        test = test.timetuple()
+        self.feed_url = "http://www.teamfortress.com/rss.xml"
+        self.last_checked = time.gmtime()
+        self.feeds = self.database.feed_channels
 
-        self.feeds = [
-            {
-                "url": "http://www.teamfortress.com/rss.xml",
-                "channel": "95672708418768896",
-                "last_checked": time.gmtime()
-            },
-            {
-                "url": "https://github.com/blog/broadcasts.atom",
-                "channel": "136539488280248320",
-                "last_checked": time.gmtime()
-            },
-            {
-                "url": "https://github.com/blog.atom",
-                "channel": "136539488280248320",
-                "last_checked": time.gmtime()
-            }
-        ]
+    @parse_command("feed {onoff}")
+    def feed(self, event):
+        args, kwargs = event.arguments
+        toggle_status = kwargs['onoff']
+
+        tf2_feed = self.feeds.find_one({"feed_url": self.feed_url})
+        channel_id = event.message.channel_id
+
+        if toggle_status == "on":
+            if not tf2_feed:
+                self.feeds.insert_one({"feed_url": self.feed_url, "channels": [channel_id]})
+                self.say(channel_id, f"Subcribed this channel for updates to {self.feed_url}")
+                return
+            else:
+                for channel in tf2_feed['channels']:
+                    if channel == channel_id:
+                        self.say(channel_id, f"This channel is already subcribed to {self.feed_url}")
+                        break
+                else:
+                    self.feeds.update_one({"feed_url": self.feed_url}, {"$push": {"channels": channel_id}})
+                    self.say(channel_id, f"Subcribed this channel for updates to {self.feed_url}")
+
+        elif toggle_status == "off":
+            if not tf2_feed:
+                self.say(channel_id, f"I dont have any channels listed for {self.feed_url}")
+            else:
+                self.feeds.update_one({"feed_url": self.feed_url}, {"$pull": {"channels": channel_id}})
+                self.say(channel_id, f"Unsubcribed this channel for updates to {self.feed_url}")
 
     @interval(60)
     def update(self):
-        for feed in self.feeds:
-            with Timer() as timer:
-                # Get feed
-                parsed_feed = feedparser.parse(feed['url'])
-                h = html2text.HTML2Text()
-                h.ignore_images = True
-                h.ignore_tables = True
+        tf2_feed = self.feeds.find_one({"feed_url": self.feed_url})
 
-                # Check last updated time
-                last_checked = feed['last_checked']
+        if not tf2_feed or not tf2_feed['channels']:
+            return
 
-                try:
-                    if last_checked > parsed_feed.feed['updated_parsed']:
-                        continue
-                except KeyError:
-                    if last_checked > parsed_feed.updated_parsed:
-                        continue
+        with Timer() as timer:
+            # Get feed
+            parsed_feed = feedparser.parse(self.feed_url)
+            h = html2text.HTML2Text()
+            h.ignore_images = True
+            h.ignore_tables = True
 
-                for post in parsed_feed.entries:
-                    # Ensure we're going to post something new
-                    if last_checked < post['published_parsed']:
-                        summary = h.handle(post.summary)
-                        summary = summary[:256]
-                        timestamp = time.strftime("%a, %b %d %Y @ %I:%M %p", post['published_parsed'])
+            # Check last updated time
+            last_checked = self.last_checked
 
-                        embed =  {
-                            "title": f":satellite: {post.title}",
-                            "description": f"**{post.link}**\n*{timestamp}*\n\n{summary}",
-                            "footer": {
-                              "text": f"⏰ {timer.delta}ms | 🔌 RSS"
-                            }
+            try:
+                if last_checked > parsed_feed.feed['updated_parsed']:
+                    return
+            except KeyError:
+                if last_checked > parsed_feed.updated_parsed:
+                    return
+
+            for post in parsed_feed.entries:
+                # Ensure we're going to post something new
+                if last_checked < post['published_parsed']:
+                    summary = h.handle(post.summary)
+                    summary = summary[:256]
+                    timestamp = time.strftime("%a, %b %d %Y @ %I:%M %p", post['published_parsed'])
+
+                    embed =  {
+                        "title": f"__{post.title}__",
+                        "url": f"{post.link}",
+                        "author": {
+                            "name": "Team Fortress 2 Updates",
+                            "icon_url": "http://icons.iconarchive.com/icons/sicons/basic-round-social/512/rss-icon.png"
+                        },
+                        "description": f"*{timestamp}*\n\n{summary}",
+                        "footer": {
+                          "text": f"⏰ {timer.delta}ms | 🔌 RSS"
                         }
+                    }
 
-                        # Post single thing from last update
-                        self.say(feed['channel'], embed=embed)
-                        feed['last_checked'] = time.gmtime()
+                    for channel in tf2_feed['channels']:
+                        self.say(channel, embed=embed)
+                        gevent.sleep(1)
 
-                        break
+                    self.last_checked = time.gmtime()
+                    break

@@ -5,13 +5,13 @@
     Contributors:
         - Patrick Hennessy
 """
-from arcbot import Plugin
-from arcbot import command
+from bolt import Plugin
+from bolt import regex_command
 import requests
 
 class Inspire(Plugin):
-    @command("^inspire(\ me)?$")
+    @regex_command("^inspire(\ me)?$")
     def inspire(self, event):
         response = requests.get('http://inspirobot.me/api?generate=true')
         response.raise_for_status()
-        self.say(event.channel_id, response.text)
+        self.say(event.message.channel_id, response.text)
