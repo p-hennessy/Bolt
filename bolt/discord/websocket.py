@@ -17,7 +17,6 @@ import websocket
 import logging
 import gevent
 import time
-import re
 
 
 class Websocket():

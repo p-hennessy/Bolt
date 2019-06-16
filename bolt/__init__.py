@@ -2,4 +2,4 @@ from bolt.bot import Bot
 from bolt.core.plugin import Plugin
 from bolt.utils.colors import Colors
 from bolt.discord.events import Events
-from bolt.core.plugin import pre_command_hook, command, interval, webhook, subscriber, help
+from bolt.core.plugin import pre_command_hook, command, interval, webhook, subscriber, help, cron, regex_command, parse_command

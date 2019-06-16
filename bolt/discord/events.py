@@ -1,14 +1,14 @@
-from bolt.discord.models import Embed, User, Message
+from bolt.discord.models import User, Message
+from bolt.discord.models.base import Timestamp
 from bolt.discord.models.message import Reaction
 from bolt.discord.models.guild import Guild, GuildMember, VoiceState
 from bolt.discord.models.channel import Channel, ChannelType
 
-
-
 from enum import Enum, auto
-import json
 import gevent
 import logging
+from copy import deepcopy
+
 
 class Events(Enum):
     READY = auto()
@@ -86,13 +86,15 @@ class EventHandler():
 
     def handle(self, event):
         # Dynamically find correct event handler based on name
+        self.logger.debug(f"Handling {event.typ.name.lower()}")
         handler = getattr(self, "on_" + event.typ.name.lower())
         handler(event)
 
     def on_ready(self, event):
         event_data = event._raw_data_
         for guild in event_data['guilds']:
-            self.cache.guilds[guild['id']] = Guild.marshal(guild)
+            new_guild = Guild.marshal(guild)
+            self.cache.guilds.upsert(new_guild)
 
         self.cache.user = User.marshal(event_data['user'])
         event.user = self.cache.user
@@ -104,29 +106,34 @@ class EventHandler():
 
     def on_guild_create(self, event):
         event_data = event._raw_data_
-        guild = self.cache.guilds[event_data['id']]
+        guild = self.cache.guilds.find(id=event_data['id'])
         guild.remarshal(event_data)
         event.guild = guild
 
+        # for member in guild.members:
+        #     member.api = self.bot.api
+        #     member.guild_id = guild.id
+        # for role in guild.roles:
+        #     role.api = self.bot.api
+
         for member in event.guild.members:
-            self.cache.users[str(member.user.id)] = member.user
+            self.cache.users.upsert(member.user)
 
     def on_guild_update(self, event):
         event_data = event._raw_data_
-        guild = self.cache.guilds[event_data['id']]
+        guild = self.cache.guilds.find(id=event_data['id'])
         guild.remarshal(event_data)
-        event.guild = guild
+        event.guild = deepcopy(guild)
 
     def on_guild_delete(self, event):
         event_data = event._raw_data_
-        guild = self.cache.guilds[event_data['id']]
-        del self.cache.guilds[event_data['id']]
-        event.guild = guild
+        guild = self.cache.guilds.find(id=event_data['id'])
+        event.guild = deepcopy(guild)
+        del guild
 
     def on_guild_ban_add(self, event):
         event_data = event._raw_data_
-        guild_id = event_data['guild_id']
-        guild = self.cache.guilds[guild_id]
+        guild = self.cache.guilds.find(id=event_data['id'])
         banned_member = None
 
         for member in guild.members:
@@ -134,23 +141,21 @@ class EventHandler():
                 banned_member = member
                 guild.members.remove(member)
 
-        event.guild = guild
-        event.member = banned_member
+        event.guild = deepcopy(guild)
+        event.member = deepcopy(banned_member)
 
     def on_guild_ban_remove(self, event):
         event_data = event._raw_data_
 
-        guild_id = event_data['guild_id']
-        user_id = event_data['user']['id']
+        guild = self.cache.guilds.find(id=event_data['id'])
+        user = self.cache.users.find(event_data['user']['id'])
 
-        try:
-            user = self.cache.users[event_data['user']['id']]
-        except KeyError as e:
+        if user is None:
             user = User.marshal(event_data['user'])
-            self.cache.users[user.id] = user
+            self.cache.users.upsert(user)
 
-        event.guild = self.cache.guilds[guild_id]
-        event.user = user
+        event.guild = deepcopy(guild)
+        event.user = deepcopy(user)
 
     def on_guild_emojis_update(self, event):
         event_data = event._raw_data_
@@ -166,18 +171,15 @@ class EventHandler():
             Add Guild and User info to event object
         """
         event_data = event._raw_data_
-        guild_id = event_data['guild_id']
-        user_id = event_data['user']['id']
-
-        guild = self.cache.guilds[guild_id]
+        guild = self.cache.guilds.find(id=event_data['id'])
         member = GuildMember.marshal(event_data)
-        guild.members.append(member)
+        guild.members.upsert(member)
 
-        if not self.cache.users.get(member.user.id):
-            self.cache.users[str(member.user.id)] = member.user
+        if not self.cache.users.find(id=member.user.id):
+            self.cache.users.upsert(member.user)
 
-        event.guild = guild
-        event.member = member
+        event.guild = deepcopy(guild)
+        event.member = deepcopy(member)
 
     def on_guild_member_remove(self, event):
         event_data = event._raw_data_
@@ -193,8 +195,8 @@ class EventHandler():
                 removed_member = guild.members.pop(index)
                 break
 
-        event.member = removed_member
-        event.guild = guild
+        event.member = deepcopy(removed_member)
+        event.guild = deepcopy(guild)
 
     def on_guild_member_update(self, event):
         event_data = event._raw_data_
@@ -220,31 +222,54 @@ class EventHandler():
 
         channel = Channel.marshal(event_data)
         if channel.type in [ChannelType.GUILD_TEXT, ChannelType.GUILD_VOICE, ChannelType.GUILD_CATEGORY]:
-            guild = self.cache.guilds[str(channel.guild_id)]
+            guild = self.cache.guilds.find(id=channel.guild_id)
             guild.channels.append(channel)
-            event.guild = guild
 
-        event.channel = channel
+            event.guild = deepcopy(guild)
+            event.channel = deepcopy(channel)
+        elif channel.type in [ChannelType.DM, ChannelType.GROUP_DM]:
+            self.cache.private_channels.append(channel)
+            event.channel = deepcopy(channel)
 
     def on_channel_update(self, event):
         event_data = event._raw_data_
 
+        guild = self.cache.guilds.find(id=event_data['guild_id'])
+        existing = guild.channels.find(id=event_data['id'])
+        existing.remarshal(event_data)
+
+        event.guild = deepcopy(guild)
+        event.channel = deepcopy(existing)
+
     def on_channel_delete(self, event):
         event_data = event._raw_data_
+        channel_type = ChannelType(event_data['type'])
 
-        if ChannelType(event_data['type']) in [ChannelType.GUILD_TEXT, ChannelType.GUILD_VOICE, ChannelType.GUILD_CATEGORY]:
-            guild = self.cache.guilds[str(event_data['guild_id'])]
+        if channel_type in [ChannelType.GUILD_TEXT, ChannelType.GUILD_VOICE, ChannelType.GUILD_CATEGORY]:
+            guild = self.cache.guilds.find(id=event_data['guild_id'])
             removed_channel = None
 
             for index, channel in enumerate(guild.channels):
                 if channel.id == event_data['id']:
                     removed_channel = guild.channels.pop(index)
 
-            event.channel = removed_channel
+            event.guild = deepcopy(guild)
+            event.channel = deepcopy(removed_channel)
 
+        elif channel_type in [ChannelType.DM, ChannelType.GROUP_DM]:
+            channel = self.cache.private_channels.find(id=event_data['id'])
+            event.channel = deepcopy(channel)
+            del channel
 
     def on_channel_pins_update(self, event):
         event_data = event._raw_data_
+
+        guild = self.cache.guilds.find(id=event_data['guild_id'])
+        existing = guild.channels.find(id=event_data['channel_id'])
+        existing.last_pin_timestamp = Timestamp(event_data['last_pin_timestamp'])
+
+        event.guild = deepcopy(guild)
+        event.channel = deepcopy(existing)
 
     #
     # Message Handlers
@@ -289,26 +314,22 @@ class EventHandler():
     def on_presence_update(self, event):
         event_data = event._raw_data_
 
-        event.user = self.cache.users[event_data['user']['id']]
-        event.user.status = event_data['status']
+        user = self.cache.users.find(id=event_data['user']['id'])
+        user.status = event_data['status']
+
+        event.user = deepcopy(user)
 
     def on_typing_start(self, event):
         event_data = event._raw_data_
 
-        guild = self.cache.guilds[str(event_data['guild_id'])]
+        guild = self.cache.guilds.find(id=event_data['guild_id'])
+        member = guild.members.find(event_data['user_id'])
+        channel = guild.channels.find(event_data['channel_id'])
 
-        for member in guild.members:
-            if member.user.id == event_data['user_id']:
-                event.member = member
-                break
-
-        for channel in guild.channels:
-            if channel.id == event_data['channel_id']:
-                event.channel = channel
-                break
-
-        event.guild = guild
-        event.timestamp = event_data['timestamp']
+        event.member = deepcopy(member)
+        event.channel = deepcopy(channel)
+        event.guild = deepcopy(guild)
+        event.timestamp = Timestamp.from_unix(event_data['timestamp'])
 
     def on_user_update(self, event):
         event_data = event._raw_data_
@@ -316,56 +337,16 @@ class EventHandler():
     def on_voice_state_update(self, event):
         event_data = event._raw_data_
 
+        guild = self.cache.guilds.find(id=event_data['guild_id'])
+
+        old_state = guild.voice_states.find(user_id=event_data['user_id'])
+        guild.voice_states.remove(old_state)
+
+        new_state = VoiceState.marshal(event_data)
+        guild.voice_states.upsert(new_state)
+
     def on_voice_server_update(self, event):
         event_data = event._raw_data_
 
     def on_webhooks_update(self, event):
         event_data = event._raw_data_
-
-
-
-
-"""
-    ✔   unknown user joins guild
-    ✔   user joins guild
-    ✔   user leaves guild
-    ✔   user kicked from guild
-    ✔   user banned from guild
-    ✔   user unbanned from guild
-    unknown user unbanned from guild
-    guild roles updated
-    guild emojis add
-    guild emojis remove
-    guild emojis update
-
-    ✔   channel created
-    ✔   channel deleted
-    channel permissions override
-    channel updated
-
-    ✔ typing start
-    ✔ pressence update
-
-    unknown user creates DM with you
-    user creates DM with you
-    message deleted from channel
-    message edited from channel
-    message pinned in channel
-    message created in channel
-    user adds react to message
-    user removes reaction from message
-    all reactions cleared from message
-    voice channel deleted with users in it
-
-    user moved voice channels by admin
-    user joins voice channel
-    user leaves voice channel
-    user mutes mic
-    user mutes speakers
-    user mutes both
-    user unmutes mic
-    user unmutes speakers
-    user unmutes both
-    user global muted by admin
-    user global unmuted by admin
-"""

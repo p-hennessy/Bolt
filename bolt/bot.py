@@ -18,6 +18,7 @@ from bolt.core.scheduler import Scheduler
 from bolt.core.plugin import Plugin
 from bolt.core.config import Config
 from bolt.utils import setup_logger
+from bolt.utils import readable_time
 
 from pymongo import MongoClient
 
@@ -61,21 +62,24 @@ class Bot():
         self.greenlet_websocket = gevent.spawn(self.websocket.start)
         self.greenlet_scheduler = gevent.spawn(self.scheduler.start)
         self.greenlet_webhooks = gevent.spawn(self.webhooks.start)
-        self.greenlet_backdoor = gevent.spawn(self.backdoor)
         self.greenlet_workers = [gevent.spawn(self.worker) for _ in range(25)]
 
         greenlets = [
             self.greenlet_websocket,
             self.greenlet_scheduler,
-            self.greenlet_backdoor,
             self.greenlet_webhooks
         ]
         greenlets.extend(self.greenlet_workers)
+                
+        if self.config.backdoor_enable is True:
+            self.greenlet_backdoor = gevent.spawn(self.backdoor)
+            greenlets.append(self.greenlet_backdoor)
+        
         gevent.joinall(greenlets)
 
     def backdoor(self):
         self.logger.debug('Spawning Backdoor Greenlet')
-        server = BackdoorServer(('127.0.0.1', 5000), locals={'bot': self})
+        server = BackdoorServer((self.config.backdoor_host, self.config.backdoor_port), locals={'bot': self})
         server.serve_forever()
 
     def worker(self):
@@ -120,3 +124,4 @@ class Bot():
 
         plugin = self.plugins.pop(found_index)
         plugin.unload()
+    

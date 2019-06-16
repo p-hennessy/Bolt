@@ -27,7 +27,7 @@ class WebhookServer():
                 continue
 
             for webhook in plugin.webhooks:
-                if route not in webhook.route:
+                if not route == webhook.route:
                     continue
                 else:
                     if method not in webhook.methods:
@@ -48,9 +48,10 @@ class WebhookServer():
                         except Exception as e:
                             self.logger.warning(f"Recieved exception processing web request: {e}")
                             response.status = falcon.HTTP_500
-            else:
-                response.status = falcon.HTTP_404
-                return response
+                            return response
+        else:
+            response.status = falcon.HTTP_404
+            return response
 
 
 class Webhook():

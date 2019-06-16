@@ -8,7 +8,7 @@
 """
 from bolt.utils.decorators import add_method_tag
 from bolt.core.command import Command, RegexCommand, ParseCommand
-from bolt.core.scheduler import Interval
+from bolt.core.scheduler import Interval, Cron
 from bolt.core.webhook import Webhook
 from bolt.core.event import Subscription
 
@@ -19,16 +19,20 @@ import ujson as json
 
 class Plugin(object):
     def __init__(self, bot):
+        name = self.__class__.__name__
+
         self.bot = bot
         self.name = type(self).__name__
-        self.logger = logging.getLogger(f"plugins.{self.__class__.__name__}")
+        self.logger = logging.getLogger(f"plugins.{name}")
 
-        self.database = bot.database_client[f"plugins-{self.__class__.__name__}"]
+        self.config = self.bot.config.plugins.get(name, {})
+        self.database = bot.database_client[f"plugins-{name}"]
 
         self.pre_command_hooks = []
         self.commands = []
         self.webhooks = []
         self.intervals = []
+        self.crons = []
         self.subscriptions = []
 
         self.enabled = False
@@ -64,8 +68,7 @@ class Plugin(object):
                     command = Command(
                         properties['pattern'],
                         callback,
-                        trigger=properties['trigger'],
-                        access=properties['access']
+                        trigger=properties['trigger']
                     )
                     self.commands.append(command)
 
@@ -73,8 +76,7 @@ class Plugin(object):
                     command = RegexCommand(
                         properties['pattern'],
                         callback,
-                        trigger=properties['trigger'],
-                        access=properties['access']
+                        trigger=properties['trigger']
                     )
                     self.commands.append(command)
 
@@ -82,8 +84,7 @@ class Plugin(object):
                     command = ParseCommand(
                         properties['pattern'],
                         callback,
-                        trigger=properties['trigger'],
-                        access=properties['access']
+                        trigger=properties['trigger']
                     )
                     self.commands.append(command)
 
@@ -102,6 +103,13 @@ class Plugin(object):
                         callback
                     )
                     self.intervals.append(interval)
+
+                elif name == "cron":
+                    cron = Cron(
+                        properties['expression'],
+                        callback
+                    )
+                    self.crons.append(cron)
 
                 elif name == "subscriber":
                     subscription = Subscription(
@@ -192,34 +200,31 @@ def help(text, usage="Not Documented"):
     })
 
 
-def command(pattern, access=0, trigger=None):
+def command(pattern, trigger=None):
     return add_method_tag({
         'name': 'command',
         'properties': {
             'pattern': pattern,
-            'access': access,
             'trigger': trigger
         }
     })
 
 
-def regex_command(pattern, access=0, trigger=None):
+def regex_command(pattern, trigger=None):
     return add_method_tag({
         'name': 'regex_command',
         'properties': {
             'pattern': pattern,
-            'access': access,
             'trigger': trigger
         }
     })
 
 
-def parse_command(pattern, access=0, trigger=None):
+def parse_command(pattern, trigger=None):
     return add_method_tag({
         'name': 'parse_command',
         'properties': {
             'pattern': pattern,
-            'access': access,
             'trigger': trigger
         }
     })
@@ -239,6 +244,15 @@ def interval(seconds):
         'name': 'interval',
         'properties': {
             'seconds': seconds
+        }
+    })
+
+
+def cron(expression):
+    return add_method_tag({
+        'name': 'cron',
+        'properties': {
+            'expression': expression
         }
     })
 

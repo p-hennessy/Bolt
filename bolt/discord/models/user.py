@@ -20,6 +20,7 @@ class User(Model):
     email = Field(str)
     flags = Field(int)
     premium_type = Field(PremiumType)
+    status = Field(str)
 
     def whisper(self):
         pass

@@ -26,7 +26,7 @@ def setup_logger(config):
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_formatter = ColoredFormatter(
-        "%(levelname)s %(name)s.%(funcName)s:%(lineno)s '%(message)s'"
+        "%(levelname)s \u001b[1;30m%(name)s.%(funcName)s:%(lineno)s \u001b[0m'%(message)s'"
     )
     console_handler.setFormatter(console_formatter)
     console_handler.setLevel(level)
