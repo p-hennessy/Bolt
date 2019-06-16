@@ -21,6 +21,13 @@ import requests
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
 
+from prompt_toolkit import PromptSession
+from prompt_toolkit.history import FileHistory
+from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+from prompt_toolkit.lexers import PygmentsLexer
+from prompt_toolkit.styles import Style
+from pygments.lexers.python import Python3Lexer
+
 RED = "\033[1;31m"
 GREEN = "\033[1;32m"
 RESET = "\033[0m"
@@ -35,6 +42,8 @@ def main():
 
     if args['command'] == "version":
         version()
+    elif args['command'] == "shell":
+        run_shell()
     elif args['command'] == "verify-config":
         verify_config(config_path)
     elif args['command'] == "verify-plugins":
@@ -51,6 +60,7 @@ def init_parser():
 
     subparser = parser.add_subparsers(dest='command')
     parser_version = subparser.add_parser('version')
+    parser_shell = subparser.add_parser('shell')
     parser_verify_config = subparser.add_parser('verify-config')
     parser_verify_plugins = subparser.add_parser('verify-plugins')
 
@@ -134,24 +144,91 @@ def version():
 
 def run_bot(config_path, plugin_dir):
     bot = Bot(config_path)
-    bot.load_plugin("./plugins/Access.py")
+    bot.load_plugin("./plugins/RBAC.py")
     bot.load_plugin("./plugins/Manage.py")
-    bot.load_plugin("./plugins/Chance.py")
-    bot.load_plugin("./plugins/DemosTF.py")
-    bot.load_plugin("./plugins/LogsTF.py")
-    bot.load_plugin("./plugins/Steam.py")
-    bot.load_plugin("./plugins/UrbanDictionary.py")
     bot.load_plugin("./plugins/ServeMe.py")
+    bot.load_plugin("./plugins/LogsTF.py")
+    bot.load_plugin("./plugins/DemosTF.py")
+    # bot.load_plugin("./plugins/Pugs.py")
+    bot.load_plugin("./plugins/RSS.py")
+    bot.load_plugin("./plugins/Chance.py")
+    bot.load_plugin("./plugins/Status.py")
+    bot.load_plugin("./plugins/Steam.py")
+    bot.load_plugin("./plugins/Inspire.py")
+    bot.load_plugin("./plugins/UrbanDictionary.py")
 
     try:
         bot.run()
     except KeyboardInterrupt:
         sys.exit(0)
 
+def run_shell():
+    while True:
+        with Shell(('127.0.0.1', 5000)) as shell:
+            while True:
+                try:
+                    message = shell.prompt()
+                    shell.send(message)
+                    print(shell.recv())
+                    print()
+                except KeyboardInterrupt:
+                    continue
+                except EOFError:
+                    return
+                except BrokenPipeError:
+                    break
 
 def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
+
+
+class Shell():
+    def __init__(self, address):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.address = address
+
+        self.history = FileHistory("/tmp/bolt-shell-history")
+        self.prompt_session = PromptSession(
+            history=self.history,
+            enable_history_search=True,
+            lexer=PygmentsLexer(Python3Lexer)
+        )
+
+    def connect(self):
+        self.sock.connect(self.address)
+        self.sock.sendall("".encode())
+        self.recv()
+
+    def disconnect(self):
+        self.sock.close()
+
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.disconnect()
+
+    def prompt(self):
+        style = Style.from_dict({'': '#ffffff', 'prompt': 'ansigreen'})
+        prompt = [('class:prompt', 'bolt'), ('class:dollar', '$ ')]
+
+        return self.prompt_session.prompt(prompt, style=style, auto_suggest=AutoSuggestFromHistory())
+
+    def send(self, message):
+        self.history.append_string(message)
+        self.sock.sendall(f"{message}\n".encode())
+
+    def recv(self):
+        BUFF_SIZE = 4096
+        data = b''
+        while True:
+            part = self.sock.recv(BUFF_SIZE)
+            data += part
+            if len(part) < BUFF_SIZE:
+                break
+        return data.decode()[:-5]
 
 
 if __name__ == '__main__':
