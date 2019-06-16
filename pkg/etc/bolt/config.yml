@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Bolt v0.4.8
+# Bolt v0.5.0
 #
 # Author: Patrick Hennessy
 # Source Code: https://github.com/ns-phennessy/Bolt
@@ -11,7 +11,7 @@
 # -----------------------------------------------------------------------------
 # Discord API key used to connect to the websocket and use the Discord API
 # https://discordapp.com/developers/applications/
-api_key: ""
+api_key: "Mzk5NDU4Mjg0NzY5Mzc4MzA5.D0paJw.R3NDzAMya2awyBGfZeLCwCNklJk"
 
 # Bot will refer to itself by this name
 # Some plugins may set the bot's name to this
@@ -25,6 +25,12 @@ trigger: "!"
 # These are extremely light threads so high numbers are okay
 # This allows for N amount of concurrent work to be performed by the bot
 worker_threads: 25
+
+# Sharding
+# -----------------------------------------------------------------------------
+# https://discordapp.com/developers/docs/topics/gateway#sharding
+shard_total: 1      # Total number of shards to distribute to
+shard_id: 0         # Shard number for this node
 
 # Database Credentials
 # -----------------------------------------------------------------------------
@@ -45,3 +51,37 @@ plugin_dir: /etc/bolt/plugins.enabled.d/
 # -----------------------------------------------------------------------------
 log_level: DEBUG        # Must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL
 log_dir: /var/log/bolt/
+
+# Backdoor Server
+# -----------------------------------------------------------------------------
+# http://www.gevent.org/api/gevent.backdoor.html
+# Backdoor server creates a TCP server you can telnet to a gain access to the
+# bot. The server exposes a 'bot' local variable.
+backdoor_enable: true
+backdoor_host: 127.0.0.1
+backdoor_port: 5000
+
+# Plugin specific
+# -----------------------------------------------------------------------------
+plugins:
+    RBAC:
+        owner: "65497519504764928"
+        roles:
+            pug_admin:
+            - Pugs.*
+            - ServeMe.*
+            default:
+            - Manage.*
+            - LogsTF.*
+            - DemosTF.*
+            - Steam.*
+            - UrbanDictionary.*
+            - Help.*
+    
+    Status:
+        statuses:
+        - Team Fortress 2
+        - Team Fort Defense
+        - Hat Simulator
+        - Scream Fortress 2
+        - type "!help" for commands

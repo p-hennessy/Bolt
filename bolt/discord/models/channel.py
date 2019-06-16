@@ -41,3 +41,30 @@ class Channel(Model):
     application_id = Field(Snowflake)
     parent_id = Field(Snowflake)
     last_pin_timestamp = Field(Timestamp)
+
+    def update(self):
+        pass
+
+    def delete(self):
+        pass
+
+    def create_invite(self):
+        pass
+
+    def create_webhook(self):
+        pass
+
+    def get_pins(self):
+        pass
+
+    def get_webhooks(self):
+        pass
+
+    def send_message(self):
+        pass
+
+    def trigger_typing(self):
+        pass
+
+    def bulk_delete_messages(self):
+        pass

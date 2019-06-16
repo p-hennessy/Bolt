@@ -6,7 +6,7 @@ from bolt.discord.models.guild import Role
 class Emoji(Model):
     __repr_keys__ = ['id', 'name']
 
-    id = Field(Snowflake, required=True)
+    id = Field(Snowflake)
     name = Field(str, required=True)
     roles = ListField(Role)
     user = ListField(User)

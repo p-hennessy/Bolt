@@ -34,7 +34,7 @@ def rate_limit():
             if remaining == 0:
                 callback.reset = reset
 
-            response.raise_for_status()
+            # response.raise_for_status()
 
             if response.text:
                 return response.json()

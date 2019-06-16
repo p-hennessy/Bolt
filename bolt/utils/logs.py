@@ -26,7 +26,7 @@ def setup_logger(config):
     # Create console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_formatter = ColoredFormatter(
-        "%(levelname)s %(name)s.%(funcName)s:%(lineno)s '%(message)s'"
+        "%(levelname)s \u001b[1;30m%(name)s.%(funcName)s:%(lineno)s \u001b[0m'%(message)s'"
     )
     console_handler.setFormatter(console_formatter)
     console_handler.setLevel(level)
@@ -34,7 +34,7 @@ def setup_logger(config):
 
     # Create log file handler
     file_handler = logging.FileHandler(os.path.join(log_dir, "bot.log"))
-    file_formatter = logging.Formatter(
+    file_formatter = NoExceptionFormatter(
         '{{"time":"{created}","lvl":"{levelname}","src":"{name}.{funcName}:{lineno}","msg":"{message}"}}',
         datefmt='%m/%d/%Y %H:%M:%S',
         style="{"
@@ -60,6 +60,15 @@ def get_logging_configuation(config):
         raise InvalidConfigurationError(f"Log directory at {log_dir} does not exist!")
 
     return (level, log_dir)
+
+
+class NoExceptionFormatter(Formatter):
+    def format(self, record):
+        record.exc_text = ''
+        return super(NoExceptionFormatter, self).format(record)
+
+    def formatException(self, record):
+        return ''
 
 
 class ColoredFormatter(Formatter):

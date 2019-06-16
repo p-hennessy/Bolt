@@ -8,12 +8,8 @@
         - Patrick Hennessy
 """
 import gevent
-from gevent import monkey
-from gevent import queue
-
-# Patch must happen before requests is imported:
-# https://github.com/requests/requests/issues/3752
-monkey.patch_all()
+from gevent import monkey, queue
+from gevent.backdoor import BackdoorServer
 
 from bolt.discord.api import API
 from bolt.discord.websocket import Websocket
@@ -33,12 +29,16 @@ import importlib.util
 
 
 class Bot():
-    VERSION = "0.4.8"
+    VERSION = "0.5.0"
 
     def __init__(self, config_path):
+        monkey.patch_all()
+
         self.config = Config(config_path)
         setup_logger(self.config)
         self.logger = logging.getLogger(__name__)
+
+        self.logger.info(f"Initializing Bolt v{self.VERSION}...")
 
         # Core
         self.plugins = []
@@ -47,8 +47,8 @@ class Bot():
         self.queue = queue.Queue()
 
         # Backend
-        self.websocket = Websocket(self, self.config.api_key)
         self.api = API(self.config.api_key)
+        self.websocket = Websocket(self, self.config.api_key)
 
         # Database
         self.database_client = MongoClient(ssl=self.config.mongo_database_use_tls)
@@ -56,6 +56,8 @@ class Bot():
         self.users = user_database.users
 
     def run(self):
+        self.logger.debug('Starting main event loop')
+
         self.greenlet_websocket = gevent.spawn(self.websocket.start)
         self.greenlet_scheduler = gevent.spawn(self.scheduler.start)
         self.greenlet_webhooks = gevent.spawn(self.webhooks.start)
@@ -64,10 +66,20 @@ class Bot():
         greenlets = [
             self.greenlet_websocket,
             self.greenlet_scheduler,
-            self.greenlet_webhooks,
+            self.greenlet_webhooks
         ]
         greenlets.extend(self.greenlet_workers)
+
+        if self.config.backdoor_enable is True:
+            self.greenlet_backdoor = gevent.spawn(self.backdoor)
+            greenlets.append(self.greenlet_backdoor)
+
         gevent.joinall(greenlets)
+
+    def backdoor(self):
+        self.logger.debug('Spawning Backdoor Greenlet')
+        server = BackdoorServer((self.config.backdoor_host, self.config.backdoor_port), locals={'bot': self})
+        server.serve_forever()
 
     def worker(self):
         while True:
@@ -76,7 +88,11 @@ class Bot():
             try:
                 callback(*args, **kwargs)
             except Exception as e:
-                self.logger.warning(f"Exception running task: {callback}: {e}")
+                module_name = f"{callback.__self__.__module__}"
+                class_name = f"{callback.__self__.__class__.__name__}"
+                method_name = f"{callback.__name__}"
+
+                self.logger.warning(f"Exception \"{type(e).__name__}\" raised in task: {module_name}.{class_name}.{method_name}: {e}", exc_info=True)
             finally:
                 gevent.sleep(0)
 
@@ -98,7 +114,7 @@ class Bot():
 
     def unload_plugin(self, name):
         found_index = None
-        for index, plugin in self.plugins.enumerate():
+        for index, plugin in enumerate(self.plugins):
             if plugin.name == name:
                 found_index = index
                 break

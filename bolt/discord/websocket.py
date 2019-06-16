@@ -5,8 +5,9 @@
     Contributors:
         - Patrick Hennessy
 """
-from bolt.core.event import Event, Subscription
-from bolt.discord.events import Events
+from bolt.core.event import Subscription
+from bolt.discord.events import Event, Events, EventHandler
+from bolt.discord.cache import Cache
 
 from datetime import timedelta
 from platform import system
@@ -16,7 +17,6 @@ import websocket
 import logging
 import gevent
 import time
-import re
 
 
 class Websocket():
@@ -34,6 +34,9 @@ class Websocket():
         self.session_time = 0
         self.login_time = 0
         self.heartbeat_greenlet = None
+
+        self.cache = Cache()
+        self.event_handler = EventHandler(self.bot, self.cache)
 
         # Subscribe to events
         self.subscriptions = [
@@ -61,7 +64,7 @@ class Websocket():
     def heartbeat(self, interval):
         while True:
             self._heartbeat_start = time.monotonic()
-            self.logger.debug(f'Heartbeat. Ping: {self.ping} @ {self._heartbeat_start}')
+            self.logger.debug(f'Heartbeat. Ping: {self.ping} @ {int(self._heartbeat_start)}')
             self.send({"op": GatewayOpCodes.HEARTBEAT, "d": self.sequence})
             gevent.sleep(interval / 1000)
 
@@ -85,44 +88,40 @@ class Websocket():
 
     def handle_websocket_message(self, socket, message):
         message = json.loads(message)
-        op_code = message['op']
+        event = Event.marshal(message)
 
-        if op_code == GatewayOpCodes.DISPATCH:
-            self.sequence = message['s']
+        if event.op_code == GatewayOpCodes.DISPATCH:
+            self.sequence = event.sequence
 
-            event_id = getattr(Events, message['t'])
-            event = Event.from_message(message)
+            # Process event and update cache
+            self.event_handler.handle(event)
 
+            # Dispatch event to any subscriptions
+            self.event_handler.dispatch(event, self.subscriptions)
             for plugin in self.bot.plugins:
-                if not plugin.enabled:
-                    continue
-
-                for subscription in plugin.subscriptions:
-                    if subscription.event == event_id:
-                        self.bot.queue.put((subscription.callback, [event], {}))
-                    gevent.sleep(0)
-
-            for subscription in self.subscriptions:
-                if subscription.event == event_id:
-                    self.bot.queue.put((subscription.callback, [event], {}))
-                gevent.sleep(0)
+                if plugin.enabled is True:
+                    self.event_handler.dispatch(event, plugin.subscriptions)
 
             return
 
-        elif op_code == GatewayOpCodes.RECONNECT:
+        elif event.op_code == GatewayOpCodes.RECONNECT:
             self.logger.warning("Got reconnect signal")
             self.websocket.close()
 
-        elif op_code == GatewayOpCodes.INVALID_SESSION:
+        elif event.op_code == GatewayOpCodes.INVALID_SESSION:
             self.logger.warning("Invalid websocket session")
             self.websocket.close()
 
-        elif op_code == GatewayOpCodes.HELLO:
+        elif event.op_code == GatewayOpCodes.HELLO:
             self.send({
                 "op": GatewayOpCodes.IDENTIFY,
                 "v": 6,
                 "d": {
                     "token": self.token,
+                    "shard": [
+                        self.bot.config.shard_id,
+                        self.bot.config.shard_total
+                    ],
                     "properties": {
                         "$os": system(),
                         "$browser": "Bolt",
@@ -135,12 +134,12 @@ class Websocket():
 
             self.heartbeat_greenlet = gevent.spawn(self.heartbeat, message['d']['heartbeat_interval'])
 
-        elif op_code == GatewayOpCodes.HEARTBEAT_ACK:
+        elif event.op_code == GatewayOpCodes.HEARTBEAT_ACK:
             delta = timedelta(seconds=time.monotonic()-self._heartbeat_start)
             self.ping = round(delta.microseconds / 1000)
 
         else:
-            self.logger.error(f"Recieved unexpected OP code: {op_code}")
+            self.logger.error(f"Recieved unexpected OP code: {event.op_code}")
 
         return True
 
@@ -173,15 +172,13 @@ class Websocket():
 
     # Event handlers
     def handle_gateway_message(self, event):
+        if event.message.author.id == self.cache.user.id:
+            return
+
+        content = event.message.content
         for command in self.iter_commands():
-            if event.content.startswith(command.trigger):
-                content = event.content.replace(command.trigger, "", 1)
-                match = re.search(command.pattern, content)
-
-                if not match:
-                    continue
-
-                event.arguments = match
+            if command.matches(content):
+                event.arguments = command.parse(content)
 
                 for hook in self.iter_pre_command_hooks():
                     output = hook(command, event)
@@ -194,7 +191,6 @@ class Websocket():
     def handle_gateway_ready(self, event):
         self.user_id = event.user.id
         self.session_id = event.session_id
-        self.guild_count = len(event.guilds)
 
     def iter_commands(self):
         for plugin in self.bot.plugins:

@@ -8,9 +8,9 @@
 
 import enum
 from datetime import datetime
+import time
 
 
-# Exceptions
 class ModelMissingRequiredKeyError(Exception):
     pass
 
@@ -35,6 +35,9 @@ class Model(object):
 
     @classmethod
     def marshal(cls, data):
+        """
+            Create a new instance of the class from the JSON data passed in
+        """
         new_obj = cls()
         new_obj.__fields__ = {}
         new_obj.__immutable_fields__ = []
@@ -61,7 +64,32 @@ class Model(object):
 
         return new_obj
 
+    def remarshal(self, data):
+        """
+            Apply updates to existing fields given JSON data
+            Fails if an update comes to an immutable field
+        """
+        for field_name, field in self.__fields__.items():
+            if not isinstance(field, Field):
+                continue
+
+            json_key = field.json_key if field.json_key else field_name
+
+            if json_key not in data.keys():
+                continue
+
+            json_data = data[json_key]
+            attr = field.marshal(json_data)
+
+            if field.immutable and not getattr(self, field_name) == attr:
+                raise ImmutableFieldError(f"Field {field_name} cannot be updated")
+
+            setattr(self, field_name, attr)
+
     def serialize(self):
+        """
+            Turn object back into a JSON-ified object
+        """
         dct = {}
 
         for item, field in self.__fields__.items():
@@ -87,11 +115,15 @@ class Model(object):
         return dct
 
     def __repr__(self):
+        """
+            Pretty repr that allows models to specify keys to use
+        """
         classname = f"{type(self).__name__}"
         items = []
 
-        for item in self.__repr_keys__:
-            items.append(str(getattr(self, item)))
+        for key in self.__repr_keys__:
+            value = str(getattr(self, key))
+            items.append(f"{key}=\"{value}\"")
 
         if len(items) > 0:
             return "{}({})".format(classname, ", ".join(items))
@@ -110,22 +142,20 @@ class Model(object):
         else:
             return object.__delattr__(self, name)
 
-    def update(self):
-        pass
-
 
 class Field(object):
     """
         Conterpart class for Models, instructing the model how to consume json data
         Includes a nice repr
     """
-    def __init__(self, typ, default=None, required=False, json_key=None, max_length=-1, immutable=False):
+    def __init__(self, typ, default=None, required=False, json_key=None, max_length=-1, immutable=False, nullable=True):
         self.type = typ
         self.default = default
         self.required = required
         self.json_key = json_key
         self.max_length = max_length
         self.immutable = immutable
+        self.nullable = nullable
 
     def __repr__(self):
         if self.required is True:
@@ -134,10 +164,21 @@ class Field(object):
             return f"Field({self.type.__name__})"
 
     def marshal(self, data):
+        # Recursively marshal types of other models
         if issubclass(self.type, Model):
             return self.type.marshal(data)
         else:
+            # Check if data is able to be None type
+            if data is None:
+                if self.nullable is True:
+                    return None
+                else:
+                    raise ModelValidationError(f"Field cannot be nullified")
+
+            # Cast it to intended type
             value = self.type(data)
+
+            # Validate field
             if not self.max_length == -1 and len(value) > self.max_length:
                 raise ModelValidationError("Length of input is too long")
 
@@ -150,7 +191,7 @@ class ListField(Field):
     """
     def __init__(self, *args, **kwargs):
         super(ListField, self).__init__(*args, **kwargs)
-        self.default = kwargs.get('default', [])
+        self.default = kwargs.get('default', SearchableList())
 
     def marshal(self, data):
         if not self.max_length == -1 and len(data) > self.max_length:
@@ -159,7 +200,7 @@ class ListField(Field):
         if not isinstance(data, list):
             raise ModelValidationError("Input data is not of type list")
 
-        ret_list = []
+        ret_list = SearchableList()
         for item in data:
             if issubclass(self.type, Model):
                 ret_list.append(self.type.marshal(item))
@@ -215,6 +256,46 @@ class Timestamp():
     def timestamp(self):
         return int(self.datetime.timestamp())
 
+    @classmethod
+    def from_unix(cls, ts):
+        dt = datetime.fromtimestamp(ts)
+        iso_date = str(dt.isoformat()) + ":.0" + time.strftime('%z')
+
+        return cls(iso_date)
+
+
+class SearchableList(list):
+    """
+        Subclass of List that allows for Mongo-esque querying of contents
+        Example:
+            users.find(name="Pat")
+            users.filter(lambda user: user.height > 5)
+    """
+    def find(self, *args, **kwargs):
+        for item in self.__iter__():
+            for key, value in kwargs.items():
+                attr = getattr(item, key, None)
+                attr_type = type(attr)
+
+                if issubclass(attr_type, (int, bool, str, float)):
+                    if (attr == attr_type(value)) is False:
+                        break
+            else:
+                return item
+
+        return None
+
+    def filter(self, expression):
+        return list(filter(expression, self.__iter__()))
+
+    def upsert(self, new_item):
+        for item in self.__iter__():
+            if hash(item) == hash(new_item):
+                break
+        else:
+            self.append(new_item)
+
+
 # class Autoslots(type):
 #     def __new__(metaclass, name, bases, dct):
 #         slots = []
@@ -235,39 +316,3 @@ class Timestamp():
 #
 #         return super(Autoslots, metaclass).__new__(metaclass, name, bases, dct)
 #
-# class SearchableList(list):
-#     """
-#         Subclass of List that allows for Mongo-esque querying of contents
-#         Example:
-#             users.find_one({"id": "1234"})
-#             users.find({"bot": False})
-#     """
-#     def find(self, query={}):
-#         for instance in self.__iter__():
-#             match = False
-#             for key, value in query.items():
-#                 attr = getattr(instance, key, None)
-#                 attr_type = type(attr)
-#
-#                 if issubclass(attr_type, (int, bool, str, float)):
-#                     match = (attr == attr_type(value))
-#
-#             if match:
-#                 yield instance
-#
-#     def find_one(self, query={}):
-#         for instance in self.__iter__():
-#             if query == {}:
-#                 return instance
-#
-#             match = False
-#
-#             for key, value in query.items():
-#                 attr = getattr(instance, key, None)
-#                 attr_type = type(attr)
-#
-#                 if issubclass(attr_type, (int, bool, str, float)):
-#                     match = (attr == attr_type(value))
-#
-#             if match:
-#                 return instance

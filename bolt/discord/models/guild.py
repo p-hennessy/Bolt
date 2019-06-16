@@ -31,6 +31,8 @@ class MFALevel(Enum):
 class GuildMember(Model):
     __repr_keys__ = ['user']
 
+    api = None
+
     user = Field(User)
     guild_id = Field(Snowflake)
     nick = Field(str)
@@ -43,20 +45,48 @@ class GuildMember(Model):
         classname = f"{type(self).__name__}"
         return f"{classname}({repr(self.user)})"
 
+    @property
+    def mention(self):
+        return f"<@{self.user.id}>"
+
+    def squelch(self):
+        self.api.modify_guild_member(self.guild_id, self.id, mute=True)
+
+    def unsquelch(self):
+        self.api.modify_guild_member(self.guild_id, self.id, mute=False)
+
+    def deafen(self):
+        self.api.modify_guild_member(self.guild_id, self.id, deaf=True)
+
+    def undeafen(self):
+        self.api.modify_guild_member(self.guild_id, self.id, deaf=False)
+
+    def move(self, channel):
+        self.api.modify_guild_member(self.guild_id, self.id, channel_id=channel.id)
+
+    def whisper(self):
+        raise NotImplementedError
+
     def kick(self, reason):
-        pass
+        raise NotImplementedError
 
     def ban(self, reason):
-        pass
+        raise NotImplementedError
+
+    def unban(self, reason):
+        raise NotImplementedError
 
     def set_nickname(self, nickname):
-        pass
+        raise NotImplementedError
 
-    def add_role(self):
-        pass
+    def add_role(self, role):
+        self.api.add_guild_member_role(self.guild_id, self.id, role.id)
 
-    def remove_role(self):
-        pass
+    def remove_role(self, role):
+        self.api.remove_guild_member_role(self.guild_id, self.id, role.id)
+
+    def has_role(self, role):
+        return bool(self.roles.find(id=role.id))
 
     @property
     def id(self):
@@ -66,6 +96,8 @@ class GuildMember(Model):
 class Role(Model):
     __repr_keys__ = ['id', 'name']
 
+    api = None
+
     id = Field(Snowflake, required=True)
     name = Field(str, required=True)
     color = Field(int)
@@ -74,6 +106,9 @@ class Role(Model):
     permissions = Field(Permission)
     managed = Field(bool)
     mentionable = Field(bool)
+
+    def delete(self):
+        pass
 
 
 class VoiceState(Model):
@@ -144,17 +179,19 @@ class Emoji(Model):
 class Guild(Model):
     __repr_keys__ = ['id', 'name']
 
+    api = None
+
     id = Field(Snowflake, required=True)
     name = Field(str)
     icon = Field(str)
     splash = Field(str)
-    owner = Field(bool)
+    owner = Field(bool, default=False)
     owner_id = Field(Snowflake)
     permissions = Field(Permission)
     region = Field(str)
     afk_channel_id = Field(Snowflake)
     afk_timeout = Field(int)
-    embed_enabled = Field(bool)
+    embed_enabled = Field(bool, default=False)
     embed_channel_id = Field(Snowflake)
     verification_level = Field(VerificationLevel)
     default_message_notifications = Field(MessageNotificationLevel)
@@ -175,3 +212,19 @@ class Guild(Model):
     members = ListField(GuildMember)
     channels = ListField(Channel)
     presences = ListField(Presence)
+
+    def update(self):
+        pass
+
+    def delete(self):
+        pass
+
+    def leave(self):
+        pass
+
+    @property
+    def system_channel(self):
+        pass
+
+    def get_owner(self):
+        pass
