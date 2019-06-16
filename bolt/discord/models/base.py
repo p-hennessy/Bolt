@@ -291,7 +291,7 @@ class SearchableList(list):
     def upsert(self, new_item):
         for item in self.__iter__():
             if hash(item) == hash(new_item):
-                return
+                break
         else:
             self.append(new_item)
 

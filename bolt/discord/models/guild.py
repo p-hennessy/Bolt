@@ -49,10 +49,10 @@ class GuildMember(Model):
     def mention(self):
         return f"<@{self.user.id}>"
 
-    def mute(self):
+    def squelch(self):
         self.api.modify_guild_member(self.guild_id, self.id, mute=True)
 
-    def unmute(self):
+    def unsquelch(self):
         self.api.modify_guild_member(self.guild_id, self.id, mute=False)
 
     def deafen(self):
