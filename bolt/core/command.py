@@ -12,9 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class Command():
-    def __init__(self, pattern, callback, trigger="", access=0):
+    def __init__(self, pattern, callback, trigger=""):
         self.pattern = pattern
-        self.access = access
         self.callback = callback
         self.trigger = trigger
 
@@ -73,7 +72,6 @@ class ParseCommand(Command):
         if text.startswith(self.trigger):
             text = text.replace(self.trigger, "", 1)
             match = self.compiled_pattern.parse(text)
-
             return match is not None
         else:
             return False

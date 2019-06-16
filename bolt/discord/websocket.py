@@ -176,15 +176,10 @@ class Websocket():
         if event.message.author.id == self.cache.user.id:
             return
 
+        content = event.message.content
         for command in self.iter_commands():
-            if event.message.content.startswith(command.trigger):
-                content = event.message.content.replace(command.trigger, "", 1)
-                match = re.search(command.pattern, content)
-
-                if not match:
-                    continue
-
-                event.arguments = match
+            if command.matches(content):
+                event.arguments = command.parse(content)
 
                 for hook in self.iter_pre_command_hooks():
                     output = hook(command, event)
@@ -197,7 +192,6 @@ class Websocket():
     def handle_gateway_ready(self, event):
         self.user_id = event.user.id
         self.session_id = event.session_id
-
 
     def iter_commands(self):
         for plugin in self.bot.plugins:
