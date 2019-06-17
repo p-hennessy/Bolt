@@ -12,8 +12,7 @@ from bolt.core.scheduler import Interval, Cron
 from bolt.core.webhook import Webhook
 from bolt.core.event import Subscription
 
-from gevent import queue, GreenletExit
-
+import gevent
 import logging
 import inspect
 import ujson as json
@@ -37,7 +36,7 @@ class Plugin(object):
         self.crons = []
         self.subscriptions = []
         self.greenlets = []
-        self.greenlet_queue = queue.Queue()
+        self.greenlet_queue = gevent.queue.Queue()
 
         self.enabled = False
 
@@ -51,7 +50,7 @@ class Plugin(object):
         def greenlet():
             try:
                 callback(*args, **kwargs)
-            except GreenletExit:
+            except gevent.GreenletExit:
                 self.logger.debug("Recieved kill signal from main thread. Exiting")
         greenlet.__name__ = callback.__name__
         self.greenlet_queue.put(greenlet)
