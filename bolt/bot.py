@@ -57,27 +57,39 @@ class Bot():
 
     def run(self):
         self.logger.debug('Starting main event loop')
+        greenlets = []
 
+        # Websocket Thread
         self.greenlet_websocket = gevent.spawn(self.websocket.start)
-        self.greenlet_scheduler = gevent.spawn(self.scheduler.start)
-        self.greenlet_webhooks = gevent.spawn(self.webhooks.start)
-        self.greenlet_workers = [gevent.spawn(self.worker) for _ in range(25)]
+        greenlets.append(self.greenlet_websocket)
 
-        greenlets = [
-            self.greenlet_websocket,
-            self.greenlet_scheduler,
-            self.greenlet_webhooks
-        ]
+        # Scheduler Thread
+        self.greenlet_scheduler = gevent.spawn(self.scheduler.start)
+        greenlets.append(self.greenlet_scheduler)
+
+        # Worker Thread(s) - Configurable
+        self.greenlet_workers = [gevent.spawn(self.worker) for _ in range(self.config.worker_threads)]
         greenlets.extend(self.greenlet_workers)
 
+        # Backdoor Server thread - Configurable
         if self.config.backdoor_enable is True:
             self.greenlet_backdoor = gevent.spawn(self.backdoor)
             greenlets.append(self.greenlet_backdoor)
+
+        # Webhook Thread - Configurable
+        if self.config.webhook_enable is True:
+            self.greenlet_webhooks = gevent.spawn(self.webhooks.start)
+            greenlets.append(self.greenlet_webhooks)
 
         gevent.joinall(greenlets)
 
     def backdoor(self):
         self.logger.debug('Spawning Backdoor Greenlet')
+        self.logger.warning("The backdoor server should be used for dev purposes only!")
+
+        if self.config.backdoor_host == "0.0.0.0":
+            self.logger.warning("Backdoor server should never bind to 0.0.0.0! This is extremely dangerous!")
+
         server = BackdoorServer((self.config.backdoor_host, self.config.backdoor_port), locals={'bot': self})
         server.serve_forever()
 
