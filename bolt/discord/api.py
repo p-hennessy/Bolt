@@ -528,3 +528,74 @@ class API():
             f"{self.base_url}/guilds/{guild_id}/emojis/{emoji_id}",
             headers=self.auth_headers
         )
+
+    # Webhooks
+    @rate_limit()
+    def create_webhook(self, channel_id, name=None, avatar=None):
+        return requests.post(
+            f"{self.base_url}/channels/{channel_id}/webhooks",
+            headers=self.auth_headers,
+            data=json.dumps({"name": name, "avatar": avatar})
+        )
+
+    @rate_limit()
+    def get_channel_webhooks(self, channel_id):
+        return requests.get(
+            f"{self.base_url}/channels/{channel_id}/webhooks",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
+    def get_guild_webhooks(self, guild_id):
+        return requests.get(
+            f"{self.base_url}/guilds/{guild_id}/webhooks",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
+    def get_webhook(self, webhook_id):
+        return requests.get(
+            f"{self.base_url}/webhooks/{webhook_id}",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
+    def get_webhook_with_token(self, webhook_id, webhook_token):
+        return requests.get(
+            f"{self.base_url}/webhooks/{webhook_id}/{webhook_token}",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
+    def modify_webhook(self, webhook_id, name=None, avatar=None, channel_id=None):
+        return requests.patch(
+            f"{self.base_url}/webhooks/{webhook_id}",
+            headers=self.auth_headers,
+            data=json.dumps({"name": name, "avatar": avatar, "channel_id": channel_id})
+        )
+
+    @rate_limit()
+    def modify_webhook_with_token(self, webhook_id, webhook_token, name=None, avatar=None):
+        return requests.patch(
+            f"{self.base_url}/webhooks/{webhook_id}/{webhook_token}",
+            headers=self.auth_headers,
+            data=json.dumps({"name": name, "avatar": avatar})
+        )
+
+    @rate_limit()
+    def delete_webhook(self, webhook_id):
+        return requests.delete(
+            f"{self.base_url}/webhooks/{webhook_id}",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
+    def delete_webhook_with_token(self, webhook_id, webhook_token):
+        return requests.delete(
+            f"{self.base_url}/webhooks/{webhook_id}/webhook_token",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
+    def execute_webhook(self, webhook_id, webhook_token):
+        raise NotImplementedError
