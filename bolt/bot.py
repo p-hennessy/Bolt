@@ -29,7 +29,7 @@ import importlib.util
 
 
 class Bot():
-    VERSION = "0.5.0"
+    VERSION = "0.5.1"
 
     def __init__(self, config_path):
         monkey.patch_all()
