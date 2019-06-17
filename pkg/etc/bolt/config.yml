@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Bolt v0.5.1
+# Bolt v0.5.2
 #
 # Author: Patrick Hennessy
 # Source Code: https://github.com/ns-phennessy/Bolt
@@ -41,6 +41,7 @@ mongo_database_use_tls: false
 
 # Webhook
 # -----------------------------------------------------------------------------
+webhook_enable: true
 webhook_port: 8080
 
 # Plugins
@@ -49,7 +50,7 @@ plugin_dir: /etc/bolt/plugins.enabled.d/
 
 # Logging
 # -----------------------------------------------------------------------------
-log_level: INFO        # Must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_level: DEBUG        # Must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL
 log_dir: /var/log/bolt/
 
 # Backdoor Server
