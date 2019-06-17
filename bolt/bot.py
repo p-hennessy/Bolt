@@ -67,6 +67,10 @@ class Bot():
         self.greenlet_scheduler = gevent.spawn(self.scheduler.start)
         greenlets.append(self.greenlet_scheduler)
 
+        # Thread Spawner
+        self.greenlet_threadspawner = gevent.spawn(self.thread_spawner)
+        greenlets.append(self.greenlet_threadspawner)
+
         # Worker Thread(s) - Configurable
         self.greenlet_workers = [gevent.spawn(self.worker) for _ in range(self.config.worker_threads)]
         greenlets.extend(self.greenlet_workers)
@@ -82,6 +86,22 @@ class Bot():
             greenlets.append(self.greenlet_webhooks)
 
         gevent.joinall(greenlets)
+
+    def thread_spawner(self):
+        while True:
+            for plugin in self.plugins:
+                if plugin.enabled is False:
+                    continue
+
+                while True:
+                    try:
+                        callback = plugin.greenlet_queue.get_nowait()
+                        self.logger.debug(f"Spawning greenlet for {callback}")
+                        plugin.greenlets.append(gevent.spawn(callback))
+                    except queue.Empty:
+                        break
+
+            gevent.sleep(1)
 
     def backdoor(self):
         self.logger.debug('Spawning Backdoor Greenlet')
@@ -99,6 +119,9 @@ class Bot():
 
             try:
                 callback(*args, **kwargs)
+            except gevent.GreenletExit:
+                self.logger.debug("Recieved kill signal from main thread. Exiting")
+                break
             except Exception as e:
                 module_name = f"{callback.__self__.__module__}"
                 class_name = f"{callback.__self__.__class__.__name__}"

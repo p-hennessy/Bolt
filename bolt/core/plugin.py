@@ -12,6 +12,8 @@ from bolt.core.scheduler import Interval, Cron
 from bolt.core.webhook import Webhook
 from bolt.core.event import Subscription
 
+from gevent import queue, GreenletExit
+
 import logging
 import inspect
 import ujson as json
@@ -34,6 +36,8 @@ class Plugin(object):
         self.intervals = []
         self.crons = []
         self.subscriptions = []
+        self.greenlets = []
+        self.greenlet_queue = queue.Queue()
 
         self.enabled = False
 
@@ -42,6 +46,15 @@ class Plugin(object):
 
     def deactivate(self):
         pass
+
+    def spawn_greenlet(self, callback, *args, **kwargs):
+        def greenlet():
+            try:
+                callback(*args, **kwargs)
+            except GreenletExit:
+                self.logger.debug("Recieved kill signal from main thread. Exiting")
+        greenlet.__name__ = callback.__name__
+        self.greenlet_queue.put(greenlet)
 
     def load_config(self, file_path):
         raise NotImplementedError
@@ -124,6 +137,7 @@ class Plugin(object):
         self.logger.info(f"Unloading plugin {self.name}...")
         self.deactivate()
 
+        gevent.killall(self.greenlets)
         self.pre_command_hooks = []
         self.commands = []
         self.webhooks = []
