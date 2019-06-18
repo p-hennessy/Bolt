@@ -1,6 +1,6 @@
-from bolt.discord.models import User, Message
+from bolt.discord.models import User
 from bolt.discord.models.base import Timestamp
-from bolt.discord.models.message import Reaction
+from bolt.discord.models.message import Reaction, MessageType, Message
 from bolt.discord.models.guild import Guild, GuildMember, VoiceState, Role
 from bolt.discord.models.emoji import Emoji
 from bolt.discord.models.channel import Channel, ChannelType
@@ -290,15 +290,36 @@ class EventHandler():
         message = Message.marshal(event_data)
         event.message = message
 
+        if message.type in [MessageType.DEFAULT]:
+            guild = self.cache.guilds.find(id=message.guild_id)
+            channel = guild.channels.find(id=message.channel_id)
+
+            event.guild = deepcopy(guild)
+            event.channel = deepcopy(channel)
+
     def on_message_update(self, event):
         event_data = event._raw_data_
         message = Message.marshal(event_data)
         event.message = message
 
+        if message.type in [MessageType.DEFAULT]:
+            guild = self.cache.guilds.find(id=message.guild_id)
+            channel = guild.channels.find(id=message.channel_id)
+
+            event.guild = deepcopy(guild)
+            event.channel = deepcopy(channel)
+
     def on_message_delete(self, event):
         event_data = event._raw_data_
         message = Message.marshal(event_data)
         event.message = message
+
+        if message.type in [MessageType.DEFAULT]:
+            guild = self.cache.guilds.find(id=message.guild_id)
+            channel = guild.channels.find(id=message.channel_id)
+
+            event.guild = deepcopy(guild)
+            event.channel = deepcopy(channel)
 
     def on_message_delete_bulk(self, event):
         return NotImplemented
@@ -308,15 +329,36 @@ class EventHandler():
         message = Reaction.marshal(event_data)
         event.message = message
 
+        if message.type in [MessageType.DEFAULT]:
+            guild = self.cache.guilds.find(id=message.guild_id)
+            channel = guild.channels.find(id=message.channel_id)
+
+            event.guild = deepcopy(guild)
+            event.channel = deepcopy(channel)
+
     def on_message_reaction_remove(self, event):
         event_data = event._raw_data_
         message = Reaction.marshal(event_data)
         event.message = message
 
+        if message.type in [MessageType.DEFAULT]:
+            guild = self.cache.guilds.find(id=message.guild_id)
+            channel = guild.channels.find(id=message.channel_id)
+
+            event.guild = deepcopy(guild)
+            event.channel = deepcopy(channel)
+
     def on_message_reaction_remove_all(self, event):
         event_data = event._raw_data_
         message = Reaction.marshal(event_data)
         event.message = message
+
+        if message.type in [MessageType.DEFAULT]:
+            guild = self.cache.guilds.find(id=message.guild_id)
+            channel = guild.channels.find(id=message.channel_id)
+
+            event.guild = deepcopy(guild)
+            event.channel = deepcopy(channel)
 
     #
     # Misc Handlers
@@ -325,7 +367,7 @@ class EventHandler():
     def on_presence_update(self, event):
         event_data = event._raw_data_
         user = self.cache.users.find(id=event_data['user']['id'])
-        user.status = event_data['status']
+        # user.status = event_data['status']
         event.user = deepcopy(user)
 
     def on_typing_start(self, event):
