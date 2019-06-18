@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Bolt v0.5.3
+# Bolt v0.5.4
 #
 # Author: Patrick Hennessy
 # Source Code: https://github.com/ns-phennessy/Bolt
@@ -41,7 +41,7 @@ mongo_database_use_tls: false
 
 # Webhook
 # -----------------------------------------------------------------------------
-webhook_enable: true
+webhook_enable: false
 webhook_port: 8080
 
 # Plugins
@@ -58,7 +58,7 @@ log_dir: /var/log/bolt/
 # http://www.gevent.org/api/gevent.backdoor.html
 # Backdoor server creates a TCP server you can telnet to a gain access to the
 # bot. The server exposes a 'bot' local variable.
-backdoor_enable: true
+backdoor_enable: false
 backdoor_host: 127.0.0.1
 backdoor_port: 5000
 
