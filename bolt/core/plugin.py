@@ -12,6 +12,8 @@ from bolt.core.scheduler import Interval, Cron
 from bolt.core.webhook import Webhook
 from bolt.core.event import Subscription
 
+from bolt.discord.models.channel import Channel
+
 import gevent
 import logging
 import inspect
@@ -153,9 +155,14 @@ class Plugin(object):
         self.logger.info(f"Disabling plugin {self.name}...")
         self.enabled = False
 
-    def say(self, channel_id, message="", embed=None, mentions=None):
+    def say(self, channel, message="", embed=None, mentions=None):
         embed = {} if embed is None else embed
         mentions = [] if mentions is None else mentions
+
+        if isinstance(channel, Channel):
+            channel_id = channel.id
+        else:
+            channel_id = channel
 
         self.logger.debug("Sending message to channel " + channel_id)
 
