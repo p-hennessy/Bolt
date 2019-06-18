@@ -21,6 +21,7 @@ class Scheduler():
 
                 for interval in plugin.intervals:
                     if interval.ready():
+                        self.logger.debug(f"Scheduling interval: {interval.callback}")
                         interval.last = time.time()
                         self.bot.queue.put((interval.callback, [], {}))
 
