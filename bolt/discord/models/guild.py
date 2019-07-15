@@ -2,6 +2,7 @@ from bolt.discord.models.base import Enum, Model, Field, ListField, Snowflake, T
 from bolt.discord.models.channel import Channel
 from bolt.discord.models.user import User
 from bolt.discord.permissions import Permission
+import ujson as json
 
 
 class MessageNotificationLevel(Enum):
@@ -28,55 +29,58 @@ class MFALevel(Enum):
     ELEVATED = 1
 
 
-class GuildMember(Model):
-    __repr_keys__ = ['user']
+class PremiumTier(Enum):
+    NONE = 0
+    TIER_1 = 1
+    TIER_2 = 2
+    TIER_3 = 3
 
-    api = None
+
+class GuildMember(Model):
+    __repr_keys__ = ['id', 'name']
 
     user = Field(User)
     guild_id = Field(Snowflake)
-    nick = Field(str)
+    _nick = Field(str, json_key="nick")
     roles = ListField(int)
     joined_at = Field(Timestamp)
     deaf = Field(bool)
     mute = Field(bool)
 
-    def __repr__(self):
-        classname = f"{type(self).__name__}"
-        return f"{classname}({repr(self.user)})"
-
     @property
     def mention(self):
-        return f"<@{self.user.id}>"
+        return self.user.mention
 
     def squelch(self):
-        self.api.modify_guild_member(self.guild_id, self.id, mute=True)
+        return self.api.modify_guild_member(self.guild_id, self.id, mute=True)
 
     def unsquelch(self):
-        self.api.modify_guild_member(self.guild_id, self.id, mute=False)
+        return self.api.modify_guild_member(self.guild_id, self.id, mute=False)
 
     def deafen(self):
-        self.api.modify_guild_member(self.guild_id, self.id, deaf=True)
+        return self.api.modify_guild_member(self.guild_id, self.id, deaf=True)
 
     def undeafen(self):
-        self.api.modify_guild_member(self.guild_id, self.id, deaf=False)
+        return self.api.modify_guild_member(self.guild_id, self.id, deaf=False)
 
     def move(self, channel):
-        self.api.modify_guild_member(self.guild_id, self.id, channel_id=channel.id)
+        return self.api.modify_guild_member(self.guild_id, self.id, channel_id=channel.id)
 
-    def whisper(self):
-        raise NotImplementedError
+    def whisper(self, *args, **kwargs):
+        channel = Channel.marshal(self.api.create_dm(self.id))
+        channel.api = self.api
+        return channel.say(*args, **kwargs)
 
-    def kick(self, reason):
-        raise NotImplementedError
+    def kick(self):
+        return self.api.remove_guild_member(self.guild_id, self.id)
 
     def ban(self, reason):
-        raise NotImplementedError
+        return self.api.create_guild_ban(self.guild_id, self.id, reason=reason)
 
-    def unban(self, reason):
-        raise NotImplementedError
+    def unban(self):
+        return self.api.remove_guild_ban(self.guild_id, self.id)
 
-    def set_nickname(self, nickname):
+    def nickname(self, nickname):
         raise NotImplementedError
 
     def add_role(self, role):
@@ -87,16 +91,29 @@ class GuildMember(Model):
 
     def has_role(self, role):
         return bool(self.roles.find(id=role.id))
+    
+    @property
+    def nick(self):
+        return self._nick
+    
+    @nick.setter
+    def nick(self, value):
+        self._nick = str(value)
 
     @property
     def id(self):
         return self.user.id
-
+    
+    @property
+    def name(self):
+        if self.nick is not None:
+            return self.nick
+        else:
+            return self.user.name
+            
 
 class Role(Model):
     __repr_keys__ = ['id', 'name']
-
-    api = None
 
     id = Field(Snowflake, required=True)
     name = Field(str, required=True)
@@ -107,8 +124,13 @@ class Role(Model):
     managed = Field(bool)
     mentionable = Field(bool)
 
+    # TODO: Implement update ability
+
+    def rename(self):
+        raise NotImplementedError
+
     def delete(self):
-        pass
+        raise NotImplementedError
 
 
 class VoiceState(Model):
@@ -121,12 +143,23 @@ class VoiceState(Model):
     self_deaf = Field(bool)
     self_mute = Field(bool)
     suppress = Field(bool)
+    
 
+class VoiceRegion(Model):
+    id = Field(str)
+    name = Field(str)
+    vip = Field(bool)
+    optimal = Field(bool)
+    deprecated = Field(bool)
+    custom = Field(bool)
+    
 
 class ActivityType(Enum):
     GAME = 0
     STREAMING = 1
     LISTENING = 2
+    WATCHING = 3
+    CUSTOM_STATUS = 4
 
 
 class Activity(Model):
@@ -175,17 +208,21 @@ class Emoji(Model):
     managed = Field(bool, default=False)
     animated = Field(bool, default=False)
 
+    # TODO: Implement Update ability
+    def rename(self):
+        raise NotImplementedError
+
+    def delete(self):
+        raise NotImplementedError
+    
 
 class Guild(Model):
     __repr_keys__ = ['id', 'name']
-
-    api = None
 
     id = Field(Snowflake, required=True)
     name = Field(str)
     icon = Field(str)
     splash = Field(str)
-    owner = Field(bool, default=False)
     owner_id = Field(Snowflake)
     permissions = Field(Permission)
     region = Field(str)
@@ -212,19 +249,50 @@ class Guild(Model):
     members = ListField(GuildMember)
     channels = ListField(Channel)
     presences = ListField(Presence)
-
-    def update(self):
-        pass
-
-    def delete(self):
-        pass
+    max_presences = Field(int)
+    max_members = Field(int)
+    vanity_url_code = Field(str)
+    banner = Field(str)
+    premium_tier = Field(PremiumTier)
+    premium_subscription_count = Field(int)
 
     def leave(self):
-        pass
+        return self.api.leave_guild(self.id)
+    
+    def prune(self, days, compute_prune_count=False):
+        return self.api.begin_guild_prune(days, compute_prune_count=compute_prune_count)
+    
+    @property
+    def invites(self):
+        return self.api.get_guild_invites(self.id)
+    
+    @property
+    def prune_count(self):
+        return self.api.get_guild_prune_count(self.id)
+    
+    @property
+    def bans(self):
+        all = SearchableList()
+        guild_bans = self.api.get_guild_bans(self.id)
+        for ban in guild_bans:
+            all.append(Ban.marshal(ban))
+
+    @property
+    def embed_channel(self):
+        return self.cache.channels[self.embed_channel_id]
+
+    @property
+    def widget_channel(self):
+        return self.cache.channels[self.widget_channel_id]
+
+    @property
+    def afk_channel(self):
+        return self.cache.channels[self.afk_channel_id]
 
     @property
     def system_channel(self):
-        pass
-
-    def get_owner(self):
-        pass
+        return self.cache.channels[self.system_channel_id]
+    
+    @property
+    def owner(self):
+        return self.cache.users[self.owner_id]

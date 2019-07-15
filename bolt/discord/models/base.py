@@ -9,7 +9,7 @@
 import enum
 from datetime import datetime
 import time
-
+import dateparser
 
 class ModelMissingRequiredKeyError(Exception):
     pass
@@ -42,7 +42,13 @@ class Model(object):
         new_obj.__fields__ = {}
         new_obj.__immutable_fields__ = []
 
-        for field_name, field in cls.__dict__.items():
+        # Get all fields from super classes
+        fields = {}
+        for base in cls.__bases__:
+            fields.update(base.__dict__.items())
+        fields.update(cls.__dict__.items())
+        
+        for field_name, field in fields.items():
             if not isinstance(field, Field):
                 continue
 
@@ -113,7 +119,20 @@ class Model(object):
                 dct[key] = attr
 
         return dct
-
+    
+    def merge(self, new_obj, preserve=None):
+        """
+            Sometimes events come from the websocket that will
+            have updates to existing model objects. This method
+            will get new values from the new object but will
+            not update any fields in preserve
+        """
+        for field_name in self.__fields__:
+            if preserve and field_name in preserve:
+                continue
+            
+            setattr(self, field_name, getattr(new_obj, field_name))
+        
     def __repr__(self):
         """
             Pretty repr that allows models to specify keys to use
@@ -141,8 +160,8 @@ class Model(object):
             raise ImmutableFieldError(f"Field \"{name}\" is immutable, cannot be deleted")
         else:
             return object.__delattr__(self, name)
-
-
+    
+    
 class Field(object):
     """
         Conterpart class for Models, instructing the model how to consume json data
@@ -245,10 +264,12 @@ class Snowflake(str):
 
 class Timestamp():
     def __init__(self, iso_date):
-        fmt = '%Y-%m-%dT%H:%M:%S.%f%z'
-        iso_date = "".join(iso_date.rsplit(":", 1))
-        self.datetime = datetime.strptime(iso_date, fmt)
-
+        try:
+            self.datetime = dateparser.parse(iso_date)
+        except:
+            import pdb; pdb.set_trace()
+            pass
+        
     def __repr__(self):
         return f"{self.__class__.__name__}({self.timestamp})"
 
@@ -294,6 +315,31 @@ class SearchableList(list):
                 break
         else:
             self.append(new_item)
+
+class SearchableDict(dict):
+    """
+        Subclass of Dict that allows for Mongo-esque querying of contents
+        Example:
+            users.find(name="Pat")
+            users.filter(lambda user: user.height > 5)
+    """
+    def find(self, *args, **kwargs):
+        for _, item in self.items():
+            for key, value in kwargs.items():
+                attr = getattr(item, key, None)
+                attr_type = type(attr)
+
+                if issubclass(attr_type, (int, bool, str, float)):
+                    if (attr == attr_type(value)) is False:
+                        break
+            else:
+                return item
+
+        return None
+
+    def filter(self, expression):
+        raise NotImplementedError
+
 
 
 # class Autoslots(type):

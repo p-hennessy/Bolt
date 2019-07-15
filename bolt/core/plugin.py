@@ -10,7 +10,7 @@ from bolt.utils.decorators import add_method_tag
 from bolt.core.command import Command, RegexCommand, ParseCommand
 from bolt.core.scheduler import Interval, Cron
 from bolt.core.webhook import Webhook
-from bolt.core.event import Subscription
+from bolt.discord.events import Subscription
 
 from bolt.discord.models.channel import Channel
 
@@ -41,7 +41,7 @@ class Plugin(object):
         self.greenlet_queue = gevent.queue.Queue()
 
         self.enabled = False
-
+    
     def activate(self):
         pass
 
@@ -146,58 +146,6 @@ class Plugin(object):
         self.subscribers = []
 
         self.enabled = False
-
-    def enable(self):
-        self.logger.info(f"Enabling plugin {self.name}...")
-        self.enabled = True
-
-    def disable(self):
-        self.logger.info(f"Disabling plugin {self.name}...")
-        self.enabled = False
-
-    def say(self, channel, message="", embed=None, mentions=None):
-        embed = {} if embed is None else embed
-        mentions = [] if mentions is None else mentions
-
-        if isinstance(channel, Channel):
-            channel_id = channel.id
-        else:
-            channel_id = channel
-
-        self.logger.debug("Sending message to channel " + channel_id)
-
-        for user in mentions:
-            message = f"<@{user}> {message}"
-
-        message_data = {
-            "content": "{}".format(message),
-            "embed": embed
-        }
-
-        try:
-            return self.bot.api.create_message(channel_id, json.dumps(message_data))
-        except Exception as e:
-            self.logger.warning(f'Send message to channel "{channel_id}" failed: {e}')
-
-    def whisper(self, user_id, message="", embed=None, mentions=None):
-        embed = {} if embed is None else embed
-        mentions = [] if mentions is None else mentions
-
-        channel = self.bot.api.create_dm(user_id)
-        channel_id = channel['id']
-
-        self.say(channel_id, message=message, embed=embed, mentions=mentions)
-
-    def upload(self, channel_id, file):
-        self.logger.debug('Uploading file to channel ' + channel_id)
-
-        endpoint = self.base_url + f"channels/{channel_id}/messages"
-        files = {'file': open(file, 'rb')}
-
-        try:
-            self.bot.api.create_message(endpoint, files=files, headers=self.auth_headers)
-        except Exception as e:
-            self.logger.warning(f'Upload of {file} to channel {channel_id} failed: {e}')
 
     def __repr__(self):
         return f"Plugin({self.name})"

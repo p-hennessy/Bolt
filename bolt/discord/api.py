@@ -20,7 +20,7 @@ def rate_limit():
             # Check if there is a timeout
             if time.time() < callback.reset:
                 delay = callback.reset - time.time()
-                self.logger.warning(f"Rate limited, sleeping for {delay} seconds")
+                # self.logger.warning(f"Rate limited, sleeping for {delay} seconds")
                 gevent.sleep(delay)
 
             # Call real method
@@ -50,7 +50,7 @@ class API():
             "Content-Type": 'application/json'
         }
         self.base_url = "https://discordapp.com/api"
-        self.logger = logging.getLogger(__name__)
+        # self.logger = logging.getLogger(__name__)
 
     # Gateway methods
     @rate_limit()
@@ -107,12 +107,9 @@ class API():
 
     @rate_limit()
     def create_message(self, channel_id, message_data, files=None):
-        if isinstance(message_data, dict):
-            message_data = json.dumps(message_data)
-
         return requests.post(
             f"{self.base_url}/channels/{channel_id}/messages",
-            data=message_data,
+            data=json.dumps(message_data),
             files=files,
             headers=self.auth_headers
         )
@@ -191,7 +188,7 @@ class API():
         )
 
     @rate_limit()
-    def get_pinned_messsages(self, channel_id):
+    def get_pinned_messages(self, channel_id):
         return requests.get(
             f"{self.base_url}/channels/{channel_id}/pins",
             headers=self.auth_headers
@@ -384,7 +381,10 @@ class API():
 
     @rate_limit()
     def remove_guild_member_role(self, guild_id, user_id, role_id):
-        raise NotImplementedError
+        return requests.delete(
+            f"{self.base_url}/guilds/{guild_id}/members/{user_id}/roles/{role_id}",
+            headers=self.auth_headers
+        )
 
     @rate_limit()
     def remove_guild_member(self, guild_id, user_id):

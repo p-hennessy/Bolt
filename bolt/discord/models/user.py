@@ -1,6 +1,5 @@
 from bolt.discord.models.base import Snowflake, Model, Field, Enum
 
-
 class PremiumType(Enum):
     NITROCLASSIC = 1
     NITRO = 2
@@ -22,5 +21,12 @@ class User(Model):
     premium_type = Field(PremiumType)
     status = Field(str)
 
-    def whisper(self):
-        pass
+    def whisper(self, *args, **kwargs):
+        from bolt.discord.models.channel import Channel
+        channel = Channel.marshal(self.api.create_dm(self.id))
+        channel.api = self.api
+        return channel.say(*args, **kwargs)
+
+    @property
+    def mention(self):
+        return f"<@{self.id}>"
