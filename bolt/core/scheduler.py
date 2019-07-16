@@ -21,13 +21,21 @@ class Scheduler():
 
                 for interval in plugin.intervals:
                     if interval.ready():
-                        self.logger.debug(f"Scheduling interval: {interval.callback}")
+                        self.logger.debug(
+                            f"Scheduling interval callback for: "
+                            f"{interval.callback.__self__.__class__.__name__}."
+                            f"{interval.callback.__name__}"
+                        )
                         interval.last = time.time()
                         self.bot.queue.put((interval.callback, [], {}))
 
                 for cron in plugin.crons:
                     if cron.ready():
-                        self.logger.debug(f"Scheduling cron: {cron.callback}")
+                        self.logger.debug(
+                            f"Scheduling interval callback for: "
+                            f"{interval.callback.__self__.__class__.__name__}."
+                            f"{interval.callback.__name__}"
+                        )
                         self.bot.queue.put((cron.callback, [], {}))
                         cron.cron.get_next()
 
