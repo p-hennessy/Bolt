@@ -1,6 +1,6 @@
 from bolt.discord.models.user import User
 from bolt.discord.models.base import Snowflake, Timestamp, Model, Field, ListField
-from bolt.discord.models.message import Reaction, Message
+from bolt.discord.models.message import Message
 from bolt.discord.models.guild import Guild, GuildMember, VoiceState, Role
 from bolt.discord.models.emoji import Emoji
 from bolt.discord.models.channel import Channel
@@ -10,10 +10,12 @@ from enum import Enum, auto
 import gevent
 import logging
 
+
 class Subscription():
     def __init__(self, event_name, callback):
         self.event_name = event_name
         self.callback = callback
+
 
 class Events(Enum):
     READY = auto()
@@ -53,12 +55,13 @@ class Events(Enum):
     def __repr__(self):
         return f"{self.__class__.__name__}.{self._name_}"
 
+
 class EventHandler():
     def __init__(self, bot):
         self.bot = bot
         self.logger = logging.getLogger(__name__)
 
-    def dispatch(self, event, subscriptions, async=False):
+    def dispatch(self, event, subscriptions, queue=False):
         for subscription in subscriptions:
             event_name = snakecase_to_camelcase(event.name)
             if subscription.event_name == event_name:
@@ -68,19 +71,21 @@ class EventHandler():
                     f"{subscription.callback.__self__.__class__.__name__}."
                     f"{subscription.callback.__name__}"
                 )
-            
-                if async is True:
+
+                if queue is True:
                     self.bot.queue.put((subscription.callback, [event], {}))
                     gevent.sleep(0)
                     continue
                 else:
                     subscription.callback(event)
 
+
 class GatewayEvent(Model):
     op_code = Field(int, json_key="op")
     sequence = Field(int, json_key="s")
     name = Field(str, json_key="t")
     cache = None
+
 
 class Ready(GatewayEvent):
     version = Field(int, json_key='v')
@@ -89,11 +94,14 @@ class Ready(GatewayEvent):
     guilds = ListField(Guild)
     session_id = Field(str)
 
+
 class Resumed(GatewayEvent):
     pass
 
+
 class InvalidSession(GatewayEvent):
     pass
+
 
 class ChannelCreate(GatewayEvent):
     channel = Field(Channel, json_key="d")
@@ -102,12 +110,15 @@ class ChannelCreate(GatewayEvent):
     def guild(self):
         return self.cache.guilds.get(self.channel.guild_id)
 
+
 class ChannelUpdate(GatewayEvent):
     channel = Field(Channel, json_key="d")
 
+
 class ChannelDelete(GatewayEvent):
     channel = Field(Channel, json_key="d")
-    
+
+
 class ChannelPinsUpdate(GatewayEvent):
     guild_id = Field(Snowflake)
     channel_id = Field(Snowflake)
@@ -116,76 +127,87 @@ class ChannelPinsUpdate(GatewayEvent):
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-        
+
     @property
     def channel(self):
         return self.cache.channels.get(self.channel_id)
 
+
 class GuildCreate(GatewayEvent):
     guild = Field(Guild, json_key="d")
 
+
 class GuildUpdate(GatewayEvent):
     guild = Field(Guild, json_key="d")
-    
+
+
 class GuildDelete(GatewayEvent):
     guild = Field(Guild, json_key="d")
-    
+
+
 class GuildBanAdd(GatewayEvent):
     guild_id = Field(Snowflake)
     user = Field(User)
-    
+
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-    
+
+
 class GuildBanRemove(GatewayEvent):
     guild_id = Field(Snowflake)
     user = Field(User)
-    
+
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-        
+
+
 class GuildEmojisUpdate(GatewayEvent):
     guild_id = Field(Snowflake)
     emojis = ListField(Emoji)
-    
+
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-        
+
+
 class GuildIntegrationsUpdate(GatewayEvent):
     guild_id = Field(Snowflake)
 
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-    
+
+
 class GuildMemberAdd(GatewayEvent):
     member = Field(GuildMember, json_key="d")
-    
+
     @property
     def guild(self):
         return self.cache.guilds.get(self.member.guild_id)
-    
+
+
 class GuildMemberRemove(GatewayEvent):
     guild_id = Field(Snowflake)
     user = Field(User)
-    
+
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-        
+
+
 class GuildMemberUpdate(GatewayEvent):
     guild_id = Field(Snowflake)
     user = Field(User)
     roles = ListField(Snowflake)
     nick = Field(str)
-    
+
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-        
+
+
 class GuildMembersChunk(GatewayEvent):
     guild_id = Field(Snowflake)
     members = ListField(GuildMember)
@@ -193,7 +215,8 @@ class GuildMembersChunk(GatewayEvent):
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-            
+
+
 class GuildRoleCreate(GatewayEvent):
     guild_id = Field(Snowflake)
     role = Field(Role)
@@ -201,7 +224,8 @@ class GuildRoleCreate(GatewayEvent):
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-    
+
+
 class GuildRoleUpdate(GatewayEvent):
     guild_id = Field(Snowflake)
     role = Field(Role)
@@ -209,7 +233,8 @@ class GuildRoleUpdate(GatewayEvent):
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-            
+
+
 class GuildRoleDelete(GatewayEvent):
     guild_id = Field(Snowflake)
     role = Field(Role)
@@ -217,10 +242,11 @@ class GuildRoleDelete(GatewayEvent):
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-            
+
+
 class MessageCreate(GatewayEvent):
     message = Field(Message, json_key="d")
-    
+
     @property
     def channel(self):
         return self.cache.channels.get(self.message.channel_id)
@@ -234,10 +260,11 @@ class MessageCreate(GatewayEvent):
     def guild(self):
         if self.message.is_guild:
             return self.cache.guilds.get(self.message.guild_id)
-    
+
+
 class MessageUpdate(GatewayEvent):
     message = Field(Message, json_key="d")
-    
+
     @property
     def channel(self):
         return self.cache.channels.get(self.message.channel_id)
@@ -246,12 +273,13 @@ class MessageUpdate(GatewayEvent):
     def guild(self):
         if self.message.is_guild:
             return self.cache.guilds.get(self.message.guild_id)
-    
+
+
 class MessageDelete(GatewayEvent):
     id = Field(Snowflake)
     channel_id = Field(Snowflake)
     guild_id = Field(Snowflake)
-    
+
     @property
     def channel(self):
         return self.cache.channels.get(self.channel_id)
@@ -260,12 +288,13 @@ class MessageDelete(GatewayEvent):
     def guild(self):
         if self.message.is_guild:
             return self.cache.guilds.get(self.guild_id)
-    
+
+
 class MessageDeleteBulk(GatewayEvent):
     ids = ListField(Snowflake)
     channel_id = Field(Snowflake)
     guild_id = Field(Snowflake)
-    
+
     @property
     def channel(self):
         return self.cache.channels.get(self.channel_id)
@@ -274,13 +303,14 @@ class MessageDeleteBulk(GatewayEvent):
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
 
+
 class MessageReactionAdd(GatewayEvent):
     user_id = Field(Snowflake)
     channel_id = Field(Snowflake)
     message_id = Field(Snowflake)
     guild_id = Field(Snowflake)
     emoji = Field(Emoji)
-    
+
     @property
     def channel(self):
         return self.cache.guilds.get(self.channel_id)
@@ -288,14 +318,15 @@ class MessageReactionAdd(GatewayEvent):
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-    
+
+
 class MessageReactionRemove(GatewayEvent):
     user_id = Field(Snowflake)
     channel_id = Field(Snowflake)
     message_id = Field(Snowflake)
     guild_id = Field(Snowflake)
     emoji = Field(Emoji)
-    
+
     @property
     def channel(self):
         return self.cache.guilds.get(self.channel_id)
@@ -303,12 +334,13 @@ class MessageReactionRemove(GatewayEvent):
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-            
+
+
 class MessageReactionRemoveAll(GatewayEvent):
     channel_id = Field(Snowflake)
     message_id = Field(Snowflake)
     guild_id = Field(Snowflake)
-    
+
     @property
     def channel(self):
         return self.cache.guilds.get(self.channel_id)
@@ -317,23 +349,25 @@ class MessageReactionRemoveAll(GatewayEvent):
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
 
+
 class PresenceUpdate(GatewayEvent):
     pass
-    
+
+
 class TypingStart(GatewayEvent):
     guild_id = Field(Snowflake)
     channel_id = Field(Snowflake)
     user_id = Field(Snowflake)
     unix_time = Field(int, json_key="timestamp")
-    
+
     @property
     def timestamp(self):
         return Timestamp.from_unix(self.unix_time)
-    
+
     @property
     def user(self):
         return self.cache.users.get(self.user_id)
-    
+
     @property
     def channel(self):
         return self.cache.guilds.get(self.channel_id)
@@ -341,9 +375,11 @@ class TypingStart(GatewayEvent):
     @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
-        
+
+
 class UserUpdate(GatewayEvent):
     user = Field(User, json_key="d")
+
 
 class VoiceStateUpdate(GatewayEvent):
     voice_state = Field(VoiceState, json_key="d")
@@ -355,7 +391,7 @@ class VoiceStateUpdate(GatewayEvent):
     @property
     def user(self):
         return self.cache.users.get(self.voice_state.user_id)
-    
+
     @property
     def channel(self):
         return self.cache.channels.get(self.voice_state.channel_id)
@@ -363,14 +399,16 @@ class VoiceStateUpdate(GatewayEvent):
     @property
     def guild(self):
         return self.cache.guilds.get(self.voice_state.guild_id)
-    
+
+
 class VoiceServerUpdate(GatewayEvent):
     pass
-    
+
+
 class WebhooksUpdate(GatewayEvent):
     guild_id = Field(Snowflake)
     message_id = Field(Snowflake)
-    
+
     @property
     def channel(self):
         return self.cache.guilds.get(self.channel.id)

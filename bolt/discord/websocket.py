@@ -6,7 +6,7 @@
         - Patrick Hennessy
 """
 from bolt.discord.events import Subscription
-from bolt.discord.events import EventHandler, Events
+from bolt.discord.events import EventHandler
 from bolt.discord import events
 
 from bolt.discord.cache import Cache
@@ -92,26 +92,25 @@ class Websocket():
     def handle_websocket_message(self, socket, message):
         message = json.loads(message)
         op_code = message.get('op', None)
-        
+
         if op_code == GatewayOpCodes.DISPATCH:
             event_name = snakecase_to_camelcase(message['t'])
             event_class = getattr(events, event_name)
-            
+
             event = event_class.marshal(message)
             event.remarshal(message['d'])
             event.cache = self.cache
-            
+
             self.sequence = event.sequence
 
             # Update cache
             self.event_handler.dispatch(event, self.cache.subscriptions)
-            
+
             # Dispatch event to all subscribers
             self.event_handler.dispatch(event, self.subscriptions)
             for plugin in self.bot.plugins:
                 if plugin.enabled is True:
-                    self.event_handler.dispatch(event, plugin.subscriptions, async=True)
-            
+                    self.event_handler.dispatch(event, plugin.subscriptions, queue=True)
 
         elif op_code == GatewayOpCodes.RECONNECT:
             self.logger.warning("Got reconnect signal")

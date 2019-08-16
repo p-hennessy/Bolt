@@ -1,6 +1,5 @@
 from bolt.discord.models.base import Model, Field, Timestamp
 from bolt.discord.models.guild import Guild
-from bolt.discord.models.message import Message
 from bolt.discord.models.channel import Channel
 from bolt.discord.models.user import User
 

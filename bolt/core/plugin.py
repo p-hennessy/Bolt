@@ -12,12 +12,9 @@ from bolt.core.scheduler import Interval, Cron
 from bolt.core.webhook import Webhook
 from bolt.discord.events import Subscription
 
-from bolt.discord.models.channel import Channel
-
 import gevent
 import logging
 import inspect
-import ujson as json
 
 
 class Plugin(object):
@@ -41,7 +38,7 @@ class Plugin(object):
         self.greenlet_queue = gevent.queue.Queue()
 
         self.enabled = False
-    
+
     def activate(self):
         pass
 

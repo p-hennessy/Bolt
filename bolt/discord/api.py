@@ -9,7 +9,6 @@ import ujson as json
 import gevent
 import requests
 import time
-import logging
 
 
 def rate_limit():

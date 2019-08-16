@@ -62,22 +62,22 @@ class Message(Model):
 
     def edit(self, content, embed=None):
         pass
-    
+
     def reply(self, message):
         self.channel.say(message, mentions=[self.author])
-    
+
     @property
     def is_guild(self):
         return self.guild_id is not None
-    
+
     @property
     def is_dm(self):
         return self.guild_id is None
-    
+
     @property
     def channel(self):
         return self.cache.channels[self.channel_id]
-    
+
     @property
     def guild(self):
         return self.cache.guilds[self.guild_id]

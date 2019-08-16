@@ -1,8 +1,7 @@
-from bolt.discord.models.base import Enum, Model, Field, ListField, Snowflake, Timestamp
+from bolt.discord.models.base import Enum, Model, Field, ListField, Snowflake, Timestamp, SearchableList
 from bolt.discord.models.channel import Channel
 from bolt.discord.models.user import User
 from bolt.discord.permissions import Permission
-import ujson as json
 
 
 class MessageNotificationLevel(Enum):
@@ -91,11 +90,11 @@ class GuildMember(Model):
 
     def has_role(self, role):
         return bool(self.roles.find(id=role.id))
-    
+
     @property
     def nick(self):
         return self._nick
-    
+
     @nick.setter
     def nick(self, value):
         self._nick = str(value)
@@ -103,14 +102,14 @@ class GuildMember(Model):
     @property
     def id(self):
         return self.user.id
-    
+
     @property
     def name(self):
         if self.nick is not None:
             return self.nick
         else:
             return self.user.name
-            
+
 
 class Role(Model):
     __repr_keys__ = ['id', 'name']
@@ -143,7 +142,7 @@ class VoiceState(Model):
     self_deaf = Field(bool)
     self_mute = Field(bool)
     suppress = Field(bool)
-    
+
 
 class VoiceRegion(Model):
     id = Field(str)
@@ -152,7 +151,7 @@ class VoiceRegion(Model):
     optimal = Field(bool)
     deprecated = Field(bool)
     custom = Field(bool)
-    
+
 
 class ActivityType(Enum):
     GAME = 0
@@ -188,15 +187,6 @@ class Ban(Model):
     user = Field(User)
 
 
-class VoiceRegion(Model):
-    id = Field(str)
-    name = Field(str)
-    vip = Field(bool)
-    optimal = Field(bool)
-    deprecated = Field(bool)
-    custom = Field(bool)
-
-
 class Emoji(Model):
     __repr_keys__ = ['id', 'name']
 
@@ -214,7 +204,7 @@ class Emoji(Model):
 
     def delete(self):
         raise NotImplementedError
-    
+
 
 class Guild(Model):
     __repr_keys__ = ['id', 'name']
@@ -258,18 +248,18 @@ class Guild(Model):
 
     def leave(self):
         return self.api.leave_guild(self.id)
-    
+
     def prune(self, days, compute_prune_count=False):
         return self.api.begin_guild_prune(days, compute_prune_count=compute_prune_count)
-    
+
     @property
     def invites(self):
         return self.api.get_guild_invites(self.id)
-    
+
     @property
     def prune_count(self):
         return self.api.get_guild_prune_count(self.id)
-    
+
     @property
     def bans(self):
         all = SearchableList()
@@ -292,7 +282,7 @@ class Guild(Model):
     @property
     def system_channel(self):
         return self.cache.channels[self.system_channel_id]
-    
+
     @property
     def owner(self):
         return self.cache.users[self.owner_id]
