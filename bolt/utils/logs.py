@@ -18,6 +18,7 @@ def setup_logger(config):
     level, log_dir = get_logging_configuation(config)
 
     logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("parse").setLevel(logging.WARNING)
     logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
 
     log = logging.getLogger('')

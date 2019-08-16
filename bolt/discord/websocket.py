@@ -11,6 +11,7 @@ from bolt.discord import events
 
 from bolt.discord.cache import Cache
 from bolt.utils import snakecase_to_camelcase
+from bolt.core.exceptions import InvalidBotToken
 
 from datetime import timedelta
 from platform import system
@@ -49,7 +50,12 @@ class Websocket():
 
     def start(self):
         self.logger.debug('Spawning Gateway Greenlet')
-        self.socket_url = f"{self.bot.api.get_gateway_bot()['url']}?v=6&encoding=json"
+
+        gateway = self.bot.api.get_gateway_bot()
+        if gateway.get("message") == "401: Unauthorized":
+            raise InvalidBotToken()
+
+        self.socket_url = f"{gateway['url']}?v=6&encoding=json"
         self.login_time = time.time()
 
         self.websocket_app = websocket.WebSocketApp(

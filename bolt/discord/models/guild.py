@@ -252,6 +252,15 @@ class Guild(Model):
     def prune(self, days, compute_prune_count=False):
         return self.api.begin_guild_prune(days, compute_prune_count=compute_prune_count)
 
+    def create_voice_channel(self):
+        pass
+
+    def create_text_channel(self):
+        pass
+
+    def create_category(self):
+        pass
+
     @property
     def invites(self):
         return self.api.get_guild_invites(self.id)

@@ -29,5 +29,9 @@ class User(Model):
         return channel.say(*args, **kwargs)
 
     @property
+    def avatar_url(self):
+        return f"https://cdn.discordapp.com/avatars/{self.id}/{self.avatar}.png"
+
+    @property
     def mention(self):
         return f"<@{self.id}>"
