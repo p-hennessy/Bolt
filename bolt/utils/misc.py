@@ -1,8 +1,10 @@
 import os
 import importlib
 
+
 def snakecase_to_camelcase(string):
     return ''.join(x.title() for x in string.split('_'))
+
 
 def find_plugins(path):
     for file in os.listdir(path):
