@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Bolt v0.6.2
+# Bolt v0.6.1
 #
 # Author: Patrick Hennessy
 # Source Code: https://github.com/ns-phennessy/Bolt
@@ -11,11 +11,11 @@
 # -----------------------------------------------------------------------------
 # Discord API key used to connect to the websocket and use the Discord API
 # https://discordapp.com/developers/applications/
-api_key: "Mzk5NDU4Mjg0NzY5Mzc4MzA5.XVZQzg.uIjA_DHxVxLqz5pAmJn8IJ45mrw"
+api_key: ""
 
 # Bot will refer to itself by this name
 # Some plugins may set the bot's name to this
-name: "Ms. Pauling"
+name: "Bolt"
 
 # Trigger is used as the default prefix for invoking commands
 # Some plugins may choose to override this value
@@ -65,30 +65,3 @@ backdoor_port: 5000
 # Plugin specific
 # -----------------------------------------------------------------------------
 plugins:
-    RBAC:
-        owners:
-          - "65497519504764928" # Zeus
-          - "256559833803784194"
-          - "143877973156560897"
-          - "134078616727322625"
-          - "96272905167446016" # Calculon
-        roles:
-            pug_admin:
-            - Pugs.*
-            - ServeMe.*
-            default:
-            - Manage.*
-            - LogsTF.*
-            - DemosTF.*
-            - Steam.*
-            - UrbanDictionary.*
-            - Help.*
-            - Chance.*
-            - Inspire.*
-    Status:
-        statuses:
-        - Team Fortress 2
-        - Team Fort Defense
-        - Hat Simulator
-        - Scream Fortress 2
-        - type "!help" for commands
