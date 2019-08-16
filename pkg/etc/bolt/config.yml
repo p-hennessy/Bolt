@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Bolt v0.6.1
+# Bolt v0.6.2
 #
 # Author: Patrick Hennessy
 # Source Code: https://github.com/ns-phennessy/Bolt
@@ -11,7 +11,7 @@
 # -----------------------------------------------------------------------------
 # Discord API key used to connect to the websocket and use the Discord API
 # https://discordapp.com/developers/applications/
-api_key: "Mzk5NDU4Mjg0NzY5Mzc4MzA5.D0paJw.R3NDzAMya2awyBGfZeLCwCNklJk"
+api_key: "Mzk5NDU4Mjg0NzY5Mzc4MzA5.XVZQzg.uIjA_DHxVxLqz5pAmJn8IJ45mrw"
 
 # Bot will refer to itself by this name
 # Some plugins may set the bot's name to this
