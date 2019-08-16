@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Bolt v0.5.5
+# Bolt v0.6.0
 #
 # Author: Patrick Hennessy
 # Source Code: https://github.com/ns-phennessy/Bolt
@@ -41,7 +41,7 @@ mongo_database_use_tls: false
 
 # Webhook
 # -----------------------------------------------------------------------------
-webhook_enable: false
+webhook_enable: true
 webhook_port: 8080
 
 # Plugins
@@ -58,7 +58,7 @@ log_dir: /var/log/bolt/
 # http://www.gevent.org/api/gevent.backdoor.html
 # Backdoor server creates a TCP server you can telnet to a gain access to the
 # bot. The server exposes a 'bot' local variable.
-backdoor_enable: false
+backdoor_enable: true
 backdoor_host: 127.0.0.1
 backdoor_port: 5000
 
@@ -66,7 +66,12 @@ backdoor_port: 5000
 # -----------------------------------------------------------------------------
 plugins:
     RBAC:
-        owner: "65497519504764928"
+        owners:
+          - "65497519504764928" # Zeus
+          - "256559833803784194"
+          - "143877973156560897"
+          - "134078616727322625"
+          - "96272905167446016" # Calculon
         roles:
             pug_admin:
             - Pugs.*
@@ -78,7 +83,8 @@ plugins:
             - Steam.*
             - UrbanDictionary.*
             - Help.*
-    
+            - Chance.*
+            - Inspire.*
     Status:
         statuses:
         - Team Fortress 2
