@@ -34,11 +34,10 @@ jobs:
       run: |
         VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
         TARBALL_NAME="bolt-$VERSION.tar.gz"
-        echo "::set-output name=tarball::$TARBALL_NAME"
         pushd pkg/
         find . -name "gitkeep" -type f -delete
-        tar -czf bolt-$VERSION.tar.gz *
-        mv bolt-$VERSION.tar.gz ..
+        tar -czf $TARBALL_NAME *
+        mv $TARBALL_NAME ..
         popd
     
     - name: Create Release
