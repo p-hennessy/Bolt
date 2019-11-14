@@ -1,4 +1,4 @@
-name: Test Pull Request
+name: Pull Request
 on: [pull_request]
 
 jobs:
@@ -8,7 +8,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.6, 3.7]
+        python-version: [3.6, 3.7, 3.8]
 
     steps:
     - name: Checkout Repo
@@ -25,7 +25,7 @@ jobs:
         pip install flake8
         pip install -r REQUIREMENTS.txt
 
-    - name: Test with pytest
+    - name: Linting...
       run: |
         flake8 bolt/
 
@@ -53,6 +53,6 @@ jobs:
         pip install nose
         pip install -r REQUIREMENTS.txt
 
-    - name: Test with pytest
+    - name: Testing...
       run: |
         nosetests -w tests/
