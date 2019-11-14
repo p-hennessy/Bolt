@@ -1,5 +1,6 @@
 name: Deploy Doc Site
 on:
+  pull_request
   push:
     paths:
     - 'docs/**'
@@ -40,6 +41,7 @@ jobs:
         popd
     
     - name: Lektor Deploy
+      if: github.event_name != 'pull_request' && github.ref == 'master'
       run: |
         pushd docs
         lektor deploy ghpages
