@@ -1,0 +1,64 @@
+name: Build artifacts
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build-artifacts:
+    name: Build artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v1
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.6'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pex
+    
+    - name: Build Pex Artifact
+      run: |
+        /bin/bash .github/scripts/build-pex-bundle.sh
+        mv bolt.pex pkg/usr/bin/bolt
+        chmod +x pkg/usr/bin/bolt
+    
+    - name: Create Bolt Tarball
+      id: create_tarball
+      run: |
+        VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+        TARBALL_NAME="bolt-$VERSION.tar.gz"
+        echo "::set-output name=tarball::$TARBALL_NAME"
+        pushd pkg/
+        find . -name "gitkeep" -type f -delete
+        tar -czf bolt-$VERSION.tar.gz *
+        mv bolt-$VERSION.tar.gz ..
+        popd
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: true
+
+      - name: Upload Release Assets
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: .
+          asset_name: ${{ steps.create_tarball.outputs.tarball }}
+          asset_content_type: application/tar+gzip
