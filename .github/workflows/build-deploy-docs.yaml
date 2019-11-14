@@ -1,7 +1,7 @@
 name: Deploy Doc Site
 on:
-  pull_request
-  push:
+  - pull_request
+  - push:
     paths:
     - 'docs/**'
 
