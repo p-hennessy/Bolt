@@ -1,0 +1,35 @@
+name: Pull Request
+on: [pull_request]
+
+jobs:
+  lint-test:
+    name: Unit Tests & Linter
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.6, 3.7]
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v1
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install nose
+        pip install flake8
+        pip install -r REQUIREMENTS.txt
+
+    - name: Linting...
+      run: |
+        flake8 bolt/
+
+    - name: Testing...
+      run: |
+        nosetests -w tests/
