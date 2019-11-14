@@ -3,7 +3,7 @@ on: [pull_request]
 
 jobs:
   run-linter:
-    name: Test and Lint
+    name: Lint
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
@@ -30,7 +30,7 @@ jobs:
         flake8 bolt/
 
   run-tests:
-    name: Test and Lint
+    name: Test
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
