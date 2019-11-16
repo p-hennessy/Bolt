@@ -1,7 +1,7 @@
 """
     Description:
         Singleton responsible for loading plugins into the botself.
-        
+
         Plugins can currently be loaded from:
             - Single .py files
             - Folder / module
@@ -30,10 +30,10 @@ class Loader():
     def load_plugins(self):
         plugin_dir = os.path.abspath(self.bot.config.plugin_dir)
         self.add_module_path(plugin_dir)
-                
+
         for file in os.listdir(plugin_dir):
             file_path = os.path.join(plugin_dir, file)
-            
+
             if zipfile.is_zipfile(file_path):
                 self.load_plugin_from_zip(file_path)
             elif os.path.isfile(file_path):
@@ -60,16 +60,16 @@ class Loader():
                 break
         else:
             self.logger.warning(f"No plugin loaded named: \"{name}\", cannot unload.")
-    
+
     def add_module_path(self, path):
         path = os.path.abspath(path)
-        
+
         if path not in sys.path:
             self.logger.debug(f"Added {path} to module search path.")
             sys.path.append(path)
         else:
             self.logger.debug(f"Path {path} already included in module search path.")
-    
+
     def load_plugin_from_file(self, path):
         name = path.split('/')[-1].split('.')[0]
         path = os.path.abspath(path)
