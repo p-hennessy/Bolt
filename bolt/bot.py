@@ -127,4 +127,3 @@ class Bot():
                 self.logger.warning(f"Exception \"{type(e).__name__}\" raised in task: {module_name}.{class_name}.{method_name}: {e}", exc_info=True)
             finally:
                 gevent.sleep(0)
-    
