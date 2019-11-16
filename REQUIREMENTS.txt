@@ -1,5 +1,5 @@
 requests==2.21.0
-websocket-client==0.54.0
+websocket-client==0.44.0
 gevent==1.4.0
 ujson==1.35
 falcon==1.4.1
@@ -8,3 +8,6 @@ parse==1.11.1
 PyYAML==5.1
 croniter==0.3.30
 dateparser==0.7.1
+yamale==2.0.1
+prompt_toolkit
+pygments
