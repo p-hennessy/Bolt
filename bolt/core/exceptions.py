@@ -4,3 +4,7 @@ class InvalidConfigurationError(Exception):
 
 class InvalidBotToken(Exception):
     pass
+
+
+class InvalidBotPlugin(Exception):
+    pass

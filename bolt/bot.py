@@ -9,30 +9,26 @@
 """
 import gevent
 from gevent import monkey, queue
+monkey.patch_all()
 from gevent.backdoor import BackdoorServer
 
 from bolt.discord.api import API
 from bolt.discord.websocket import Websocket
 from bolt.core.webhook import WebhookServer
 from bolt.core.scheduler import Scheduler
-from bolt.core.plugin import Plugin
 from bolt.core.config import Config
+from bolt.core.loader import Loader
 from bolt.utils import setup_logger
 
 from pymongo import MongoClient
 
-import os
 import logging
-import logging.handlers
-import inspect
-import importlib.util
 
 
 class Bot():
     VERSION = "0.6.2"
 
     def __init__(self, config_path):
-        monkey.patch_all()
 
         self.config = Config(config_path)
         setup_logger(self.config)
@@ -45,6 +41,7 @@ class Bot():
         self.webhooks = WebhookServer(self)
         self.scheduler = Scheduler(self)
         self.queue = queue.Queue()
+        self.loader = Loader(self)
 
         # Backend
         self.api = API(self.config.api_key)
@@ -130,31 +127,3 @@ class Bot():
                 self.logger.warning(f"Exception \"{type(e).__name__}\" raised in task: {module_name}.{class_name}.{method_name}: {e}", exc_info=True)
             finally:
                 gevent.sleep(0)
-
-    def load_plugin(self, path):
-        name = path.split('/')[-1].split('.')[0]
-        path = os.path.abspath(path)
-
-        plugin_module_spec = importlib.util.spec_from_file_location(name, path)
-        plugin_module = importlib.util.module_from_spec(plugin_module_spec)
-        plugin_module_spec.loader.exec_module(plugin_module)
-
-        for name, clazz in inspect.getmembers(plugin_module, inspect.isclass):
-            if issubclass(clazz, Plugin) and name != "Plugin":
-                plugin = clazz(self)
-                plugin.load()
-
-                self.plugins.append(plugin)
-                break
-
-    def unload_plugin(self, name):
-        found_index = None
-        for index, plugin in enumerate(self.plugins):
-            if plugin.name == name:
-                found_index = index
-                break
-        else:
-            return
-
-        plugin = self.plugins.pop(found_index)
-        plugin.unload()
