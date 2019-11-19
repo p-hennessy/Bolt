@@ -8,6 +8,7 @@ with open("bolt/data/config-defaults.json") as file:
 with open("bolt/data/config-schema.json") as file:
     SCHEMA = json.load(file)
 
+
 class Config():
     def __init__(self, config_path):
         with open(config_path) as config_file:
@@ -23,7 +24,7 @@ class Config():
     def validate(config_path):
         with open(config_path) as config_file:
             config = yaml.safe_load(config_file.read())
-        
+
         validator = Draft7Validator(
             SCHEMA,
             format_checker=draft7_format_checker
