@@ -1,11 +1,12 @@
 from jsonschema import Draft7Validator, draft7_format_checker
 import yaml
 import ujson as json
+import os
 
-with open("bolt/data/config-defaults.json") as file:
+with open(os.path.join(os.path.dirname(__file__), "../data/config-defaults.json")) as file:
     DEFAULTS = json.load(file)
 
-with open("bolt/data/config-schema.json") as file:
+with open(os.path.join(os.path.dirname(__file__), "../data/config-schema.json")) as file:
     SCHEMA = json.load(file)
 
 
