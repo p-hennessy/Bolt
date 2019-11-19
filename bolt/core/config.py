@@ -1,12 +1,14 @@
 from jsonschema import Draft7Validator, draft7_format_checker
 import yaml
 import ujson as json
-import os
+from os.path import join, dirname
 
-with open(os.path.join(os.path.dirname(__file__), "../data/config-defaults.json")) as file:
+DEFAULT_FILE = join(dirname(__file__), "../data/config-defaults.json")
+with open(DEFAULT_FILE) as file:
     DEFAULTS = json.load(file)
 
-with open(os.path.join(os.path.dirname(__file__), "../data/config-schema.json")) as file:
+SCHEMA_FILE = join(dirname(__file__), "../data/config-schema.json")
+with open(SCHEMA_FILE) as file:
     SCHEMA = json.load(file)
 
 
