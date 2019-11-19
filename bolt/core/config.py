@@ -1,21 +1,15 @@
-from bolt.core.exceptions import InvalidConfigurationError
-
+from jsonschema import Draft7Validator, draft7_format_checker
 import yaml
+import ujson as json
+from os.path import join, dirname
 
+DEFAULT_FILE = join(dirname(__file__), "../data/config-defaults.json")
+with open(DEFAULT_FILE) as file:
+    DEFAULTS = json.load(file)
 
-REQUIRED_KEYS = [
-    'api_key',
-]
-
-DEFAULTS = {
-    'log_level': 'DEBUG',
-    'mongo_database_username': '',
-    'mongo_database_password': '',
-    'mongo_database_uri': 'mongodb://localhost:27017',
-    'name': 'Bolt',
-    'trigger': '.',
-    'webhook_port': "1234"
-}
+SCHEMA_FILE = join(dirname(__file__), "../data/config-schema.json")
+with open(SCHEMA_FILE) as file:
+    SCHEMA = json.load(file)
 
 
 class Config():
@@ -34,6 +28,8 @@ class Config():
         with open(config_path) as config_file:
             config = yaml.safe_load(config_file.read())
 
-        for key in REQUIRED_KEYS:
-            if key not in config:
-                raise InvalidConfigurationError(f"Missing required key \"{key}\" in \"{config_path}\"")
+        validator = Draft7Validator(
+            SCHEMA,
+            format_checker=draft7_format_checker
+        )
+        return [error for error in validator.iter_errors(config)]

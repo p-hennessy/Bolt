@@ -8,6 +8,6 @@ parse==1.11.1
 PyYAML==5.1
 croniter==0.3.30
 dateparser==0.7.1
-yamale==2.0.1
+jsonschema==3.2.0
 prompt_toolkit
 pygments

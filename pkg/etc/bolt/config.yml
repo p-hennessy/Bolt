@@ -5,7 +5,6 @@
 # Source Code: https://github.com/ns-phennessy/Bolt
 # License: MIT
 # -----------------------------------------------------------------------------
----
 
 # General
 # -----------------------------------------------------------------------------
@@ -34,7 +33,7 @@ shard_id: 0         # Shard number for this node
 
 # Database Credentials
 # -----------------------------------------------------------------------------
-mongo_database_uri: "mongodb://localhost:27017"
+mongo_database_uri: mongodb://localhost:27017
 mongo_database_username: ""
 mongo_database_password: ""
 mongo_database_use_tls: false
@@ -44,24 +43,25 @@ mongo_database_use_tls: false
 webhook_enable: true
 webhook_port: 8080
 
+# Backdoor Server
+# -----------------------------------------------------------------------------
+# http://www.gevent.org/api/gevent.backdoor.html
+# Backdoor server creates a TCP server you can telnet to a gain access to the
+# bot. The server exposes a 'bot' local variable.
+backdoor_enable: false
+backdoor_host: 127.0.0.1
+backdoor_port: 5000
+
 # Plugins
 # -----------------------------------------------------------------------------
 plugin_dir: /etc/bolt/plugins.enabled.d/
 
 # Logging
 # -----------------------------------------------------------------------------
-log_level: DEBUG        # Must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL
+log_level: INFO        # Must be one of: DEBUG, INFO, WARNING, ERROR, CRITICAL
 log_dir: /var/log/bolt/
 
-# Backdoor Server
-# -----------------------------------------------------------------------------
-# http://www.gevent.org/api/gevent.backdoor.html
-# Backdoor server creates a TCP server you can telnet to a gain access to the
-# bot. The server exposes a 'bot' local variable.
-backdoor_enable: true
-backdoor_host: 127.0.0.1
-backdoor_port: 5000
 
 # Plugin specific
 # -----------------------------------------------------------------------------
-plugins:
+plugins: {}

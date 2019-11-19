@@ -11,12 +11,14 @@
         by the Free Software Foundation
 """
 from bolt import Bot
+from bolt.core.config import Config
 
 import argparse
 import sys
 import yaml
 import socket
 import requests
+import os
 
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
@@ -27,10 +29,6 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.lexers import PygmentsLexer
 from prompt_toolkit.styles import Style
 from pygments.lexers.python import Python3Lexer
-
-RED = "\033[1;31m"
-GREEN = "\033[1;32m"
-RESET = "\033[0m"
 
 
 def main():
@@ -55,7 +53,7 @@ def main():
 def init_parser():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--config", default='pkg/etc/bolt/config.yml')
+    parser.add_argument("--config", default='/etc/bolt/config.yml')
     parser.add_argument("--plugin-dir", default='plugins/')
 
     subparser = parser.add_subparsers(dest='command')
@@ -68,70 +66,24 @@ def init_parser():
 
 
 def verify_config(config_path):
-    exit_error = False
+    config_path = os.path.abspath(config_path)
+    errors = Config.validate(config_path)
 
-    with open(config_path) as config_file:
-        config = yaml.safe_load(config_file.read())
+    RED = "\033[1;31m"
+    GREEN = "\033[1;32m"
+    RESET = "\033[0m"
 
-    required_keys = [
-        'api_key',
-    ]
-
-    defaults = {
-        'log_format': 'json',
-        'log_level': 'DEBUG',
-        'mongo_database_username': '',
-        'mongo_database_password': '',
-        'mongo_database_uri': 'mongodb://localhost:27017',
-        'name': 'Bolt',
-        'trigger': '.',
-        'webhook_port': "1234"
-    }
-
-    for key, value in config.items():
-        value = str(value)
-        if len(value) <= 0:
-            if key in required_keys:
-                print(f"{RED}✘{RESET} Configuation option \"{key}\" needs a valid value")
-                exit_error = True
-            else:
-                config[key] = defaults[key]
-
-
-    # Test API key with Discord
-    response = requests.get(
-        "https://discordapp.com/api/gateway/bot",
-        headers={
-            "authorization": "Bot " + config['api_key'],
-            "Content-Type": 'application/json'
-        }
-    )
-    if not response.ok:
-        print(f"{RED}✘{RESET} Invalid Discord token provided")
-        exit_error = True
-    else:
-        print(f"{GREEN}✔{RESET} Able to connect to Discord with provided token")
-
-    # Test connection to Mongo
-    try:
-        database_client = MongoClient(
-            config['mongo_database_uri']
-        )
-        database_client.admin.command('ismaster')
-        database_client.close()
-        print(f"{GREEN}✔{RESET} Able to connect to MongoDB server with provided credentials")
-    except ConnectionFailure:
-        print(f"{RED}✘ {RESET} MongoDB server \"{config['mongo_database_uri']}\" not available")
-        exit_error = True
-
-    # Check if webhook port is already in use
-    if is_port_in_use(config['webhook_port']):
-        print(f"{RED}✘ {RESET} Webhook port \"{config['webhook_port']}\" is already in use")
-        exit_error = True
-    else:
-        print(f"{GREEN}✔{RESET} Webhook port \"{config['webhook_port']}\" is available")
-
-    sys.exit(int(exit_error))
+    if len(errors) == 0:
+        print(f"{GREEN}✔{RESET} Configuration is good!")
+        sys.exit(0)
+    
+    print(f"Invalid configuration at '{config_path}':")
+    for error in errors:
+        if len(error.path) > 0:
+            print(f"{RED}✘{RESET} '{error.path[0]}': {error.message}")
+        else:
+            print(f"{RED}✘{RESET} {error.message}")
+    sys.exit(1)
 
 
 def verify_plugins():
@@ -177,58 +129,6 @@ def run_shell():
                     return
                 except BrokenPipeError:
                     break
-
-def is_port_in_use(port):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(('localhost', port)) == 0
-
-
-class Shell():
-    def __init__(self, address):
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.address = address
-
-        self.history = FileHistory("/tmp/bolt-shell-history")
-        self.prompt_session = PromptSession(
-            history=self.history,
-            enable_history_search=True,
-            lexer=PygmentsLexer(Python3Lexer)
-        )
-
-    def connect(self):
-        self.sock.connect(self.address)
-        self.sock.sendall("".encode())
-        self.recv()
-
-    def disconnect(self):
-        self.sock.close()
-
-    def __enter__(self):
-        self.connect()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.disconnect()
-
-    def prompt(self):
-        style = Style.from_dict({'': '#ffffff', 'prompt': 'ansigreen'})
-        prompt = [('class:prompt', 'bolt'), ('class:dollar', '$ ')]
-
-        return self.prompt_session.prompt(prompt, style=style, auto_suggest=AutoSuggestFromHistory())
-
-    def send(self, message):
-        self.history.append_string(message)
-        self.sock.sendall(f"{message}\n".encode())
-
-    def recv(self):
-        BUFF_SIZE = 4096
-        data = b''
-        while True:
-            part = self.sock.recv(BUFF_SIZE)
-            data += part
-            if len(part) < BUFF_SIZE:
-                break
-        return data.decode()[:-5]
 
 
 if __name__ == '__main__':
