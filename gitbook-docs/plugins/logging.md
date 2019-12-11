@@ -25,6 +25,3 @@ def Example(Plugin):
         self.logger.critical("Critical")
 ```
 
-  
-
-

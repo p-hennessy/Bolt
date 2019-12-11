@@ -18,13 +18,11 @@ Get the version that Bolt is running.
 
 {% endapi-method-response-example-description %}
 
-```
+```text
 {"version": "0.6.2"}
 ```
 {% endapi-method-response-example %}
 {% endapi-method-response %}
 {% endapi-method-spec %}
 {% endapi-method %}
-
-
 

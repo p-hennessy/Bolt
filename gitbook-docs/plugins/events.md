@@ -19,5 +19,3 @@ def on_guild_member_update(self, event):
 
 {% page-ref page="../reference/events-names.md" %}
 
-
-

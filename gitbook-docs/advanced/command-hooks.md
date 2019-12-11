@@ -29,7 +29,7 @@ def check_access(self, command, event):
         event.channel.say("You don't have access to that command.")
         return False
     else:
-        return True        
+        return True
 ```
 {% endtab %}
 {% endtabs %}
