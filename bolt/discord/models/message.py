@@ -60,8 +60,18 @@ class Message(Model):
     def add_reaction(self):
         pass
 
-    def edit(self, content, embed=None):
-        pass
+    def edit(self, message="", embed=None, mentions=None):
+        self.content = message
+        self.embed = embed
+
+        embed = embed if embed is not None else self.embed
+        mentions = mentions if mentions is not None else self.mentions
+
+        for user in mentions:
+            message = f"{user.mention} {message}"
+
+        message_data = {"content": message, "embed": embed}
+        self.api.edit_message(self.channel_id, self.id, message_data)
 
     def reply(self, message):
         self.channel.say(message, mentions=[self.author])

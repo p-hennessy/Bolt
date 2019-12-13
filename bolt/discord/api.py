@@ -142,11 +142,11 @@ class API():
         )
 
     @rate_limit()
-    def edit_message(self, channel_id, message_id, **kwargs):
+    def edit_message(self, channel_id, message_id, message_data):
         return requests.patch(
             f"{self.base_url}/channels/{channel_id}/messages/{message_id}",
             headers=self.auth_headers,
-            data=json.dumps(kwargs)
+            data=json.dumps(message_data)
         )
 
     @rate_limit()

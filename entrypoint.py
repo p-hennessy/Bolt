@@ -96,18 +96,7 @@ def version():
 
 def run_bot(config_path, plugin_dir):
     bot = Bot(config_path)
-    bot.load_plugin("./plugins/RBAC.py")
-    bot.load_plugin("./plugins/Manage.py")
-    bot.load_plugin("./plugins/ServeMe.py")
-    bot.load_plugin("./plugins/LogsTF.py")
-    bot.load_plugin("./plugins/DemosTF.py")
-    # bot.load_plugin("./plugins/Pugs.py")
-    bot.load_plugin("./plugins/RSS.py")
-    bot.load_plugin("./plugins/Chance.py")
-    bot.load_plugin("./plugins/Status.py")
-    bot.load_plugin("./plugins/Steam.py")
-    bot.load_plugin("./plugins/Inspire.py")
-    bot.load_plugin("./plugins/UrbanDictionary.py")
+    bot.loader.load_plugins()
 
     try:
         bot.run()

@@ -2,6 +2,7 @@ from bolt.discord.models.base import Snowflake, Model, Field, ListField, Enum, T
 from bolt.discord.models.user import User
 from bolt.discord.permissions import Permission
 
+
 import os
 
 
@@ -61,6 +62,8 @@ class Channel(Model):
         return self.bot.api.create_message(files=all_files, headers=self.auth_headers)
 
     def say(self, message="", embed=None, mentions=None):
+        from bolt.discord.models.message import Message
+
         embed = {} if embed is None else embed
         mentions = [] if mentions is None else mentions
 
@@ -69,7 +72,10 @@ class Channel(Model):
 
         message_data = {"content": message, "embed": embed}
 
-        return self.api.create_message(self.id, message_data)
+        message = Message.marshal(self.api.create_message(self.id, message_data))
+        message.api = self.api
+        message.cache = self.cache
+        return message
 
     def trigger_typing(self):
         return self.api.trigger_typing(self.id)

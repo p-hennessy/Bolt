@@ -6,7 +6,7 @@
 # License: MIT
 # -----------------------------------------------------------------------------
 [Unit]
-Description=Bolt - Discord Bot Server
+Description=Bolt - Discord Bot
 After=network.target
 AssertPathExists=/etc/bolt/
 AssertPathExists=/var/log/bolt/
@@ -16,6 +16,8 @@ Type=simple
 User=bolt
 Group=bolt
 Environment=WEBSOCKET_CLIENT_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+ExecStartPre=/usr/bin/bolt verify-config
+ExecStartPre=/usr/bin/bolt verify-plugins
 ExecStart=/usr/bin/bolt
 TimeoutStopSec=5
 
