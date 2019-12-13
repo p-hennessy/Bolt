@@ -4,9 +4,9 @@
 This bot is not at a stable state and it's very likely to have breaking changes on a regular basis until the author is happy with it
 {% endhint %}
 
-**Bolt** is an extensible chat bot written in Python, inspired by [Errbot](https://github.com/errbotio/errbot) and [Hubot](https://hubot.github.com/) projects. The goal of this project is to provide a simple to extend bot framework for [Discord](https://discordapp.com/). 
+**Bolt** is an extensible chat bot written in Python, inspired by [Errbot](https://github.com/errbotio/errbot) and [Hubot](https://hubot.github.com/) projects. The goal of this project is to provide a simple to extend bot framework for [Discord](https://discordapp.com/).
 
-#### **Batteries included:**
+## **Batteries included:**
 
 {% tabs %}
 {% tab title="Commands" %}
@@ -23,7 +23,7 @@ class Example(Plugin):
 
 For more information, see these pages:
 
-* [Commands](plugins/untitled.md)
+* [Commands](https://github.com/ns-phennessy/Bolt/tree/c236a1f4ad7b8d6b36f52ab6c445e04f51e0d313/docs/plugins/untitled.md)
 * [Command Hooks](advanced/command-hooks.md)
 {% endtab %}
 
@@ -98,9 +98,9 @@ For more information, see these pages:
 {% endtab %}
 {% endtabs %}
 
-Bolt originally started out as a simple Trivia Bot that used long polling and webhooks to read and write to chat channels. 
+Bolt originally started out as a simple Trivia Bot that used long polling and webhooks to read and write to chat channels.
 
-I became obsessed with making this bot more robust and at that time, no bots existed for Discord, so this bot evolved into a fully vetted framework that I could use to build functionality off of. 
+I became obsessed with making this bot more robust and at that time, no bots existed for Discord, so this bot evolved into a fully vetted framework that I could use to build functionality off of.
 
 This project is a place I can experiment with design ideas and evolve a sense of personal code standards. I treat it more as an academic project to learn about new libraries and tools available to me as Python continues to grow.
 
