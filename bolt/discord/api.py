@@ -333,10 +333,6 @@ class API():
         )
 
     @rate_limit()
-    def modify_guild_channel_positions(self, guild_id):
-        raise NotImplementedError
-
-    @rate_limit()
     def get_guild_member(self, guild_id, user_id):
         return requests.get(
             f"{self.base_url}/guilds/{guild_id}/members/{user_id}",
@@ -350,10 +346,6 @@ class API():
             headers=self.auth_headers,
             data=json.dumps(kwargs)
         )
-
-    @rate_limit()
-    def add_guild_members(self, guild_id, user_id):
-        raise NotImplementedError
 
     @rate_limit()
     def modify_guild_member(self, guild_id, user_id, **kwargs):
@@ -387,19 +379,32 @@ class API():
 
     @rate_limit()
     def remove_guild_member(self, guild_id, user_id):
-        raise NotImplementedError
+        return requests.delete(
+            f"{self.base_url}/guilds/{guild_id}/members/{user_id}",
+            headers=self.auth_headers
+        )
 
     @rate_limit()
     def get_guild_bans(self, guild_id):
-        raise NotImplementedError
+        return requests.get(
+            f"{self.base_url}/guilds/{guild_id}/bans",
+            headers=self.auth_headers
+        )
 
     @rate_limit()
-    def create_guild_ban(self, guild_id, user_id):
-        raise NotImplementedError
+    def create_guild_ban(self, guild_id, user_id, delete_message_days=0, reason="No reason given"):
+        return requests.put(
+            f"{self.base_url}/guilds/{guild_id}/bans/{user_id}",
+            headers=self.auth_headers,
+            data=json.dumps({"delete-message-days": delete_message_days, "reason": reason})
+        )
 
     @rate_limit()
     def delete_guild_ban(self, guild_id, user_id):
-        raise NotImplementedError
+        return requests.delete(
+            f"{self.base_url}/guilds/{guild_id}/bans/{user_id}",
+            headers=self.auth_headers
+        )
 
     @rate_limit()
     def get_guild_roles(self, guild_id):
@@ -425,12 +430,28 @@ class API():
         )
 
     @rate_limit()
-    def modify_guild_role_positions(self, guild_id, **kwargs):
-        raise NotImplementedError
+    def modify_guild_role_positions(self, guild_id, positions=[]):
+        return requests.patch(
+            f"{self.base_url}/guilds/{guild_id}/roles",
+            headers=self.auth_headers,
+            data=json.dumps(positions)
+        )
 
     @rate_limit()
-    def modify_guild_role(self, guild_id, role_id, **kwargs):
-        raise NotImplementedError
+    def modify_guild_role(self, guild_id, role_id, name, permissions=0, color=0, hoist=False, mentionable=False):
+        role_data = {
+            "name": name,
+            "permissions": permissions,
+            "color": color,
+            "hoist": hoist,
+            "mentionable": mentionable
+        }
+
+        return requests.patch(
+            f"{self.base_url}/guilds/{guild_id}/roles/{role_id}",
+            headers=self.auth_headers,
+            data=json.dumps(role_data)
+        )
 
     @rate_limit()
     def delete_guild_role(self, guild_id, role_id):
@@ -440,48 +461,86 @@ class API():
         )
 
     @rate_limit()
-    def get_guild_prune_count(self, guild_id):
-        raise NotImplementedError
+    def get_guild_prune_count(self, guild_id, days=1):
+        return requests.get(
+            f"{self.base_url}/guilds/{guild_id}/prune",
+            headers=self.auth_headers,
+            data=json.dumps({"days": days})
+        )
 
     @rate_limit()
-    def begin_guild_prune(self, guild_id):
-        raise NotImplementedError
+    def begin_guild_prune(self, guild_id, days=1, compute_prune_count=False):
+        return requests.post(
+            f"{self.base_url}/guilds/{guild_id}/prune",
+            headers=self.auth_headers,
+            data=json.dumps({"days": days, "compute_prune_count": compute_prune_count})
+        )
 
     @rate_limit()
-    def get_guild_voice_region(self, guild_id):
-        raise NotImplementedError
+    def get_guild_voice_regions(self, guild_id):
+        return requests.get(
+            f"{self.base_url}/guilds/{guild_id}/regions",
+            headers=self.auth_headers
+        )
 
     @rate_limit()
     def get_guild_invites(self, guild_id):
-        raise NotImplementedError
+        return requests.get(
+            f"{self.base_url}/guilds/{guild_id}/invites",
+            headers=self.auth_headers
+        )
 
     @rate_limit()
     def get_guild_integrations(self, guild_id):
-        raise NotImplementedError
+        return requests.get(
+            f"{self.base_url}/guilds/{guild_id}/integrations",
+            headers=self.auth_headers
+        )
 
     @rate_limit()
-    def create_guild_integrations(self, guild_id):
-        raise NotImplementedError
+    def create_guild_integration(self, guild_id, **kwargs):
+        return requests.post(
+            f"{self.base_url}/guilds/{guild_id}/integrations",
+            headers=self.auth_headers,
+            data=json.dumps(kwargs)
+        )
 
     @rate_limit()
-    def modify_guild_integrations(self, guild_id, integration_id):
-        raise NotImplementedError
+    def modify_guild_integrations(self, guild_id, integration_id, **kwargs):
+        return requests.post(
+            f"{self.base_url}/guilds/{guild_id}/integrations/{integration_id}",
+            headers=self.auth_headers,
+            data=json.dumps(kwargs)
+        )
 
     @rate_limit()
-    def delete_guild_integrations(self, guild_id, integration_id):
-        raise NotImplementedError
+    def delete_guild_integration(self, guild_id, integration_id):
+        return requests.delete(
+            f"{self.base_url}/guilds/{guild_id}/integrations/{integration_id}",
+            headers=self.auth_headers
+        )
 
     @rate_limit()
     def sync_guild_integration(self, guild_id, integration_id):
-        raise NotImplementedError
+        return requests.post(
+            f"{self.base_url}/guilds/{guild_id}/integrations/{integration_id}/sync",
+            headers=self.auth_headers
+        )
 
     @rate_limit()
     def get_guild_embed(self, guild_id):
-        raise NotImplementedError
+        return requests.get(
+            f"{self.base_url}/guilds/{guild_id}/embed",
+            headers=self.auth_headers
+        )
 
     @rate_limit()
-    def modify_guild_embed(self, guild_id):
-        raise NotImplementedError
+    def modify_guild_embed(self, guild_id, **kwargs):
+        return requests.patch(
+            f"{self.base_url}/guilds/{guild_id}/embed",
+            headers=self.auth_headers,
+            data=json.dumps(kwargs)
+        )
 
     @rate_limit()
     def list_guild_emojis(self, guild_id):
@@ -594,7 +653,3 @@ class API():
             f"{self.base_url}/webhooks/{webhook_id}/webhook_token",
             headers=self.auth_headers
         )
-
-    @rate_limit()
-    def execute_webhook(self, webhook_id, webhook_token):
-        raise NotImplementedError
