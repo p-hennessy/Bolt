@@ -24,6 +24,7 @@ from pymongo import MongoClient
 
 import logging
 
+
 class Bot():
     VERSION = "0.6.2"
 
