@@ -30,11 +30,11 @@ class Loader():
 
     def load_plugins(self):
         plugin_dir = os.path.abspath(self.bot.config.plugin_dir)
-        
+
         if not os.path.isdir(plugin_dir):
             self.logger.error(f"Plugin path \"{plugin_dir}\" does not exist!")
             raise InvalidConfigurationError(f"Plugin path \"{plugin_dir}\" does not exist!")
-        
+
         self.add_module_path(plugin_dir)
 
         for file in os.listdir(plugin_dir):
