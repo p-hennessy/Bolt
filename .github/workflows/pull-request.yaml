@@ -31,10 +31,8 @@ jobs:
 
     - name: Linting...
       run: |
-        pipenv shell
-        flake8 bolt/
+        pipenv run flake8 bolt/
 
     - name: Testing...
       run: |
-        pipenv shell
-        nosetests -w tests/
+        pipenv run nosetests -w tests/
