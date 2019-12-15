@@ -7,6 +7,7 @@
     bumpversion = "*"
     flake8 = "*"
     pytest = "*"
+    nose = "*"
     pre-commit = "*"
 
 [packages]
