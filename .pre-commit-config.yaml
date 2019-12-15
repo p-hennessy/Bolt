@@ -8,3 +8,12 @@ repos:
       - id: detect-aws-credentials
       - id: detect-private-key
       - id: flake8
+      
+      
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.7
+    hooks:
+      - id: forbid-tabs
+      - id: forbid-crlf
+      - id: remove-tabs
+      - id: remove-crlf
