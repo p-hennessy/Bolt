@@ -4,4 +4,6 @@ exclude =
     __init__.py,
     __py_cache__,
     *.cfg,
-    .git
+    .git,
+    *.json
+    

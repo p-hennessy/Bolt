@@ -1,0 +1,19 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.4.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: check-symlinks
+      - id: detect-aws-credentials
+      - id: detect-private-key
+      - id: flake8
+      
+      
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.7
+    hooks:
+      - id: forbid-tabs
+      - id: forbid-crlf
+      - id: remove-tabs
+      - id: remove-crlf

@@ -1,0 +1,28 @@
+[[source]]
+    name = "pypi"
+    url = "https://pypi.org/simple"
+    verify_ssl = true
+
+[dev-packages]
+    bumpversion = "*"
+    flake8 = "*"
+    pytest = "*"
+    pre-commit = "*"
+
+[packages]
+    croniter = "*"
+    dateparser = "*"
+    falcon = "*"
+    gevent = "~=1.4"
+    jsonschema = "*"
+    parse = "*"
+    prompt_toolkit = "*"
+    pygments = "*"
+    pymongo = "*"
+    pyyaml = "*"
+    requests = "*"
+    ujson = "*"
+    websocket-client = "~=0.44.0"
+    
+[requires]
+    python_version = "3.6"
