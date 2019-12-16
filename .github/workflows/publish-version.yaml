@@ -25,8 +25,9 @@ jobs:
     
     - name: Build Pex Artifact
       run: |
-        echo "::debug:: $(ls -al)"
-      
+        echo "::debug:: $(ls -al .github)"
+        echo "::debug:: $(ls -al .github/scripts/)"
+
         /bin/bash .github/scripts/build-pex-bundle.sh
         mv bolt.pex pkg/usr/bin/bolt
         chmod +x pkg/usr/bin/bolt
