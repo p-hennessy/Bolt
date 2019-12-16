@@ -25,6 +25,7 @@ jobs:
     
     - name: Build Pex Artifact
       run: |
+        pipenv shell
         /bin/bash .github/scripts/build-pex-bundle.sh
         mv bolt.pex pkg/usr/bin/bolt
         chmod +x pkg/usr/bin/bolt
