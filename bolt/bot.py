@@ -30,7 +30,7 @@ class Bot():
 
     def __init__(self, config_path):
 
-        self.config = Config(config_path)
+        self.config = Config.from_yaml_file(config_path)
         setup_logger(self.config)
         self.logger = logging.getLogger(__name__)
 

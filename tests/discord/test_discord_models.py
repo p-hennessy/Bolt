@@ -5,6 +5,7 @@ from bolt.discord.models.embed import Embed
 from bolt.discord.models.channel import Channel, ChannelType
 from bolt.discord.models.guild import Guild
 
+
 class TestDiscordModel(unittest.TestCase):
     def test_user(self):
         input_data = {
@@ -76,13 +77,13 @@ class TestDiscordModel(unittest.TestCase):
 
     def test_embed_long_input_data(self):
         with self.assertRaises(ModelValidationError):
-            Embed.marshal({"title": "t" * 512,})
+            Embed.marshal({"title": "t" * 512})
 
         with self.assertRaises(ModelValidationError):
-            Embed.marshal({"description": "t" * 4096,})
+            Embed.marshal({"description": "t" * 4096})
 
         with self.assertRaises(ModelValidationError):
-            Embed.marshal({"fields": [{"name": "name", "value": "value"} for f in range(0,50)]})
+            Embed.marshal({"fields": [{"name": "name", "value": "value"} for f in range(0, 50)]})
 
     def test_channel_text(self):
         input_data = {

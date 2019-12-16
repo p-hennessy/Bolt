@@ -13,23 +13,29 @@ with open(SCHEMA_FILE) as file:
 
 
 class Config():
-    def __init__(self, config_path):
-        with open(config_path) as config_file:
-            config = yaml.safe_load(config_file.read())
-
+    def __init__(self, config):
+        self._raw = config
         for key, value in DEFAULTS.items():
             setattr(self, key, value)
 
         for key, value in config.items():
             setattr(self, key, value)
 
-    @staticmethod
-    def validate(config_path):
-        with open(config_path) as config_file:
+    @classmethod
+    def from_yaml_file(cls, path):
+        with open(path) as config_file:
             config = yaml.safe_load(config_file.read())
+            return cls(config)
 
+    @classmethod
+    def from_json_file(cls, path):
+        with open(path) as config_file:
+            config = json.load(config_file)
+            return cls(config)
+
+    def validate(self):
         validator = Draft7Validator(
             SCHEMA,
             format_checker=draft7_format_checker
         )
-        return [error for error in validator.iter_errors(config)]
+        return [error for error in validator.iter_errors(self._raw)]

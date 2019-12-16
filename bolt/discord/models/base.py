@@ -337,25 +337,3 @@ class SearchableDict(dict):
 
     def filter(self, expression):
         raise NotImplementedError
-
-
-# class Autoslots(type):
-#     def __new__(metaclass, name, bases, dct):
-#         slots = []
-#
-#         # Add fields to slots
-#         for property, field in dct.items():
-#             if isinstance(field, Field):
-#                 slots.append(property)
-#
-#         # Merge items from predefined slots
-#         if not dct.get('__slots__'):
-#             dct['__slots__'] = set(slots)
-#         else:
-#             dct['__slots__'] = set(dct['__slots__'] + slots)
-#
-#         if not dct['__slots__']:
-#             del dct['__slots__']
-#
-#         return super(Autoslots, metaclass).__new__(metaclass, name, bases, dct)
-#
