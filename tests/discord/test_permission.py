@@ -1,6 +1,7 @@
 import unittest
 from bolt.discord.permissions import Permission
 
+
 class TestPermission(unittest.TestCase):
 
     def test_permission_from_list_to_list(self):

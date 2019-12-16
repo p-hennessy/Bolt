@@ -35,7 +35,9 @@ class WebhookServer():
                         return response
                     else:
                         try:
-                            ret = webhook.callback(request)
+                            request_data = json.loads(request.stream.read())
+                            request_headers = request.headers
+                            ret = webhook.callback(request_data, request_headers)
 
                             if isinstance(ret, str):
                                 response.body = ret

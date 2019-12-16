@@ -39,13 +39,16 @@ class Loader():
 
         for file in os.listdir(plugin_dir):
             file_path = os.path.join(plugin_dir, file)
-
-            if zipfile.is_zipfile(file_path):
-                self.load_plugin_from_zip(file_path)
-            elif os.path.isfile(file_path):
-                self.load_plugin_from_file(file_path)
-            elif os.path.isdir(file_path):
-                self.load_plugin_from_module(file_path)
+            try:
+                if zipfile.is_zipfile(file_path):
+                    self.load_plugin_from_zip(file_path)
+                elif os.path.isfile(file_path):
+                    self.load_plugin_from_file(file_path)
+                elif os.path.isdir(file_path):
+                    self.load_plugin_from_module(file_path)
+            except ModuleNotFoundError as e:
+                self.logger.error(f"Error loading {os.path.basename(file_path)}: {e}")
+                continue
 
     def load_plugin_module(self, module):
         for name, clazz in inspect.getmembers(module, inspect.isclass):

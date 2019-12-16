@@ -2,6 +2,7 @@ import unittest
 from bolt.discord.models.base import Model, Field, ListField
 from bolt.discord.models.base import ModelMissingRequiredKeyError, ModelValidationError, ImmutableFieldError
 
+
 class TestModel(unittest.TestCase):
     def test_model_basic(self):
         class CoolModel(Model):
@@ -22,7 +23,7 @@ class TestModel(unittest.TestCase):
         input_data = {"name": 123}
 
         with self.assertRaises(ModelMissingRequiredKeyError):
-            actual = CoolModel.marshal(input_data)
+            CoolModel.marshal(input_data)
 
     def test_field_immutable(self):
         class CoolModel(Model):
@@ -45,7 +46,7 @@ class TestModel(unittest.TestCase):
         input_data = {}
 
         try:
-            actual = CoolModel.marshal(input_data)
+            CoolModel.marshal(input_data)
         except Exception as e:
             self.fail(f"test_field_blank raised exception {e}")
 
@@ -66,7 +67,7 @@ class TestModel(unittest.TestCase):
         input_data = {"name": "b" * 100}
 
         with self.assertRaises(ModelValidationError):
-            actual = CoolModel.marshal(input_data)
+            CoolModel.marshal(input_data)
 
     def test_field_default_value(self):
         class CoolModel(Model):
@@ -86,8 +87,7 @@ class TestModel(unittest.TestCase):
         input_data = {"name": "Boltbot"}
 
         with self.assertRaises(ModelMissingRequiredKeyError):
-            actual = CoolModel.marshal(input_data)
-
+            CoolModel.marshal(input_data)
 
     def test_field_int(self):
         class CoolModel(Model):
@@ -123,7 +123,7 @@ class TestModel(unittest.TestCase):
         class CoolModel(Model):
             alist = ListField(int)
 
-        input_data = {"alist": [1,2,3,4,5]}
+        input_data = {"alist": [1, 2, 3, 4, 5]}
 
         actual = CoolModel.marshal(input_data)
         self.assertListEqual(actual.alist, input_data['alist'])

@@ -26,7 +26,7 @@ class Command():
 
     def invoke(self, event):
         event.message.content = event.message.content.replace(self.trigger, "", 1)
-        self.callback(event)
+        return self.callback(event)
 
     def matches(self, text):
         if text.startswith(self.trigger):

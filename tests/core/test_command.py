@@ -1,8 +1,10 @@
 import unittest
 from bolt.core.command import Command, RegexCommand, ParseCommand
+from bolt.discord.events import MessageCreate
+from bolt.discord.models.message import Message
+
 
 class TestCommand(unittest.TestCase):
-
     def dummycallback(self):
         pass
 
@@ -23,6 +25,15 @@ class TestCommand(unittest.TestCase):
     def test_change_trigger(self):
         command = Command("test command", self.dummycallback, trigger="?!")
         self.assertTrue(command.matches("?!test command"))
+
+    def test_invoke(self):
+        def dummycallback(event):
+            return True
+
+        event = MessageCreate()
+        event.message = Message.marshal({"id": "1", "channel_id": "2", "content": "!test"})
+        command = Command("test command", dummycallback, trigger="!")
+        self.assertTrue(command.invoke(event))
 
 
 class TestRegexCommand(unittest.TestCase):
