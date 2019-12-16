@@ -9,6 +9,7 @@
     pytest = "*"
     nose = "*"
     pre-commit = "*"
+    pex = "*"
 
 [packages]
     croniter = "*"
