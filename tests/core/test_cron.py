@@ -17,7 +17,8 @@ class TestCron(unittest.TestCase):
     def setUp(self):
         self.config_file = "/tmp/bolt-test-config.yaml"
         fake_config = {
-            "api_key": "1234"
+            "api_key": "1234",
+            "log_dir": "/tmp/"
         }
 
         with open(self.config_file, "w") as tempconfig:
