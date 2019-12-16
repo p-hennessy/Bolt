@@ -1,21 +1,14 @@
 from jsonschema import Draft7Validator, draft7_format_checker
 import yaml
 import ujson as json
-from os.path import join, dirname
 
-DEFAULT_FILE = join(dirname(__file__), "../data/config-defaults.json")
-with open(DEFAULT_FILE) as file:
-    DEFAULTS = json.load(file)
-
-SCHEMA_FILE = join(dirname(__file__), "../data/config-schema.json")
-with open(SCHEMA_FILE) as file:
-    SCHEMA = json.load(file)
+from bolt.data import config_defaults, config_schema
 
 
 class Config():
     def __init__(self, config):
         self._raw = config
-        for key, value in DEFAULTS.items():
+        for key, value in config_defaults.items():
             setattr(self, key, value)
 
         for key, value in config.items():
@@ -35,7 +28,7 @@ class Config():
 
     def validate(self):
         validator = Draft7Validator(
-            SCHEMA,
+            config_schema,
             format_checker=draft7_format_checker
         )
         return [error for error in validator.iter_errors(self._raw)]
