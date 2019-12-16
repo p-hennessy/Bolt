@@ -12,9 +12,9 @@ pipenv lock -r > $TEMP_DIR/REQUIREMENTS.txt
 
 pushd $TEMP_DIR
 
-/usr/local/bin/pex \
+pex \
     -v \
-    --python=/usr/bin/python3.6 \
+    --python=$(which python3.6) \
     -r REQUIREMENTS.txt \
     -D $PWD \
     -f $PWD \
