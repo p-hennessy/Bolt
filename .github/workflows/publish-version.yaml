@@ -25,43 +25,40 @@ jobs:
     
     - name: Build Pex Artifact
       run: |
-        echo "::debug:: $(ls -al .github)"
-        echo "::debug:: $(ls -al .github/scripts/)"
-
         /bin/bash .github/scripts/build-pex-bundle.sh
         mv bolt.pex pkg/usr/bin/bolt
         chmod +x pkg/usr/bin/bolt
     
-    # - name: Create Bolt Tarball
-    #   id: create_tarball
-    #   run: |
-    #     VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
-    #     TARBALL_NAME="bolt-$VERSION.tar.gz"
-    #     pushd pkg/
-    #     find . -name "gitkeep" -type f -delete
-    #     tar -czf $TARBALL_NAME *
-    #     mv $TARBALL_NAME ..
-    #     popd
-    #     echo "::set-output name=tarball::$TARBALL_NAME"
-    #
-    # - name: Create Release
-    #   id: create_release
-    #   uses: actions/create-release@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     tag_name: ${{ github.ref }}
-    #     release_name: Release ${{ github.ref }}
-    #     draft: false
-    #     prerelease: true
-    #
-    # - name: Upload Release Assets
-    #   id: upload-release-asset
-    #   uses: actions/upload-release-asset@v1.0.1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-    #     asset_path: .
-    #     asset_name: ${{ steps.create_tarball.outputs.tarball }}
-    #     asset_content_type: application/tar+gzip
+    - name: Create Bolt Tarball
+      id: create_tarball
+      run: |
+        VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+        TARBALL_NAME="bolt-$VERSION.tar.gz"
+        pushd pkg/
+        find . -name "gitkeep" -type f -delete
+        tar -czf $TARBALL_NAME *
+        mv $TARBALL_NAME ..
+        popd
+        echo "::set-output name=tarball::$TARBALL_NAME"
+    
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: true
+    
+    - name: Upload Release Assets
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: .
+        asset_name: ${{ steps.create_tarball.outputs.tarball }}
+        asset_content_type: application/tar+gzip
