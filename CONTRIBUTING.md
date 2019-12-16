@@ -1,4 +1,6 @@
 # Setup dev enviornment
+<details>
+<summary>Details</summary>
 
 This project uses [pipenv](https://github.com/pypa/pipenv).
 
@@ -6,16 +8,21 @@ Install it then run:
 ```bash
 $ pipenv install --dev
 ```
+</details>
 
-----------------------------------------------------------------------------------------
+
 # Tests
-
+<details>
+<summary>Details</summary>
+    
 ```bash
 $ pipenv run tests
 ```
+</details>
 
-----------------------------------------------------------------------------------------
+
 # Building packages
+
 Bolt can be distributed with a few different bundles:
 - RPM
 - DEB
@@ -24,7 +31,9 @@ Bolt can be distributed with a few different bundles:
 
 Scripts exist to do this automatically.
 
-## Building just the binary
+<details>
+<summary>Building just the binary</summary>
+    
 This project uses [pex](https://github.com/pantsbuild/pex) to create a standalone
 binary with all the dependencies included. It only requires a Python runtime to
 execute.
@@ -32,28 +41,38 @@ execute.
 ```bash
 $ pipenv run build binary
 ```
+</details>
 
-## Building RPM
+<details>
+<summary>Building RPM</summary>
+    
 ```bash
 $ pipenv run build rpm
 ```
+</details>
 
-## Building DEB
+<summary>Building DEB</summary>
+    
 ```bash
 $ pipenv run build deb
 ```
+</details>
 
-## Building TARBALL
+<summary>Building TARBALL</summary>
+    
 ```bash
 $ pipenv run build tarball
 ```
+</details>
 
-## Building Docker
+<summary>Building DOCKER</summary>
+    
 ```bash
 $ pipenv run build docker
 ```
+</details>
 
-----------------------------------------------------------------------------------------
+
 # Bump software version
 
 This project follows the [semver](https://semver.org/) standard.
