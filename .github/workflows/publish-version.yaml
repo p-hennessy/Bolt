@@ -21,6 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install pipenv
+        pip install pex
         pipenv install --dev --python=3.6
     
     - name: Build Pex Artifact
