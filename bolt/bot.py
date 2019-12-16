@@ -26,7 +26,7 @@ import logging
 
 
 class Bot():
-    VERSION = "0.7.11"
+    VERSION = "0.7.12"
 
     def __init__(self, config_path):
 
