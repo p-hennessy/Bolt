@@ -51,6 +51,7 @@ $ pipenv run build rpm
 ```
 </details>
 
+<details>
 <summary>Building DEB</summary>
     
 ```bash
@@ -58,6 +59,7 @@ $ pipenv run build deb
 ```
 </details>
 
+<details>
 <summary>Building TARBALL</summary>
     
 ```bash
@@ -65,6 +67,7 @@ $ pipenv run build tarball
 ```
 </details>
 
+<details>
 <summary>Building DOCKER</summary>
     
 ```bash
