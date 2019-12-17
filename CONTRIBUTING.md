@@ -1,13 +1,9 @@
----
-
-[**Documentation**](https://docs.bolt.bot) 
-| [**Issues**](https://github.com/ns-phennessy/Bolt/issues/new/choose) 
-| [**Discord**](#)
+[**Documentation**](https://docs.bolt.bot) | [**Issues**](https://github.com/ns-phennessy/Bolt/issues/new/choose) | [**Discord**](#)
 
 ---
 
 ## Table of Contents
-1. [Report Bug(#report-bug)
+1. [Report Bug](#report-bug)
 2. [Suggest Feature](#suggest-feature)
 3. [Submit Changes](#submit-changes)
 4. [Discussion](#changes)
