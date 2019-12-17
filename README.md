@@ -2,7 +2,8 @@
 
 ![Logo](https://user-images.githubusercontent.com/5940454/29853902-3b4a47dc-8d08-11e7-9158-31874826084c.png)
 
-[![Python](https://img.shields.io/badge/Python-3.6-7289da.svg?style=flat-square)](https://www.python.org/downloads/release/python-360/) [![License](https://img.shields.io/badge/License-MIT-7289da.svg?style=flat-square)](https://opensource.org/licenses/MIT) [![Build Status](https://img.shields.io/travis/ns-phennessy/Bolt/master.svg?label=Build&style=flat-square)](https://travis-ci.org/ns-phennessy/Bolt) [![Codacy Badge](https://img.shields.io/codacy/grade/01884c4719a746ba8ae317ba10268a44/master.svg?label=Quality&style=flat-square)](https://www.codacy.com/app/ns-phennessy/Bolt?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ns-phennessy/Bolt&amp;utm_campaign=Badge_Grade) [![LibrariesIO](https://img.shields.io/librariesio/github/ns-phennessy/Bolt.svg?label=Dependencies&style=flat-square)](https://libraries.io/github/ns-phennessy/Bolt)
+[![Python](https://img.shields.io/badge/Python-3.6-7289da.svg?style=flat-square)](https://www.python.org/downloads/release/python-360/) [![License](https://img.shields.io/badge/License-MIT-7289da.svg?style=flat-square)](https://opensource.org/licenses/MIT) 
+[![Codacy Badge](https://img.shields.io/codacy/grade/01884c4719a746ba8ae317ba10268a44/master.svg?label=Quality&style=flat-square)](https://www.codacy.com/app/ns-phennessy/Bolt?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ns-phennessy/Bolt&amp;utm_campaign=Badge_Grade) [![LibrariesIO](https://img.shields.io/librariesio/github/ns-phennessy/Bolt.svg?label=Dependencies&style=flat-square)](https://libraries.io/github/ns-phennessy/Bolt)
 
 ## About Bolt
 
