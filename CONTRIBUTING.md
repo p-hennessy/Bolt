@@ -40,7 +40,8 @@ TODO How to do a PR
 ## Code Style
 
 This project adheres to [pep8](https://www.python.org/dev/peps/pep-0008/) with the
-notable exception line length is irrelevant. Almost all lines in project are under 100 characters, but are not nessessarily restricted to that.
+notable exception that line length is irrelevant. 
+Most lines are under 100 characters, but are not nessessarily restricted to that.
 
 The ability to comprehend the code is the only thing that matters.
 
