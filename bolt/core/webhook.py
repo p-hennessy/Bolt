@@ -1,5 +1,6 @@
 from gevent.pywsgi import WSGIServer
 import logging
+import time
 import ujson as json
 import falcon
 
@@ -12,48 +13,59 @@ class WebhookServer():
         self.app.add_sink(self.handle, '/')
 
         self.logger = logging.getLogger(__name__)
-        self.server = WSGIServer(('', 8080), self.app, log=self.logger)
+        self.server = WSGIServer(('', 8080), self.app, log=None)
 
     def start(self):
         self.logger.debug('Spawning WebhookServer greenlet')
         self.server.serve_forever()
 
-    def handle(self, request, response):
-        route = request.path
-        method = request.method
-
+    def get_webhooks(self):
         for plugin in self.bot.plugins:
-            if not plugin.enabled:
+            if plugin.enabled is False:
                 continue
 
             for webhook in plugin.webhooks:
-                if not route == webhook.route:
-                    continue
+                yield webhook
+
+    def handle(self, request, response):
+        start_time = time.time()
+
+        for webhook in self.get_webhooks():
+            if not request.path == webhook.route:
+                continue
+            else:
+                if request.method not in webhook.methods:
+                    response.status = falcon.HTTP_405
+                    break
                 else:
-                    if method not in webhook.methods:
-                        response.status = falcon.HTTP_405
-                        return response
-                    else:
-                        try:
-                            request_data = json.loads(request.stream.read())
-                            request_headers = request.headers
-                            ret = webhook.callback(request_data, request_headers)
+                    try:
+                        request_data = json.loads(request.stream.read())
+                        ret = webhook.callback(request_data, request.headers)
 
-                            if isinstance(ret, str):
-                                response.body = ret
-                            elif isinstance(ret, dict):
-                                response.body = json.dumps(ret)
+                        if isinstance(ret, str):
+                            response.body = ret
+                        elif isinstance(ret, dict):
+                            response.body = json.dumps(ret)
 
-                            response.status = falcon.HTTP_200
-                            return response
+                        response.status = falcon.HTTP_200
+                        break
 
-                        except Exception as e:
-                            self.logger.warning(f"Recieved exception processing web request: {e}")
-                            response.status = falcon.HTTP_500
-                            return response
+                    except Exception:
+                        response.status = falcon.HTTP_500
+                        break
         else:
             response.status = falcon.HTTP_404
-            return response
+
+        self.logger.info(f"""
+            {request.method.upper()}
+            '{request.path}'
+            {request.content_length or "-"}
+            {request.host}
+            {request.user_agent or "-"}
+            {float(time.time() - start_time):.2}ms
+            '{response.status}'
+        """)
+        return response
 
 
 class Webhook():
