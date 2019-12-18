@@ -3,19 +3,21 @@ Documentation:
   - README.md
 
 Deployment:
-  - pkg/**/*
+  - pkg/
   - .github/scripts/build-pex-bundle.sh
   - .github/workflows/publish-version.yaml
   - entrypoint.py
     
 Core Functionality:
-  - bolt/core/**/*
-  - bolt/utils/**/*
-  - bolt/data/**/*
+  - bolt/core/*
+  - bolt/utils/*
+  - bolt/data/*
   - bolt/bot.py
     
 Discord Connector:
+  - bolt/discord/*
   - bolt/discord/**/*
     
 Tests:
+  - tests/*
   - tests/**/*
