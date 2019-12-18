@@ -56,15 +56,17 @@ class WebhookServer():
         else:
             response.status = falcon.HTTP_404
 
-        self.logger.info(f"""
-            {request.method.upper()}
-            '{request.path}'
-            {request.content_length or "-"}
-            {request.host}
-            {request.user_agent or "-"}
-            {float(time.time() - start_time):.2}ms
-            '{response.status}'
-        """)
+        dash = "-"
+        line = (
+            f"{request.method.upper()} "
+            f"{request.path} "
+            f"{request.content_length or dash} "
+            f"{request.host} "
+            f"{request.user_agent or dash} "
+            f"{time.time() - start_time:.2f}ms "
+            f"{response.status}"
+        )
+        self.logger.info(line)
         return response
 
 
