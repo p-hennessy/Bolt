@@ -9,6 +9,7 @@ import ujson as json
 import gevent
 import requests
 import time
+import logging
 
 
 def rate_limit():
@@ -16,27 +17,40 @@ def rate_limit():
         callback.reset = time.time()
 
         def wrapper(self, *args, **kwargs):
-            # Check if there is a timeout
+            # Check if there is an existing timeout from previous calls
             if time.time() < callback.reset:
                 delay = callback.reset - time.time()
-                # self.logger.warning(f"Rate limited, sleeping for {delay} seconds")
+                self.logger.warning(f"Rate limited, sleeping for {delay} seconds")
                 gevent.sleep(delay)
 
-            # Call real method
-            response = callback(self, *args, **kwargs)
+            retries_remaining = 3
+            while retries_remaining > 0:
+                if retries_remaining == 0:
+                    raise Exception("Exceeded max retries for request.")
 
-            # Look for rate limit headers
-            remaining = int(response.headers.get('X-RateLimit-Remaining', 1))
-            reset = float(response.headers.get('X-RateLimit-Reset', time.time()))
+                # Call real method
+                response = callback(self, *args, **kwargs)
 
-            # We will have to wait on next request until reset
-            if remaining == 0:
-                callback.reset = reset
+                # Look for rate limit headers
+                remaining = int(response.headers.get('X-RateLimit-Remaining', 1))
+                reset = float(response.headers.get('X-RateLimit-Reset', time.time()))
 
-            # response.raise_for_status()
+                # We will have to wait on next request until reset
+                if remaining == 0:
+                    callback.reset = reset
 
-            if response.text:
-                return response.json()
+                # Check if this request is the timeout. Can happen when reconnecting the bot a lot
+                if response.status_code == 429:
+                    delay = callback.reset - time.time()
+                    self.logger.warning(f"Rate limited, sleeping for {delay} seconds")
+                    gevent.sleep(delay)
+                    retries_remaining -= 1
+                    continue
+                else:
+                    response.raise_for_status()
+
+                if response.text:
+                    return response.json()
 
         return wrapper
     return decorate
@@ -49,7 +63,7 @@ class API():
             "Content-Type": 'application/json'
         }
         self.base_url = "https://discordapp.com/api"
-        # self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
 
     # Gateway methods
     @rate_limit()

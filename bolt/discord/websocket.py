@@ -65,6 +65,7 @@ class Websocket():
             on_open=self.handle_websocket_open,
             on_close=self.handle_websocket_close
         )
+        self.logger.info("Successfully connected to Discord")
         self.websocket_app.run_forever()
 
     def send(self, data):
