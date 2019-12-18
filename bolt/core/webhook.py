@@ -56,7 +56,6 @@ class WebhookServer():
         else:
             response.status = falcon.HTTP_404
 
-        # GET '/github' 50b 10.23.43.231 python/2.6.3 0.24ms '200 OK'
         self.logger.info(f"""
             {request.method.upper()}
             '{request.path}'
