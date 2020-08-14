@@ -307,8 +307,9 @@ class SearchableList(list):
         return list(filter(expression, self.__iter__()))
 
     def upsert(self, new_item):
-        for item in self.__iter__():
-            if hash(item) == hash(new_item):
+        for index, item in enumerate(self):
+            if item == new_item:
+                self[index] = new_item
                 break
         else:
             self.append(new_item)
@@ -336,4 +337,6 @@ class SearchableDict(dict):
         return None
 
     def filter(self, expression):
-        raise NotImplementedError
+        for _, item in self.items():
+            if expression(item) is True:
+                yield item
