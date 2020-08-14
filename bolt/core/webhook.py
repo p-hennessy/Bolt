@@ -35,11 +35,16 @@ class WebhookServer():
                 continue
             else:
                 if request.method not in webhook.methods:
-                    response.status = falcon.HTTP_405
-                    break
+                    continue
                 else:
                     try:
-                        request_data = json.loads(request.stream.read())
+                        if request.method in ["POST", "PATCH"]:
+                            request_data = json.loads(request.stream.read())
+                        elif request.method == "GET":
+                            request_data = request.params
+                        else:
+                            request_data = {}
+                            
                         ret = webhook.callback(request_data, request.headers)
 
                         if isinstance(ret, str):
@@ -50,7 +55,8 @@ class WebhookServer():
                         response.status = falcon.HTTP_200
                         break
 
-                    except Exception:
+                    except Exception as e:
+                        self.logger.warning(f'Caught exception handling webhook: {e}')
                         response.status = falcon.HTTP_500
                         break
         else:
