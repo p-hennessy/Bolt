@@ -50,6 +50,7 @@ from bolt import Plugin
 from bolt import webhook
 
 class Example(Plugin):
+    
     @webhook('/hookme', methods=['GET'])
        def webhook(self, request):
            # do stuff
