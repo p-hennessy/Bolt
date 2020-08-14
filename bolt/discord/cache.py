@@ -149,9 +149,7 @@ class Cache():
 
     def on_voice_state_update(self, event):
         if event.connected is True:
-            existing = event.guild.voice_states.find(user_id=event.voice_state.user_id)
-            if existing is None:
-                event.guild.voice_states.append(event.voice_state)
+            event.guild.voice_states.upsert(event.voice_state)
         else:
             existing = event.guild.voice_states.find(user_id=event.voice_state.user_id)
             event.guild.voice_states.remove(existing)

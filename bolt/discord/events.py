@@ -13,7 +13,10 @@ import logging
 
 class Subscription():
     def __init__(self, event_name, callback):
-        self.event_name = event_name
+        if isinstance(event_name, Events):
+            self.event_name = snakecase_to_camelcase(event_name.name)
+        else:
+            self.event_name = event_name
         self.callback = callback
 
 
@@ -150,6 +153,10 @@ class GuildBanAdd(GatewayEvent):
     user = Field(User)
 
     @property
+    def ban(self):
+        return self.guild.bans.filter(lambda ban: ban.user.id == self.user.id)[0]
+    
+    @property
     def guild(self):
         return self.cache.guilds.get(self.guild_id)
 
@@ -202,6 +209,10 @@ class GuildMemberUpdate(GatewayEvent):
     user = Field(User)
     roles = ListField(Snowflake)
     nick = Field(str)
+
+    @property
+    def member(self):
+        return self.cache.guilds.find(id=self.guild_id).members.find(id=self.user.id)
 
     @property
     def guild(self):

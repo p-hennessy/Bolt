@@ -199,7 +199,7 @@ def subscriber(event):
     return add_method_tag({
         'name': 'subscriber',
         'properties': {
-            'event': event,
+            'event': event
         }
     })
 

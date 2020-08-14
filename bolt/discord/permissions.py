@@ -58,6 +58,9 @@ class Permission():
                 return True
         else:
             return self.allows(item)
+    
+    def __get__(self):
+        return self.bitarray
 
     def __repr__(self):
         classname = f"{type(self).__name__}"
