@@ -17,13 +17,13 @@ def rate_limit():
         callback.reset = time.time()
 
         def wrapper(self, *args, **kwargs):
+            retries_remaining = 3
             # Check if there is an existing timeout from previous calls
             if time.time() < callback.reset:
                 delay = callback.reset - time.time()
-                self.logger.warning(f"Rate limited, sleeping for {delay} seconds")
+                self.logger.warning(f"Rate limited on \"{callback.__name__}\", sleeping for {delay} seconds. Retries left: {retries_remaining}")
                 gevent.sleep(delay)
 
-            retries_remaining = 3
             while retries_remaining > 0:
                 if retries_remaining == 0:
                     raise Exception("Exceeded max retries for request.")
@@ -42,8 +42,8 @@ def rate_limit():
                 # Check if this request is the timeout. Can happen when reconnecting the bot a lot
                 if response.status_code == 429:
                     delay = callback.reset - time.time()
-                    self.logger.warning(f"Rate limited, sleeping for {delay} seconds")
-                    gevent.sleep(delay)
+                    self.logger.warning(f"Rate limited on \"{callback.__name__}\", sleeping for {delay} seconds. Retries left: {retries_remaining}")
+                    gevent.sleep(delay + 1)
                     retries_remaining -= 1
                     continue
                 else:
@@ -51,6 +51,8 @@ def rate_limit():
 
                 if response.text:
                     return response.json()
+                else:
+                    return {}
 
         return wrapper
     return decorate
@@ -62,7 +64,7 @@ class API():
             "authorization": "Bot " + token,
             "Content-Type": 'application/json'
         }
-        self.base_url = "https://discordapp.com/api"
+        self.base_url = "https://discord.com/api"
         self.logger = logging.getLogger(__name__)
 
     # Gateway methods
@@ -334,9 +336,10 @@ class API():
         )
 
     @rate_limit()
-    def create_guild_channel(self, guild_id, name, **kwargs):
+    def create_guild_channel(self, guild_id, name, type, **kwargs):
         data = {
-            "name": name
+            "name": name,
+            "type": type
         }
         data.update(**kwargs)
 
@@ -666,4 +669,12 @@ class API():
         return requests.delete(
             f"{self.base_url}/webhooks/{webhook_id}/webhook_token",
             headers=self.auth_headers
+        )
+
+    @rate_limit()
+    def get_audit_log(self, guild_id, **kwargs):
+        return requests.get(
+            f"{self.base_url}/guilds/{guild_id}/audit-logs",
+            headers=self.auth_headers,
+            params=kwargs
         )
