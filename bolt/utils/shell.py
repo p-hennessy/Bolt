@@ -9,9 +9,9 @@ from pygments.lexers.python import Python3Lexer
 
 
 class Shell():
-    def __init__(self, address):
+    def __init__(self, host, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.address = address
+        self.address = (host, port)
 
         self.history = FileHistory("/tmp/bolt-shell-history")
         self.prompt_session = PromptSession(
@@ -53,3 +53,5 @@ class Shell():
             data += part
             if len(part) < BUFF_SIZE:
                 break
+            
+        return data.decode()[:-5]

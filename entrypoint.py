@@ -10,6 +10,7 @@
         under the terms of the GNU General Public License v3; as published
         by the Free Software Foundation
 """
+from bolt.utils.shell import Shell
 from bolt import Bot
 from bolt.core.config import Config
 
@@ -105,13 +106,12 @@ def run_bot(config_path, plugin_dir):
 
 def run_shell():
     while True:
-        with Shell(('127.0.0.1', 5000)) as shell:
+        with Shell('localhost', 5000) as shell:
             while True:
                 try:
                     message = shell.prompt()
                     shell.send(message)
                     print(shell.recv())
-                    print()
                 except KeyboardInterrupt:
                     continue
                 except EOFError:
