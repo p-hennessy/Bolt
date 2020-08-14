@@ -2,7 +2,6 @@ from bolt.discord.models.base import Snowflake, Model, Field, ListField, Enum, T
 from bolt.discord.models.user import User
 from bolt.discord.permissions import Permission
 
-
 import os
 
 
@@ -12,6 +11,8 @@ class ChannelType(Enum):
     GUILD_VOICE = 2
     GROUP_DM = 3
     GUILD_CATEGORY = 4
+    GUILD_NEWS = 5
+    GUILD_STORE = 6
 
 
 class PermissionOverwrite(Model):
@@ -52,14 +53,15 @@ class Channel(Model):
         raise NotImplementedError
 
     def create_invite(self):
-        raise NotImplementedError
-
+        from bolt.discord.models.invite import Invite
+        return Invite.marshal(self.api.create_channel_invite(self.id))
+        
     def create_webhook(self):
         raise NotImplementedError
 
     def upload(self, files=[]):
         all_files = {os.path.basename(file): open(file, 'rb') for file in files}
-        return self.bot.api.create_message(files=all_files, headers=self.auth_headers)
+        return self.bot.create_message(files=all_files, headers=self.auth_headers)
 
     def say(self, message="", embed=None, mentions=None):
         from bolt.discord.models.message import Message
@@ -74,7 +76,10 @@ class Channel(Model):
 
         message = Message.marshal(self.api.create_message(self.id, message_data))
         message.api = self.api
-        message.cache = self.cache
+        
+        if getattr(self, "cache", None) is not None:
+            message.cache = self.cache
+            
         return message
 
     def trigger_typing(self):
@@ -84,7 +89,7 @@ class Channel(Model):
         raise NotImplementedError
 
     @property
-    def voice_members(self):
+    def voice_states(self):
         if self.type == ChannelType.GUILD_VOICE:
             return self.guild.voice_states.filter(lambda vs: vs.channel_id == self.id)
 
