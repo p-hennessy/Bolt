@@ -2,6 +2,12 @@ import os
 import importlib
 
 
+class attrdict(dict):
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 def snakecase_to_camelcase(string):
     return ''.join(x.title() for x in string.split('_'))
 
