@@ -1,5 +1,5 @@
 from bolt.discord.models.base import Enum, Model, Field, ListField, Snowflake, Timestamp, SearchableList
-from bolt.discord.models.channel import Channel
+from bolt.discord.models.channel import Channel, ChannelType
 from bolt.discord.models.user import User
 from bolt.discord.permissions import Permission
 
@@ -142,6 +142,9 @@ class VoiceState(Model):
     self_deaf = Field(bool)
     self_mute = Field(bool)
     suppress = Field(bool)
+    
+    def __eq__(self, other):
+        return self.user_id == other.user_id
 
 
 class VoiceRegion(Model):
@@ -252,15 +255,18 @@ class Guild(Model):
     def prune(self, days, compute_prune_count=False):
         return self.api.begin_guild_prune(days, compute_prune_count=compute_prune_count)
 
-    def create_voice_channel(self):
-        pass
-
-    def create_text_channel(self):
-        pass
-
-    def create_category(self):
-        pass
-
+    def create_voice_channel(self, name, **kwargs):
+        response = self.api.create_guild_channel(self.id, name, ChannelType.GUILD_VOICE.value, **kwargs)
+        return Channel.marshal(response)
+        
+    def create_text_channel(self, name, **kwargs):
+        response = self.api.create_guild_channel(self.id, name, ChannelType.GUILD_TEXT.value, **kwargs)
+        return Channel.marshal(response)
+        
+    def create_category(self, name, **kwargs):
+        response = self.api.create_guild_channel(self.id, name, ChannelType.GUILD_CATEGORY.value, **kwargs)
+        return Channel.marshal(response)
+        
     @property
     def invites(self):
         return self.api.get_guild_invites(self.id)
@@ -275,6 +281,7 @@ class Guild(Model):
         guild_bans = self.api.get_guild_bans(self.id)
         for ban in guild_bans:
             all.append(Ban.marshal(ban))
+        return all
 
     @property
     def embed_channel(self):

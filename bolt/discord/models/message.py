@@ -75,7 +75,12 @@ class Message(Model):
 
     def reply(self, message):
         self.channel.say(message, mentions=[self.author])
-
+    
+    @property
+    def member(self):
+        # TODO error handling around if guild
+        return self.guild.members.find(id=self.author.id)
+        
     @property
     def is_guild(self):
         return self.guild_id is not None

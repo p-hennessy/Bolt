@@ -13,6 +13,10 @@ class Invite(Model):
     approximate_presence_count = Field(int)
     approximate_member_count = Field(int)
 
+    @property
+    def link(self):
+        return f"https://discord.gg/{self.code}"
+
 
 class InviteMetadata(Model):
     inviter = Field(User)

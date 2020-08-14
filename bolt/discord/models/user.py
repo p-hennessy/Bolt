@@ -26,6 +26,7 @@ class User(Model):
         from bolt.discord.models.channel import Channel
         channel = Channel.marshal(self.api.create_dm(self.id))
         channel.api = self.api
+        channel.cache = self.cache
         return channel.say(*args, **kwargs)
 
     @property
