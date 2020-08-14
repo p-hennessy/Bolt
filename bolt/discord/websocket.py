@@ -150,7 +150,7 @@ class Websocket():
             self.heartbeat_greenlet = gevent.spawn(self.heartbeat, message['d']['heartbeat_interval'])
 
         elif op_code == GatewayOpCodes.HEARTBEAT_ACK:
-            delta = timedelta(seconds=time.monotonic()-self._heartbeat_start)
+            delta = timedelta(seconds=time.monotonic() - self._heartbeat_start)
             self.ping = round(delta.microseconds / 1000)
 
         else:
@@ -193,7 +193,7 @@ class Websocket():
         content = event.message.content
         for command in self.iter_commands():
             if command.matches(content):
-                event.arguments = command.parse(content)
+                event.args, event.kwargs = command.parse(content)
 
                 for hook in self.iter_pre_command_hooks():
                     output = hook(command, event)
