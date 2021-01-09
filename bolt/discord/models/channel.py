@@ -15,6 +15,15 @@ class ChannelType(Enum):
     GUILD_STORE = 6
 
 
+class ChannelMention(Model):
+    __repr_keys__ = ['id', 'name', 'type']
+
+    id = Field(Snowflake)
+    guild_id = Field(str)
+    type = Field(ChannelType)
+    name = Field(str)
+
+
 class PermissionOverwrite(Model):
     __repr_keys__ = ['id', 'type']
 
@@ -55,7 +64,7 @@ class Channel(Model):
     def create_invite(self):
         from bolt.discord.models.invite import Invite
         return Invite.marshal(self.api.create_channel_invite(self.id))
-        
+
     def create_webhook(self):
         raise NotImplementedError
 
@@ -76,10 +85,10 @@ class Channel(Model):
 
         message = Message.marshal(self.api.create_message(self.id, message_data))
         message.api = self.api
-        
+
         if getattr(self, "cache", None) is not None:
             message.cache = self.cache
-            
+
         return message
 
     def trigger_typing(self):

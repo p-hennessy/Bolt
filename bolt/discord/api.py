@@ -21,7 +21,7 @@ def rate_limit():
             # Check if there is an existing timeout from previous calls
             if time.time() < callback.reset:
                 delay = callback.reset - time.time()
-                self.logger.warning(f"Rate limited on \"{callback.__name__}\", sleeping for {delay} seconds. Retries left: {retries_remaining}")
+                self.logger.warning(f"Rate limited on \"{callback.__name__}\", sleeping for {delay} seconds. Retries left: {retries_remaining}")  # noqa: E501
                 gevent.sleep(delay)
 
             while retries_remaining > 0:
@@ -42,7 +42,7 @@ def rate_limit():
                 # Check if this request is the timeout. Can happen when reconnecting the bot a lot
                 if response.status_code == 429:
                     delay = callback.reset - time.time()
-                    self.logger.warning(f"Rate limited on \"{callback.__name__}\", sleeping for {delay} seconds. Retries left: {retries_remaining}")
+                    self.logger.warning(f"Rate limited on \"{callback.__name__}\", sleeping for {delay} seconds. Retries left: {retries_remaining}")  # noqa: E501
                     gevent.sleep(delay + 1)
                     retries_remaining -= 1
                     continue
@@ -130,9 +130,23 @@ class API():
         )
 
     @rate_limit()
+    def crosspost_message(self, channel_id, message_id):
+        return requests.post(
+            f"{self.base_url}/channels/{channel_id}/messages/{message_id}/crosspost",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
     def create_reaction(self, channel_id, message_id, emoji):
         return requests.put(
             f"{self.base_url}/channels/{channel_id}/messages/{message_id}/reactions/{emoji}/@me",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
+    def get_reactions(self, channel_id, message_id, emoji):
+        return requests.get(
+            f"{self.base_url}/channels/{channel_id}/messages/{message_id}/reactions/{emoji}",
             headers=self.auth_headers
         )
 
@@ -181,6 +195,14 @@ class API():
         )
 
     @rate_limit()
+    def edit_channel_permissions(self, channel_id, overwrite_id):
+        raise NotImplementedError
+        return requests.put(
+            f"{self.base_url}/channels/{channel_id}/permissions/{overwrite_id}",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
     def get_channel_invites(self, channel_id):
         return requests.delete(
             f"{self.base_url}/channels/{channel_id}/invites",
@@ -193,6 +215,21 @@ class API():
             f"{self.base_url}/channels/{channel_id}/invites",
             headers=self.auth_headers,
             data=json.dumps(kwargs)
+        )
+
+    @rate_limit()
+    def delete_channel_permission(self, channel_id, overwrite_id):
+        return requests.delete(
+            f"{self.base_url}/channels/{channel_id}/permissions/{overwrite_id}",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
+    def follow_news_channel(self, channel_id, target_channel_id):
+        return requests.post(
+            f"{self.base_url}/channels/{channel_id}/followers",
+            data=json.dumps({"webhook_channel_id": target_channel_id}),
+            headers=self.auth_headers
         )
 
     @rate_limit()
@@ -291,6 +328,10 @@ class API():
         )
 
     @rate_limit()
+    def create_group_dm(self, user_id):
+        raise NotImplementedError
+
+    @rate_limit()
     def get_user_connections(self):
         return requests.get(
             f"{self.base_url}/users/@me/connections",
@@ -310,6 +351,13 @@ class API():
     def get_guild(self, guild_id):
         return requests.get(
             f"{self.base_url}/guilds/{guild_id}",
+            headers=self.auth_headers
+        )
+
+    @rate_limit()
+    def get_guild_preview(self, guild_id):
+        return requests.get(
+            f"{self.base_url}/guilds/{guild_id}/preview",
             headers=self.auth_headers
         )
 

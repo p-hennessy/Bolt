@@ -3,6 +3,7 @@ from bolt.discord.models.emoji import Emoji
 from bolt.discord.models.user import User
 from bolt.discord.models.guild import Role, GuildMember
 from bolt.discord.models.embed import Embed
+from bolt.discord.models.channel import ChannelMention
 
 
 class MessageType(Enum):
@@ -22,6 +23,23 @@ class Reaction(Model):
     emoji = Field(Emoji, required=True)
 
 
+class StickerFormat(Enum):
+    PNG = 1
+    APNG = 2
+    LOTTIE = 3
+
+
+class Sticker(Model):
+    id = Field(Snowflake, required=True)
+    pack_id = Field(Snowflake, required=True)
+    name = Field(str, required=True)
+    description = Field(str, required=True)
+    tags = Field(str)
+    asset = Field(str)
+    preview_asset = Field(str)
+    format_type = Field(StickerFormat)
+
+
 class Attachment(Model):
     __repr_keys__ = ['id', 'filename']
 
@@ -32,6 +50,32 @@ class Attachment(Model):
     proxy_url = Field(str, required=True)
     height = Field(str)
     width = Field(str)
+
+
+class MessageApplication(Model):
+    id = Field(Snowflake, required=True)
+    cover_image = Field(str)
+    description = Field(int, required=True)
+    icon = Field(str, required=True)
+    name = Field(str, required=True)
+
+
+class MessageActivityType(Enum):
+    JOIN = 0
+    SPECTATE = 1
+    LISTEN = 2
+    JOIN_REQUEST = 3
+
+
+class MessageActivity(Model):
+    type = Field(MessageActivityType)
+    party_id = Field(Snowflake)
+
+
+class MessageReference(Model):
+    message_id = Field(Snowflake)
+    channel_id = Field(Snowflake)
+    guild_id = Field(Snowflake)
 
 
 class Message(Model):
@@ -49,13 +93,19 @@ class Message(Model):
     mention_everyone = Field(bool, default=False)
     mentions = ListField(User)
     mention_roles = ListField(Role)
+    mention_channels = ListField(ChannelMention)
     attachments = ListField(Attachment)
     embeds = ListField(Embed)
     reactions = ListField(Reaction)
     nonce = Field(Snowflake)
     pinned = Field(bool)
-    type = Field(MessageType)
     webhook_id = Field(Snowflake)
+    type = Field(MessageType)
+    activity = Field(MessageActivity)
+    application = Field(MessageApplication)
+    message_reference = Field(MessageReference)
+    flags = Field(int)
+    strickers = ListField(Sticker)
 
     def add_reaction(self):
         pass
@@ -75,12 +125,12 @@ class Message(Model):
 
     def reply(self, message):
         self.channel.say(message, mentions=[self.author])
-    
+
     @property
     def member(self):
         # TODO error handling around if guild
         return self.guild.members.find(id=self.author.id)
-        
+
     @property
     def is_guild(self):
         return self.guild_id is not None

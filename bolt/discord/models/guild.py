@@ -43,8 +43,10 @@ class GuildMember(Model):
     _nick = Field(str, json_key="nick")
     roles = ListField(int)
     joined_at = Field(Timestamp)
+    premium_since = Field(Timestamp)
     deaf = Field(bool)
     mute = Field(bool)
+    pending = Field(bool)
 
     @property
     def mention(self):
@@ -142,7 +144,7 @@ class VoiceState(Model):
     self_deaf = Field(bool)
     self_mute = Field(bool)
     suppress = Field(bool)
-    
+
     def __eq__(self, other):
         return self.user_id == other.user_id
 
@@ -215,14 +217,17 @@ class Guild(Model):
     id = Field(Snowflake, required=True)
     name = Field(str)
     icon = Field(str)
+    icon_hash = Field(str)
     splash = Field(str)
+    discovery_splash = Field(str)
+    owner = Field(bool)
     owner_id = Field(Snowflake)
     permissions = Field(Permission)
     region = Field(str)
     afk_channel_id = Field(Snowflake)
     afk_timeout = Field(int)
-    embed_enabled = Field(bool, default=False)
-    embed_channel_id = Field(Snowflake)
+    widget_enabled = Field(bool)
+    widget_channel_id = Field(Snowflake)
     verification_level = Field(VerificationLevel)
     default_message_notifications = Field(MessageNotificationLevel)
     explicit_content_filter = Field(ExplicitContentFilterLevel)
@@ -231,9 +236,9 @@ class Guild(Model):
     features = ListField(str)
     mfa_level = Field(MFALevel)
     application_id = Field(Snowflake)
-    widget_enabled = Field(bool)
-    widget_channel_id = Field(Snowflake)
     system_channel_id = Field(Snowflake)
+    system_channel_flags = Field(int)   # TODO make bit array thing
+    rules_channel_id = Field(Snowflake)
     joined_at = Field(Timestamp)
     large = Field(bool)
     unavailable = Field(bool)
@@ -248,6 +253,11 @@ class Guild(Model):
     banner = Field(str)
     premium_tier = Field(PremiumTier)
     premium_subscription_count = Field(int)
+    preferred_locale = Field(str)
+    public_updates_channel_id = Field(Snowflake)
+    max_video_channel_users = Field(int)
+    approximate_member_count = Field(int)
+    approximate_presence_count = Field(int)
 
     def leave(self):
         return self.api.leave_guild(self.id)
@@ -258,15 +268,15 @@ class Guild(Model):
     def create_voice_channel(self, name, **kwargs):
         response = self.api.create_guild_channel(self.id, name, ChannelType.GUILD_VOICE.value, **kwargs)
         return Channel.marshal(response)
-        
+
     def create_text_channel(self, name, **kwargs):
         response = self.api.create_guild_channel(self.id, name, ChannelType.GUILD_TEXT.value, **kwargs)
         return Channel.marshal(response)
-        
+
     def create_category(self, name, **kwargs):
         response = self.api.create_guild_channel(self.id, name, ChannelType.GUILD_CATEGORY.value, **kwargs)
         return Channel.marshal(response)
-        
+
     @property
     def invites(self):
         return self.api.get_guild_invites(self.id)
@@ -302,3 +312,18 @@ class Guild(Model):
     @property
     def owner(self):
         return self.cache.users[self.owner_id]
+
+
+class GuildPreview(Model):
+    __repr_keys__ = ['id', 'name']
+
+    id = Field(Snowflake, required=True)
+    name = Field(str)
+    description = Field(str)
+    icon = Field(str)
+    splash = Field(str)
+    discovery_splash = Field(str)
+    emojis = ListField(Emoji)
+    features = ListField(str)
+    approximate_member_count = Field(int)
+    approximate_presence_count = Field(int)
